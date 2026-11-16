@@ -16,3 +16,17 @@
 #lz-anatomy-zone .azc-loading-controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px;max-width:100%}#lz-anatomy-zone .azc-hike-option{border:1px solid #b6c7ed;background:var(--azc-soft);color:var(--azc-blue);border-radius:8px;padding:9px 12px;font-size:12px;min-height:38px}#lz-anatomy-zone .azc-hike-option[aria-pressed=true]{background:var(--azc-blue);border-color:var(--azc-blue);color:#fff}@media(pointer:coarse){#lz-anatomy-zone .azc-hike-option{min-height:44px}}@media(max-width:420px){#lz-anatomy-zone .azc-loading-controls{width:100%}#lz-anatomy-zone .azc-mode{width:100%;flex-wrap:wrap}#lz-anatomy-zone .azc-mode button{flex-basis:100%}}
 
 #lz-anatomy-zone{background:transparent;border-radius:0;overflow:visible}
+
+/* Squat COM comparison, sharing the existing motion controls. */
+#lz-anatomy-zone .azc-stage-area.is-com .azc-stage-title{position:static;padding:17px 20px 0}
+#lz-anatomy-zone .azc-com-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:14px 20px 8px}
+#lz-anatomy-zone .azc-com-panel{min-width:0;overflow:hidden;background:var(--azc-paper);border:1px solid var(--azc-line);border-radius:12px}
+#lz-anatomy-zone .azc-com-panel h3{font-size:15px;font-weight:600;margin:12px 13px 3px;color:var(--azc-ink)}
+#lz-anatomy-zone .azc-com-panel>p{font-size:11px;line-height:1.5;min-height:34px;margin:0 13px 7px;color:var(--azc-muted)}
+#lz-anatomy-zone .azc-com-stage{position:relative;width:100%;height:430px;touch-action:none;background:linear-gradient(#eaf1f9,#f3f7fc)}
+#lz-anatomy-zone .azc-com-stage canvas{display:block;width:100%;height:100%}
+#lz-anatomy-zone .azc-com-legend{display:flex;align-items:center;gap:7px;padding:3px 22px 12px;font-size:11px;color:var(--azc-muted)}
+#lz-anatomy-zone .azc-com-legend>span{width:8px;height:8px;border-radius:50%;background:#315bc1;flex-shrink:0}
+#lz-anatomy-zone .azc-com-error{grid-column:1/-1;padding:16px;color:var(--azc-ink)}
+@media(max-width:750px){#lz-anatomy-zone .azc-com-grid{padding:12px;gap:9px}#lz-anatomy-zone .azc-com-panel h3{margin:11px 10px 3px;font-size:14px}#lz-anatomy-zone .azc-com-panel>p{margin:0 10px 7px;min-height:50px}#lz-anatomy-zone .azc-com-stage{height:390px}}
+@media(max-width:600px){#lz-anatomy-zone .azc-com-grid{grid-template-columns:1fr}#lz-anatomy-zone .azc-com-panel>p{min-height:0}#lz-anatomy-zone .azc-com-stage{height:360px}}

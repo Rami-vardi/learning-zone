@@ -18,10 +18,10 @@ window.azAppliedScenes={
   note:'The reviewed Jamie material does not directly establish this entire heel bias, rounding and bar drift sequence. This is a selected teaching strategy. Foot pressure is not a measured whole-body centre of mass; no pressure or force values are calculated.'
  },
  squat:{
-  title:'Back Squat',labels:['Reference','Extension Bias'],ends:['Setup','Bottom'],view:'side',
-  captions:{a:['Begin from the reference pelvis and trunk position.','The hips, knees, ankles and trunk share the descent.','Compare pelvic orientation and spinal shape at depth.'],b:['Anterior pelvic tilt and a lumbar arch are visible at setup.','The extended starting shape changes as the squat gets deeper.','Near the bottom, the pelvis tucks into PPT and the lumbar arch reduces.']},
+  title:'Back Squat',labels:['Reference','Extension Bias'],ends:['Setup','Full Squat'],view:'side',
+  captions:{a:['Begin from the reference pelvis and trunk position.','The hips, knees, ankles and trunk share the descent.','The hips descend below knee level while the feet stay planted.'],b:['Anterior pelvic tilt and a lumbar arch are visible at setup.','The extended starting shape changes as the squat gets deeper.','Near the bottom of the full squat, the pelvis tucks into PPT and the lumbar arch reduces.']},
   source:'Jamie Smith course slides 14 and 59. Slide 59 presents butt wink as proximal reorientation and illustrates a pelvic tuck away from anterior tilt near the bottom. Updated course deck: slides 15 and 43.',
-  note:'This preset makes the extended setup and later posterior pelvic tilt clear. The sources do not establish that more starting extension always causes a fixed amount or timing of butt wink. Depth also depends on the task, stance, anatomy and available movement options.'
+  note:'This preset uses a slightly wider stance and modest toe-out to show full squat depth, while keeping the extended setup and later posterior pelvic tilt clear. The sources do not establish that more starting extension always causes a fixed amount or timing of butt wink. Depth also depends on the task, stance, anatomy and available movement options.'
  },
  press:{
   title:'Seated Dumbbell Press',labels:['Feet Down','Feet Raised'],ends:['Rack','Overhead'],view:'oblique',
@@ -73,13 +73,20 @@ window.azAppliedScenes.lunge={
  note:'Right is the front leg and left is the rear leg throughout. The two loading patterns are selected teaching examples. Moving weight forward does not require a pelvic hike, and rearward loading does not automatically lower the rear heel. Foot contact, pelvic hike/drop and pelvic rotation are shown as distinct features. More Front Hip Hike makes both the right pelvic hike and the accompanying body shift more pronounced. The colored foot marks the selected support; no forces or centre-of-mass values are calculated.'
 };
 
+window.azAppliedScenes.squatcom={
+ title:'Squat COM Comparison',wholeChainOnly:true,labels:['',''],ends:['Stand','Full Squat'],view:'oblique',
+ captions:{a:['Three setups, full squat depth. The combined COM remains over the foot support.','Three setups, full squat depth. The combined COM remains over the foot support.','Three setups, full squat depth. The combined COM remains over the foot support.'],b:['Three setups, full squat depth. The combined COM remains over the foot support.','Three setups, full squat depth. The combined COM remains over the foot support.','Three setups, full squat depth. The combined COM remains over the foot support.']},
+ source:'Selected teaching models comparing a goblet squat, a back squat with heel elevation, and a safety bar squat. Hecker et al. (2019) examine safety bar squat mechanics. Lu et al. (2022) examine heel lift effects during barbell squats.',
+ note:'The COM marker is calculated from an illustrative 80 kg body and 20 kg load segment model. It is not measured athlete data. Load placement and heel elevation change different parts of the setup; these presets show the shared balance task. These models use a slightly wider stance and modest toe-out at full depth. Individual responses and available depth vary.'
+};
+
 (function(){
 'use strict';
-const markup="<div id=\"lz-anatomy-zone\">\n<section class=\"azc-explorer\" aria-label=\"Interactive movement explorer\">\n      <div class=\"azc-toolbar\">\n        <div class=\"azc-pickers\">\n        <label class=\"azc-movement\" id=\"azc-body-field\">Body Movements<select id=\"azc-body-movement\" class=\"cursor-interaction\">\n          <option value=\"\" disabled selected>Choose a Body Movement</option>\n          <optgroup label=\"Pelvis &amp; Hip\"><option value=\"hike\">Pelvic Hike / Drop</option><option value=\"tilt\">Anterior / Posterior Tilt</option><option value=\"hip\">Hip Internal / External Rotation</option></optgroup>\n          <optgroup label=\"Ribcage\"><option value=\"ribs\">Breathing &amp; Lateral Expansion</option><option value=\"ribshift\">Posterior / Anterior Ribcage Shift</option></optgroup>\n          <optgroup label=\"Scapula\"><option value=\"scapula\">Protraction / Retraction</option></optgroup>\n          <optgroup label=\"Foot &amp; Ankle\"><option value=\"foot\">Pronation / Supination</option></optgroup>\n          <optgroup label=\"Whole Chain\"><option value=\"chain\">Pelvis, Ribcage &amp; Scapula</option></optgroup>\n        </select></label>\n        <label class=\"azc-movement is-active\" id=\"azc-exercise-field\">Exercises<select id=\"azc-exercise\" class=\"cursor-interaction\">\n          <option value=\"\" disabled>Choose an Exercise</option>\n          <option value=\"rdl\">Romanian Deadlift</option><option value=\"squat\">Back Squat</option><option value=\"lunge\" selected>Lunge</option><option value=\"press\">Seated Dumbbell Press</option><option value=\"row\">Seated Machine Row</option><option value=\"pullup\">Pull-Up</option><option value=\"dips\">Bar Dips</option><option value=\"pushup\">Push-Up</option><option value=\"bench\">Bench Press</option>\n        </select></label>\n        </div>\n        <div class=\"azc-loading-controls\"><div class=\"azc-mode\" role=\"group\" aria-label=\"Loading strategy\"><button type=\"button\" class=\"cursor-interaction\" data-azc-mode=\"local\" aria-pressed=\"true\">Front Leg Loading</button><button type=\"button\" class=\"cursor-interaction\" data-azc-mode=\"chain\" aria-pressed=\"false\">Rear Leg Loading</button></div><button id=\"azc-front-hike\" type=\"button\" class=\"azc-hike-option cursor-interaction\" aria-pressed=\"false\">More Front Hip Hike</button></div>\n        <details id=\"azc-options\" class=\"azc-options\"><summary class=\"cursor-interaction\"><i data-lucide=\"sliders-horizontal\" aria-hidden=\"true\"></i>View &amp; Details</summary><div class=\"azc-options-panel\">\n          <label>Camera<select id=\"azc-camera\" class=\"cursor-interaction\"><option value=\"front\">Front</option><option value=\"oblique\">Oblique</option><option value=\"side\">Side</option><option value=\"back\">Back</option></select></label>\n          <label id=\"azc-side-field\">Focus Side<select id=\"azc-side\" class=\"cursor-interaction\"><option value=\"right\">Right</option><option value=\"left\">Left</option></select></label>\n          <label class=\"azc-check\"><input id=\"azc-labels\" type=\"checkbox\">Show Anatomy Labels</label>\n          <label class=\"azc-check\"><input id=\"azc-ghost\" type=\"checkbox\">Show Neutral Reference</label>\n          <button type=\"button\" id=\"azc-camera-reset\" class=\"azc-textbutton cursor-interaction\">Reset Camera</button>\n          <details id=\"azc-source\"><summary class=\"cursor-interaction\">Model &amp; Sources<i data-lucide=\"chevron-down\" aria-hidden=\"true\"></i></summary><p id=\"azc-source-text\"></p><p id=\"azc-source-note\"></p><p>Jamie Smith course slides · <a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC9603242/\" target=\"_blank\" rel=\"noreferrer\">Dips study</a> · <a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC6221737/\" target=\"_blank\" rel=\"noreferrer\">Push-Up Plus study</a> · <a href=\"https://www.hrpub.org/journals/article_info.php?aid=7784\" target=\"_blank\" rel=\"noreferrer\">Bench Press Leg Drive study</a></p><p>Skull and pelvic meshes: <a href=\"https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html\" target=\"_blank\" rel=\"noreferrer\">BodyParts3D</a>, © The Database Center for Life Science, <a href=\"https://creativecommons.org/licenses/by/4.0/\" target=\"_blank\" rel=\"noreferrer\">CC Attribution 4.0</a>. Simplified and rescaled.</p></details>\n        </div></details>\n      </div>\n      <div class=\"azc-stage-area\">\n        <div class=\"azc-stage-title\"><h2 id=\"azc-title\">Lunge</h2><span id=\"azc-focus\">Right Front Leg Loading</span></div>\n        <div id=\"azc-stage\" role=\"img\" aria-label=\"Interactive schematic anatomy. Drag to rotate and scroll to zoom.\"></div>\n        <div class=\"azc-stage-caption\"><span>Drag to rotate <b>·</b> Scroll to zoom</span><span>Schematic anatomy</span></div>\n      </div>\n      <div class=\"azc-bottom\">\n        <p id=\"azc-explanation\" aria-live=\"polite\">Right foot forward, left foot behind. Follow the shift toward the front leg.</p>\n        <div class=\"azc-slider-row\"><span id=\"azc-negative\">Top</span><input id=\"azc-range\" type=\"range\" min=\"0\" max=\"100\" value=\"45\" step=\"1\" aria-label=\"Movement position\"><span id=\"azc-positive\">Lower</span></div>\n        <div class=\"azc-bottom-actions\"><button type=\"button\" id=\"azc-play\" class=\"azc-play cursor-interaction\" aria-pressed=\"false\"><i data-lucide=\"play\" aria-hidden=\"true\"></i><span>Play</span></button><button type=\"button\" id=\"azc-reset\" class=\"azc-reset cursor-interaction\"><i data-lucide=\"rotate-ccw\" aria-hidden=\"true\"></i>Reset</button><span id=\"azc-mode-hint\">Illustrative comparison</span></div>\n      </div>\n    </section>\n</div>";
+const markup="<div id=\"lz-anatomy-zone\">\n<section class=\"azc-explorer\" aria-label=\"Interactive movement explorer\">\n      <div class=\"azc-toolbar\">\n        <div class=\"azc-pickers\">\n        <label class=\"azc-movement\" id=\"azc-body-field\">Body Movements<select id=\"azc-body-movement\" class=\"cursor-interaction\">\n          <option value=\"\" disabled selected>Choose a Body Movement</option>\n          <optgroup label=\"Pelvis &amp; Hip\"><option value=\"hike\">Pelvic Hike / Drop</option><option value=\"tilt\">Anterior / Posterior Tilt</option><option value=\"hip\">Hip Internal / External Rotation</option></optgroup>\n          <optgroup label=\"Ribcage\"><option value=\"ribs\">Breathing &amp; Lateral Expansion</option><option value=\"ribshift\">Posterior / Anterior Ribcage Shift</option></optgroup>\n          <optgroup label=\"Scapula\"><option value=\"scapula\">Protraction / Retraction</option></optgroup>\n          <optgroup label=\"Foot &amp; Ankle\"><option value=\"foot\">Pronation / Supination</option></optgroup>\n          <optgroup label=\"Whole Chain\"><option value=\"chain\">Pelvis, Ribcage &amp; Scapula</option></optgroup>\n        </select></label>\n        <label class=\"azc-movement is-active\" id=\"azc-exercise-field\">Exercises<select id=\"azc-exercise\" class=\"cursor-interaction\">\n          <option value=\"\" disabled>Choose an Exercise</option>\n          <option value=\"rdl\">Romanian Deadlift</option><option value=\"squat\">Back Squat</option><option value=\"squatcom\">Squat COM Comparison</option><option value=\"lunge\" selected>Lunge</option><option value=\"press\">Seated Dumbbell Press</option><option value=\"row\">Seated Machine Row</option><option value=\"pullup\">Pull-Up</option><option value=\"dips\">Bar Dips</option><option value=\"pushup\">Push-Up</option><option value=\"bench\">Bench Press</option>\n        </select></label>\n        </div>\n        <div class=\"azc-loading-controls\"><div class=\"azc-mode\" role=\"group\" aria-label=\"Loading strategy\"><button type=\"button\" class=\"cursor-interaction\" data-azc-mode=\"local\" aria-pressed=\"true\">Front Leg Loading</button><button type=\"button\" class=\"cursor-interaction\" data-azc-mode=\"chain\" aria-pressed=\"false\">Rear Leg Loading</button></div><button id=\"azc-front-hike\" type=\"button\" class=\"azc-hike-option cursor-interaction\" aria-pressed=\"false\">More Front Hip Hike</button></div>\n        <details id=\"azc-options\" class=\"azc-options\"><summary class=\"cursor-interaction\"><i data-lucide=\"sliders-horizontal\" aria-hidden=\"true\"></i>View &amp; Details</summary><div class=\"azc-options-panel\">\n          <label>Camera<select id=\"azc-camera\" class=\"cursor-interaction\"><option value=\"front\">Front</option><option value=\"oblique\">Oblique</option><option value=\"side\">Side</option><option value=\"back\">Back</option></select></label>\n          <label id=\"azc-side-field\">Focus Side<select id=\"azc-side\" class=\"cursor-interaction\"><option value=\"right\">Right</option><option value=\"left\">Left</option></select></label>\n          <label class=\"azc-check\"><input id=\"azc-labels\" type=\"checkbox\">Show Anatomy Labels</label>\n          <label class=\"azc-check\"><input id=\"azc-ghost\" type=\"checkbox\">Show Neutral Reference</label>\n          <button type=\"button\" id=\"azc-camera-reset\" class=\"azc-textbutton cursor-interaction\">Reset Camera</button>\n          <details id=\"azc-source\"><summary class=\"cursor-interaction\">Model &amp; Sources<i data-lucide=\"chevron-down\" aria-hidden=\"true\"></i></summary><p id=\"azc-source-text\"></p><p id=\"azc-source-note\"></p><p>Jamie Smith course slides · <a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC9603242/\" target=\"_blank\" rel=\"noreferrer\">Dips study</a> · <a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC6221737/\" target=\"_blank\" rel=\"noreferrer\">Push-Up Plus study</a> · <a href=\"https://www.hrpub.org/journals/article_info.php?aid=7784\" target=\"_blank\" rel=\"noreferrer\">Bench Press Leg Drive study</a></p><p id=\"azc-com-source-links\" hidden><a href=\"https://pubmed.ncbi.nlm.nih.gov/30363042/\" target=\"_blank\" rel=\"noreferrer\">Safety squat bar study</a> · <a href=\"https://pubmed.ncbi.nlm.nih.gov/35877352/\" target=\"_blank\" rel=\"noreferrer\">Heel elevation study</a></p><p>Skull and pelvic meshes: <a href=\"https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html\" target=\"_blank\" rel=\"noreferrer\">BodyParts3D</a>, © The Database Center for Life Science, <a href=\"https://creativecommons.org/licenses/by/4.0/\" target=\"_blank\" rel=\"noreferrer\">CC Attribution 4.0</a>. Simplified and rescaled.</p></details>\n        </div></details>\n      </div>\n      <div class=\"azc-stage-area\">\n        <div class=\"azc-stage-title\"><h2 id=\"azc-title\">Lunge</h2><span id=\"azc-focus\">Right Front Leg Loading</span></div>\n        <div id=\"azc-stage\" role=\"img\" aria-label=\"Interactive schematic anatomy. Drag to rotate and scroll to zoom.\"></div>\n        <div id=\"azc-com-grid\" class=\"azc-com-grid\" hidden><section class=\"azc-com-panel\"><h3>Goblet Squat</h3><p>Dumbbell held at the chest</p><div class=\"azc-com-stage\" id=\"azc-com-cgoblet\" role=\"img\" aria-label=\"Goblet squat model\"></div></section><section class=\"azc-com-panel\"><h3>Heels Raised</h3><p>Bar on back, heels on a visible wedge</p><div class=\"azc-com-stage\" id=\"azc-com-cheels\" role=\"img\" aria-label=\"Heel elevated squat model\"></div></section><section class=\"azc-com-panel\"><h3>Safety Bar Squat</h3><p>Shoulder pads, camber and front handles</p><div class=\"azc-com-stage\" id=\"azc-com-csafety\" role=\"img\" aria-label=\"Safety bar squat model\"></div></section></div><div id=\"azc-com-legend\" class=\"azc-com-legend\" hidden><span aria-hidden=\"true\"></span>Model COM, lifter and load combined</div><div class=\"azc-stage-caption\"><span>Drag to rotate <b>·</b> Scroll to zoom</span><span>Schematic anatomy</span></div>\n      </div>\n      <div class=\"azc-bottom\">\n        <p id=\"azc-explanation\" aria-live=\"polite\">Right foot forward, left foot behind. Follow the shift toward the front leg.</p>\n        <div class=\"azc-slider-row\"><span id=\"azc-negative\">Top</span><input id=\"azc-range\" type=\"range\" min=\"0\" max=\"100\" value=\"45\" step=\"1\" aria-label=\"Movement position\"><span id=\"azc-positive\">Lower</span></div>\n        <div class=\"azc-bottom-actions\"><button type=\"button\" id=\"azc-play\" class=\"azc-play cursor-interaction\" aria-pressed=\"false\"><i data-lucide=\"play\" aria-hidden=\"true\"></i><span>Play</span></button><button type=\"button\" id=\"azc-reset\" class=\"azc-reset cursor-interaction\"><i data-lucide=\"rotate-ccw\" aria-hidden=\"true\"></i>Reset</button><span id=\"azc-mode-hint\">Illustrative comparison</span></div>\n      </div>\n    </section>\n</div>";
 window.LZAnatomyRuntime={mount(host,opts={}){
   host.innerHTML=markup;
   const root=host.querySelector('#lz-anatomy-zone');
-  let viewer;const listeners=[];
+  let viewer;let comparisonViewers=[],comparisonFrame=0,viewerGeneration=0,comparisonActive=false;const listeners=[];
   try{
   const q=s=>root.querySelector(s),all=s=>Array.from(root.querySelectorAll(s));
   const anatomy=window.azCleanSceneData,exercises=window.azAppliedScenes;
@@ -87,6 +94,7 @@ window.LZAnatomyRuntime={mount(host,opts={}){
   const state={movement:'lunge',amount:.45,mode:'chain',scenario:'a',frontHipHike:false,side:'right',labels:false,ghost:false,minimal:true};
   let playing=false,frame=0,last=0,direction=1,destroyed=false;
   function listen(el,type,fn,options){el.addEventListener(type,fn,options);listeners.push(()=>el.removeEventListener(type,fn,options));}
+  const comparison=()=>state.movement==='squatcom';
   const applied=()=>Boolean(exercises[state.movement]);
   const wholeChainOnly=()=>Boolean(exercises[state.movement]?.wholeChainOnly);
   function text(selector,value){const el=q(selector);if(el.textContent!==value)el.textContent=value;}
@@ -108,6 +116,40 @@ window.LZAnatomyRuntime={mount(host,opts={}){
       case 'chain':return chain?(p?'Posterior pelvic tilt, posterior ribcage shift and scapular protraction.':'Anterior pelvic tilt, anterior ribcage shift and scapular retraction.'):(p?'Posterior pelvic tilt, with the trunk as a reference.':'Anterior pelvic tilt, with the trunk as a reference.');
     }
   }
+  function disposeComparison(){
+    viewerGeneration++;cancelAnimationFrame(comparisonFrame);comparisonFrame=0;all('.azc-com-error').forEach(el=>el.remove());
+    const previous=comparisonViewers;comparisonViewers=[];
+    for(const item of previous)item.viewer.dispose();
+    for(const id of ['cgoblet','cheels','csafety'])q('#azc-com-'+id).replaceChildren();
+  }
+  function comparisonState(id){return {...state,movement:id,mode:'chain',labels:false,ghost:false,view:q('#azc-camera').value,ascending:direction<0};}
+  function syncViewers(){
+    if(comparison()){
+      if(!comparisonActive){
+        comparisonActive=true;viewer?.dispose();viewer=null;disposeComparison();
+        const generation=viewerGeneration,ids=['cgoblet','cheels','csafety'];let index=0;
+        function createNext(){
+          comparisonFrame=0;if(destroyed||!comparisonActive||generation!==viewerGeneration)return;
+          const id=ids[index++],container=q('#azc-com-'+id);
+          try{
+            const model=window.createAnatomyViewer(container,comparisonState(id));
+            if(destroyed||!comparisonActive||generation!==viewerGeneration){model.dispose();return;}
+            comparisonViewers.push({id,viewer:model});
+            if(index<ids.length)comparisonFrame=requestAnimationFrame(createNext);
+          }catch(error){
+            disposeComparison();pause();const notice=document.createElement('p');notice.setAttribute('role','alert');notice.className='azc-com-error';notice.textContent='The squat comparison could not load. Choose another movement and reopen it to retry.';q('#azc-com-grid').appendChild(notice);
+          }
+        }
+        comparisonFrame=requestAnimationFrame(createNext);
+      }else for(const item of comparisonViewers)item.viewer.update(comparisonState(item.id));
+    }else{
+      if(comparisonActive){comparisonActive=false;disposeComparison();}
+      if(!viewer)viewer=window.createAnatomyViewer(q('#azc-stage'),{...state,view:q('#azc-camera').value,ascending:direction<0});
+      else viewer.update({...state,ascending:direction<0});
+    }
+  }
+  function setCamera(value){if(comparison())for(const item of comparisonViewers)item.viewer.setView(value);else viewer?.setView(value);}
+  function resetCamera(){if(comparison())for(const item of comparisonViewers)item.viewer.resetCamera();else viewer?.resetCamera();}
   function render(){
     if(destroyed)return;
     if(wholeChainOnly()){state.mode='chain';state.scenario='b';}
@@ -119,34 +161,35 @@ window.LZAnatomyRuntime={mount(host,opts={}){
     q('.azc-mode').hidden=wholeChainOnly();
     q('.azc-loading-controls').hidden=wholeChainOnly();
     const canHike=state.movement==='lunge'&&state.scenario==='a';q('#azc-front-hike').hidden=!canHike;q('#azc-front-hike').setAttribute('aria-pressed',String(canHike&&state.frontHipHike));
-    q('#azc-ghost').parentNode.hidden=Boolean(ex);
+    q('#azc-ghost').parentNode.hidden=Boolean(ex);q('#azc-labels').parentNode.hidden=comparison();
+    q('#azc-stage').hidden=comparison();q('#azc-com-grid').hidden=!comparison();q('#azc-com-legend').hidden=!comparison();q('#azc-com-source-links').hidden=!comparison();q('.azc-stage-area').classList.toggle('is-com',comparison());
     const label=ex?ex.title:neutral?'Neutral Position':state.amount>0?d.positive:d.negative;
     text('#azc-title',label);
     const lower=!ex&&['hike','tilt','hip','foot'].includes(state.movement);
     text('#azc-focus',state.movement==='lunge'?(state.scenario==='a'?'Right Front Leg Loading'+(state.frontHipHike?' · More Hip Hike':''):'Left Rear Leg Loading'):ex?ex.labels[state.scenario==='a'?0:1]:lower?(state.side==='right'?'Right side':'Left side'):state.movement==='chain'?'Pelvis, ribcage and scapula':'');
-    q('#azc-focus').hidden=!ex&&!lower&&state.movement!=='chain';q('#azc-side-field').hidden=!lower;
+    q('#azc-focus').hidden=comparison()||!ex&&!lower&&state.movement!=='chain';q('#azc-side-field').hidden=!lower;
     text('#azc-negative',ex?ex.ends[0]:short[state.movement][0]);text('#azc-positive',ex?ex.ends[1]:short[state.movement][1]);
     text('#azc-explanation',detail());text('#azc-source-text',d.source);text('#azc-source-note',d.note);
     text('#azc-mode-hint',ex?(wholeChainOnly()?'Teaching example':'Illustrative comparison'):state.movement==='tilt'&&chain?'Proposed teaching pairing':state.movement==='foot'&&chain?'Loaded-leg example':chain?'Chain teaching preset':'Local view');
     q('#azc-stage').setAttribute('aria-label','Interactive schematic anatomy. '+label+'. '+detail()+' Drag to rotate and scroll to zoom.');
-    viewer.update({...state,ascending:direction<0});root.anatomyExerciseState={...state,playing};
+    syncViewers();root.anatomyExerciseState={...state,playing};
   }
   function pause(value=false){playing=value;cancelAnimationFrame(frame);last=0;q('#azc-play').innerHTML='<i data-lucide="'+(value?'pause':'play')+'" aria-hidden="true"></i><span>'+(value?'Pause':'Play')+'</span>';q('#azc-play').setAttribute('aria-pressed',String(value));icons();if(playing){if(state.amount>.97)direction=-1;else if(state.amount<(applied()?.03:-.97))direction=1;frame=requestAnimationFrame(tick);}root.anatomyExerciseState={...state,playing};}
-  function tick(now){if(!playing||destroyed)return;const dt=last?Math.min((now-last)/1000,.06):0;last=now;state.amount+=direction*dt*(applied()?.20:.28);const minimum=applied()?0:-1;if(state.amount>=1){state.amount=1;direction=-1;}else if(state.amount<=minimum){state.amount=minimum;direction=1;}render();frame=requestAnimationFrame(tick);}
+  function tick(now){if(!playing||destroyed)return;if(comparison()&&last&&comparisonViewers.some(item=>item.viewer.isFallback)&&now-last<110){frame=requestAnimationFrame(tick);return;}const dt=last?Math.min((now-last)/1000,comparison()?.25:.06):0;last=now;state.amount+=direction*dt*(applied()?.20:.28);const minimum=applied()?0:-1;if(state.amount>=1){state.amount=1;direction=-1;}else if(state.amount<=minimum){state.amount=minimum;direction=1;}render();frame=requestAnimationFrame(tick);}
   function setAmount(value){direction=value<state.amount?-1:1;pause();state.amount=Math.max(applied()?0:-1,Math.min(1,value));render();}
   function defaultView(){if(applied())return exercises[state.movement].view;return ['tilt','ribshift'].includes(state.movement)?'side':state.movement==='scapula'?'back':state.movement==='foot'?(state.mode==='chain'?'front':'oblique'):'front';}
-  function selectMovement(value){if(!anatomy[value]&&!exercises[value])return;pause();direction=1;state.frontHipHike=false;state.movement=value;state.amount=applied()?.12:.55;if(applied()){state.mode='chain';state.scenario=wholeChainOnly()||['pullup','dips'].includes(state.movement)?'b':'a';state.ghost=false;q('#azc-ghost').checked=false;}q('#azc-body-movement').value=applied()?'':value;q('#azc-exercise').value=applied()?value:'';render();const view=defaultView();q('#azc-camera').value=view;viewer.setView(view);}
+  function selectMovement(value){if(!anatomy[value]&&!exercises[value])return;pause();direction=1;state.frontHipHike=false;state.movement=value;state.amount=comparison()?1:applied()?.12:.55;if(applied()){state.mode='chain';state.scenario=wholeChainOnly()||['pullup','dips'].includes(state.movement)?'b':'a';state.ghost=false;q('#azc-ghost').checked=false;}q('#azc-body-movement').value=applied()?'':value;q('#azc-exercise').value=applied()?value:'';const view=defaultView();q('#azc-camera').value=view;render();setCamera(view);}
   listen(q('#azc-body-movement'),'change',e=>selectMovement(e.target.value));listen(q('#azc-exercise'),'change',e=>selectMovement(e.target.value));
-  all('[data-azc-mode]').forEach(b=>listen(b,'click',()=>{if(wholeChainOnly())return;if(applied()){const next=b.dataset.azcMode==='local'?'a':'b';if(next!==state.scenario)state.frontHipHike=false;state.scenario=next;state.mode='chain';}else state.mode=b.dataset.azcMode;render();if(state.movement==='foot'){const view=defaultView();q('#azc-camera').value=view;viewer.setView(view);}}));
+  all('[data-azc-mode]').forEach(b=>listen(b,'click',()=>{if(wholeChainOnly())return;if(applied()){const next=b.dataset.azcMode==='local'?'a':'b';if(next!==state.scenario)state.frontHipHike=false;state.scenario=next;state.mode='chain';}else state.mode=b.dataset.azcMode;render();if(state.movement==='foot'){const view=defaultView();q('#azc-camera').value=view;setCamera(view);}}));
   listen(q('#azc-front-hike'),'click',()=>{if(state.movement!=='lunge'||state.scenario!=='a')return;state.frontHipHike=!state.frontHipHike;render();});
   listen(q('#azc-side'),'change',e=>{state.side=e.target.value;render();});
   listen(q('#azc-range'),'input',e=>setAmount(Number(e.target.value)/100));
   listen(q('#azc-play'),'click',()=>pause(!playing));listen(q('#azc-reset'),'click',()=>setAmount(0));
-  listen(q('#azc-camera'),'change',e=>viewer.setView(e.target.value));
-  listen(q('#azc-camera-reset'),'click',()=>{viewer.resetCamera();q('#azc-camera').value='front';});
+  listen(q('#azc-camera'),'change',e=>setCamera(e.target.value));
+  listen(q('#azc-camera-reset'),'click',()=>{resetCamera();q('#azc-camera').value='front';});
   listen(q('#azc-labels'),'change',e=>{state.labels=e.target.checked;render();});listen(q('#azc-ghost'),'change',e=>{state.ghost=e.target.checked;render();});
   listen(root,'click',e=>{if(!q('#azc-options').contains(e.target))q('#azc-options').open=false;});listen(document,'visibilitychange',()=>{if(document.hidden)pause();});
-  q('#azc-body-movement').value=applied()?'':state.movement;q('#azc-exercise').value=applied()?state.movement:'';render();const view=defaultView();q('#azc-camera').value=view;viewer.setView(view);
+  q('#azc-body-movement').value=applied()?'':state.movement;q('#azc-exercise').value=applied()?state.movement:'';render();const view=defaultView();q('#azc-camera').value=view;setCamera(view);
 
   return {
     flush:async()=>{},
@@ -154,12 +197,12 @@ window.LZAnatomyRuntime={mount(host,opts={}){
       if(destroyed)return;
       destroyed=true;playing=false;cancelAnimationFrame(frame);frame=0;
       for(const remove of listeners.splice(0))remove();
-      viewer.dispose();
+      viewer?.dispose();viewer=null;comparisonActive=false;disposeComparison();
       delete root.anatomyExerciseState;
       if(root.parentNode===host)host.replaceChildren();
     }
   };
 
-  }catch(error){for(const remove of listeners.splice(0))remove();viewer?.dispose();host.replaceChildren();throw error;}
+  }catch(error){for(const remove of listeners.splice(0))remove();viewer?.dispose();for(const item of comparisonViewers)item.viewer.dispose();cancelAnimationFrame(comparisonFrame);host.replaceChildren();throw error;}
 }};
 })();

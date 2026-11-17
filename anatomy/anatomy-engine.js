@@ -650,9 +650,175 @@
       model.updateMatrixWorld(true);previewDebug={movement:m,amount:a,joints,com:modelCom?.toArray(),bodyCom:bodyCom?.toArray(),load:loadPoint?.toArray()};
     }
 
+    // Conventional pull: the knees withdraw as the bar rises, then hips finish the lift.
+    // Positions are illustrative, solved with fixed bones, planted feet and straight arms.
+    function tensionDeadliftFrame(lift){
+      const q=T.MathUtils.clamp(lift,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
+      const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),femurSag=Math.sqrt(L1*L1-.05*.05),tibiaSag=Math.sqrt(L2*L2-.05*.05);
+      const points=tensionFootPoints(legs[0]),ankleY=.08-Math.min(...points.map(v=>v.y)),ankleZ=.045;
+      const shinAngle=.20*Math.pow(1-q,2),thighAngle=1.20*(1-q);
+      const kneeY=ankleY+tibiaSag*Math.cos(shinAngle),kneeZ=ankleZ+tibiaSag*Math.sin(shinAngle);
+      const hipY=kneeY+femurSag*Math.cos(thighAngle),hipZ=kneeZ-femurSag*Math.sin(thighAngle);
+      const armReach=2.225,barZ=.35;
+      function solve(pitch){
+        const Q=new T.Quaternion().setFromAxisAngle(V(1,0,0),pitch),origin=V(0,hipY,hipZ).sub(V(0,-.17,.005).applyQuaternion(Q));
+        const S=V(1.04,2.25,.02).applyQuaternion(Q).add(origin),deltaZ=S.z-barZ,vertical=Math.sqrt(Math.max(.001,armReach*armReach-.39*.39-deltaZ*deltaZ));
+        return {origin,Q,bar:V(0,S.y-vertical,barZ)};
+      }
+      // Match a real plate on the ground exactly at lift-off despite rig proportions.
+      let low=1.05,high=1.30;
+      const baseShin=.20,baseThigh=1.20,baseKY=ankleY+tibiaSag*Math.cos(baseShin),baseKZ=ankleZ+tibiaSag*Math.sin(baseShin),baseHY=baseKY+femurSag*Math.cos(baseThigh),baseHZ=baseKZ-femurSag*Math.sin(baseThigh);
+      for(let i=0;i<36;i++){
+        const t=(low+high)/2,oy=baseHY+.17*Math.cos(t)+.005*Math.sin(t),oz=baseHZ+.17*Math.sin(t)-.005*Math.cos(t),sy=oy+2.25*Math.cos(t)-.02*Math.sin(t),sz=oz+2.25*Math.sin(t)+.02*Math.cos(t),by=sy-Math.sqrt(armReach*armReach-.39*.39-(sz-barZ)*(sz-barZ));
+        if(by>.90)low=t;else high=t;
+      }
+      const pitch=(low+high)/2*Math.pow(1-q,.65),frame=solve(pitch);
+      if(q<1e-10)frame.bar.y=.90;
+      frame.kneeTargets=new Map(legs.map(l=>[l.side,V(l.side*.56,kneeY,kneeZ)]));
+      frame.shinAngle=shinAngle;frame.kneeFlexion=shinAngle+thighAngle;frame.hipPosition=V(0,hipY,hipZ);return frame;
+    }
+
+    // Slight yielding through the chain, with most visible recoil at the ankle.
+    function poseTensionPogo(phase){
+      const p=T.MathUtils.clamp(phase,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),contactEnd=.30,contact=p<contactEnd,u=contact?p/contactEnd:(p-contactEnd)/(1-contactEnd);
+      const pulse=contact?Math.sin(Math.PI*u):0,compression=.09*pulse,footLift=contact?0:.34*Math.sin(Math.PI*u),footPitch=.44-.35*pulse;
+      const footQ=new T.Quaternion().setFromAxisAngle(V(1,0,0),footPitch),L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),f=legs[0];
+      const points=tensionFootPoints(f).map(v=>v.clone().applyQuaternion(footQ));let low=points[0];for(const v of points)if(v.y<low.y)low=v;
+      const ankleY=.08-low.y+footLift,ankleZ=.55-low.z,pelvisPitch=-.028*pulse;
+      const origin=V(0,ankleY+L1+L2+.17-.012-compression,ankleZ-.018-.045*pulse),pelvisQ=new T.Quaternion().setFromAxisAngle(V(1,0,0),pelvisPitch);
+      const angleAt=r=>.012+.040*pulse*Math.min(1,r/2.3),centreAt=r=>V(0,r-.007*pulse*r*r,.014*pulse*r*r).add(origin),turn=(x,y,z)=>centreAt(y).add(V(x,0,z).applyAxisAngle(V(1,0,0),angleAt(y)));
+      pelvis.position.copy(origin);pelvis.quaternion.copy(pelvisQ);pelvis.updateMatrixWorld(true);
+      torso.position.copy(turn(0,1.42,0));torso.rotation.set(angleAt(1.85),0,0);torso.updateMatrixWorld(true);head.position.copy(turn(0,2.95,-.08));head.rotation.set(angleAt(2.95)+.025*pulse,0,0);
+      for(const v of spineGroups){const r=v.y-3.3;v.node.position.copy(turn(0,r,v.z));v.node.rotation.set(angleAt(r),0,0);}
+      sternum.position.copy(sternumRest);const jointChecks=[],armChecks=[];
+      for(const l of legs){
+        const fp=tensionFootPoints(l).map(v=>v.clone().applyQuaternion(footQ));let bottom=fp[0];for(const v of fp)if(v.y<bottom.y)bottom=v;
+        const A=V(l.side*.61,.08-bottom.y+footLift,.55-bottom.z),H=pelvis.localToWorld(V(l.side*.51,-.17,.005)),K=twoJoint(H,A,L1,L2,V(0,0,1)),fd=K.clone().sub(H),sd=A.clone().sub(K);
+        l.root.position.copy(H);l.root.rotation.set(0,0,0);l.femur.quaternion.setFromUnitVectors(V(l.side*.10,-1.63,0).normalize(),fd.clone().normalize());l.femur.scale.set(1,1,1);l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(V(0,-1.31,.04).normalize(),sd.clone().normalize());l.shin.scale.set(1,1,1);l.root.updateMatrixWorld(true);l.foot.position.copy(l.shin.worldToLocal(A.clone()));l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(footQ);l.foot.scale.set(1,1,1);
+        jointChecks.push({side:l.side,hip:H.toArray(),knee:K.toArray(),ankle:A.toArray(),footMinHeight:bottom.y+A.y,footPitch,forefoot:[A.x,.08+footLift,.55],kneeFlexion:T.MathUtils.radToDeg(Math.PI-Math.acos(T.MathUtils.clamp(H.clone().sub(K).normalize().dot(A.clone().sub(K).normalize()),-1,1)))});
+      }
+      for(const a of exArms){
+        const side=a.side,S=turn(side*1.04,2.25,.02),armAngle=.04+.08*Math.sin(2*Math.PI*p-.25),upper=V(side*.10,-Math.cos(armAngle),Math.sin(armAngle)).normalize(),fore=V(side*.02,-Math.cos(armAngle+.16+.06*pulse),Math.sin(armAngle+.16+.06*pulse)).normalize(),E=S.clone().addScaledVector(upper,1.08),W=E.clone().addScaledVector(fore,.98),G=W.clone().addScaledVector(fore,.17);
+        poseSegment(a.clavicle,turn(0,2.40,.30),S);poseSegment(a.upper,S,E);poseSegment(a.fore,E,W);a.hand.position.copy(W);a.hand.quaternion.setFromUnitVectors(V(0,-1,0),fore);
+        armChecks.push({side,shoulder:S.toArray(),elbow:E.toArray(),wrist:W.toArray(),grip:G.toArray(),upperLength:S.distanceTo(E),foreLength:E.distanceTo(W)});
+      }
+      model.updateMatrixWorld(true);tensionDebug={movement:'tension_pogo',phase:p,phaseLabel:contact?(u<.5?'Landing and compression':'Rebound'):'Flight',compression,bodyYield:pulse,contact,legs:jointChecks,joints:jointChecks,arms:armChecks,contacts:{floorHeight:.08,footLift,forefootContact:contact},trunkPitch:angleAt(1.85),pelvis:origin.toArray()};tensionHighlight('tension_pogo',p);
+    }
+
+    const tensionIds=new Set(['tension_deadlift','tension_pushup','tension_swing','tension_pogo','tension_cat']);
+    let tensionDebug=null;
+    const tensionEquipment=new T.Group();scene.add(tensionEquipment);
+    const tensionLoad=new T.MeshStandardMaterial({color:0x304b65,roughness:.68,metalness:.14,transparent:true,opacity:.18,depthWrite:false});
+    tensionLoad.userData.azStudyAlpha=true;
+    const tensionBar=new T.Group();tensionEquipment.add(tensionBar);between(tensionBar,[-1.92,0,0],[1.92,0,0],.038,.038,steel);
+    for(const s of[-1,1])for(const x of[1.36,1.57]){const plate=mesh(new T.CylinderGeometry(.82,.82,.15,24),tensionLoad,tensionBar);plate.rotation.z=Math.PI/2;plate.position.x=s*x;}
+    const tensionSpineMaterials=new Map(),tensionSpineMeshes=[];
+    for(const v of spineGroups)v.node.traverse(o=>{if(!o.isMesh)return;const original=o.material;if(!tensionSpineMaterials.has(original))tensionSpineMaterials.set(original,original.clone());tensionSpineMeshes.push({mesh:o,original,highlight:tensionSpineMaterials.get(original)});});
+    function tensionHighlight(m,p){
+      let level=m==='tension_deadlift'?.95:m==='tension_pushup'?.54:m==='tension_cat'?.12:m==='tension_swing'?.30+.60*Math.pow(Math.sin(Math.PI*p),2):.30;
+      for(const mat of tensionSpineMaterials.values())mat.color.copy(new T.Color(palettes.ivory)).lerp(new T.Color(0x4d83b4),level);
+      thorM.color.copy(new T.Color(palettes.ivory)).lerp(new T.Color(0x709dbf),level*.80);pelvicM.color.copy(new T.Color(palettes.ivory)).lerp(new T.Color(0x709dbf),level*.70);
+      if(m==='tension_pogo'){const contact=tensionDebug?.contact??p<.30;for(const l of legs){l.footMat.color.setHex(contact?0x4d83b4:0xa6bccb);l.shinMat.color.setHex(contact?0x7ea8c4:palettes.context);}}
+      if(tensionDebug)tensionDebug.tensionEmphasis=level;
+    }
+    function tensionFootPoints(l){
+      if(l.tensionFootPoints)return l.tensionFootPoints;model.updateMatrixWorld(true);const inverse=l.foot.matrixWorld.clone().invert(),points=[];l.foot.traverse(o=>{if(!o.isMesh)return;const matrix=inverse.clone().multiply(o.matrixWorld),attr=o.geometry.attributes.position;for(let i=0;i<attr.count;i++)points.push(new T.Vector3().fromBufferAttribute(attr,i).applyMatrix4(matrix));});return l.tensionFootPoints=points;
+    }
+    function poseTension(m,phase){
+      const p=T.MathUtils.clamp(phase,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),lift=.5-.5*Math.cos(p*Math.PI*2);
+      for(const item of tensionSpineMeshes)item.mesh.material=item.highlight;
+      tensionEquipment.visible=true;tensionBar.visible=false;previewEquipment.visible=false;equipment.visible=false;exerciseArms.visible=true;
+      pelvis.visible=torso.visible=head.visible=true;arms.forEach(x=>x.node.visible=false);scapulae.forEach(x=>x.node.visible=true);spineGroups.forEach(x=>x.node.visible=true);spineGuide.visible=false;ghost.visible=false;landmarks.forEach(x=>x.visible=false);torso.children.forEach(o=>{if(o.isMesh&&o.material===ctxM)o.visible=false;});
+      for(const key in regionMaterials)regionMaterials[key].color.setHex(key==='context'?palettes.context:palettes.ivory);
+      for(const l of legs){l.root.visible=l.femur.visible=l.shin.visible=l.foot.visible=true;l.femurMat.color.setHex(palettes.ivory);l.shinMat.color.setHex(palettes.context);l.footMat.color.setHex(palettes.ivory);}
+      floor.visible=true;floor.scale.set(1.8,1.8,1);floorRing.visible=false;
+      if(m==='tension_pogo'){poseTensionPogo(p);return;}
+      if(m==='tension_pushup'){
+        const oldMovement=state.movement,oldScenario=state.scenario;state.movement='pushup';state.scenario='b';poseHorizontalExercise(lift);state.movement=oldMovement;state.scenario=oldScenario;
+        tensionDebug={...exerciseDebug,movement:m,phase:p,contacts:exerciseDebug.contacts};tensionHighlight(m,p);return;
+      }
+      if(m==='tension_swing'||m==='tension_cat'){poseTensionSwingCat(m,lift);tensionHighlight(m,lift);tensionDebug.cyclePhase=p;return;}
+      const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),jointChecks=[],armChecks=[];
+      let origin,Q,bar=null,footPitch=0,footLift=0,kneeTargets=null;
+      if(m==='tension_deadlift'){
+        const frame=tensionDeadliftFrame(lift);origin=frame.origin;Q=frame.Q;bar=frame.bar;kneeTargets=frame.kneeTargets;tensionBar.visible=true;tensionBar.position.copy(bar);
+      }else{
+        const contact=p<.24,u=contact?p/.24:(p-.24)/.76;footLift=contact?0:.38*Math.sin(Math.PI*u);footPitch=contact?.38-.20*Math.sin(Math.PI*u):.43;
+        Q=new T.Quaternion();const f=legs[0],qFoot=new T.Quaternion().setFromAxisAngle(V(1,0,0),footPitch);let minY=Infinity;for(const x of tensionFootPoints(f))minY=Math.min(minY,x.clone().applyQuaternion(qFoot).y);
+        const ankleY=.08-minY+footLift,compression=contact?.10*Math.sin(Math.PI*u):0;origin=V(0,ankleY+L1+L2+.17-.04-compression,.02);
+      }
+      const turn=(x,y,z)=>V(x,y,z).applyQuaternion(Q).add(origin);
+      pelvis.position.copy(origin);pelvis.quaternion.copy(Q);pelvis.updateMatrixWorld(true);torso.position.copy(turn(0,1.42,0));torso.quaternion.copy(Q);head.position.copy(turn(0,2.95,-.08));head.quaternion.copy(Q);
+      for(const v of spineGroups){v.node.position.copy(turn(0,v.y-3.3,v.z));v.node.quaternion.copy(Q);}sternum.position.copy(sternumRest);
+      for(const l of legs){
+        const fQ=new T.Quaternion().setFromAxisAngle(V(1,0,0),footPitch);let minY=Infinity;for(const x of tensionFootPoints(l))minY=Math.min(minY,x.clone().applyQuaternion(fQ).y);
+        const A=V(l.side*.61,.08-minY+footLift,.045),H=pelvis.localToWorld(V(l.side*.51,-.17,.005)),K=kneeTargets?.get(l.side)||twoJoint(H,A,L1,L2,V(0,0,1)),fd=K.clone().sub(H),sd=A.clone().sub(K);
+        l.root.position.copy(H);l.femur.quaternion.setFromUnitVectors(V(l.side*.10,-1.63,0).normalize(),fd.clone().normalize());l.femur.scale.set(1,1,1);l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(V(0,-1.31,.04).normalize(),sd.clone().normalize());l.shin.scale.set(1,1,1);l.root.updateMatrixWorld(true);l.foot.position.copy(l.shin.worldToLocal(A.clone()));l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(fQ);l.foot.scale.set(1,1,1);
+        jointChecks.push({side:l.side,hip:H.toArray(),knee:K.toArray(),ankle:A.toArray(),footMinHeight:minY+A.y,footPitch});
+      }
+      for(const arm of exArms){const s=arm.side,S=turn(s*1.04,2.25,.02);let E,W,G;
+        if(m==='tension_deadlift'){G=bar.clone().add(V(s*.65,0,0));const dir=G.clone().sub(S).normalize();W=G.clone().addScaledVector(dir,-.17);E=twoJoint(S,W,1.08,.98,V(s*.25,0,.20));}
+        else{const upper=V(s*.06,-1,.03).normalize(),fore=V(s*.02,-1,.08).normalize();E=S.clone().addScaledVector(upper,1.08);W=E.clone().addScaledVector(fore,.98);G=W.clone().addScaledVector(fore,.17);}
+        poseSegment(arm.clavicle,turn(0,2.40,.30),S);poseSegment(arm.upper,S,E);poseSegment(arm.fore,E,W);arm.hand.position.copy(W);arm.hand.quaternion.setFromUnitVectors(V(0,-1,0),G.clone().sub(W).normalize());armChecks.push({side:s,shoulder:S.toArray(),elbow:E.toArray(),wrist:W.toArray(),grip:G.toArray(),upperLength:S.distanceTo(E),foreLength:E.distanceTo(W)});
+      }
+      model.updateMatrixWorld(true);tensionDebug={movement:m,phase:p,lift,joints:jointChecks,legs:jointChecks,arms:armChecks,bar:bar?.toArray(),contacts:{floorHeight:.08,footLift},trunkPitch:new T.Euler().setFromQuaternion(Q).x};tensionHighlight(m,p);
+    }
+
+    // New teaching examples only. Parent controller owns the playback phase.
+    const tensionBellGroup=new T.Group();scene.add(tensionBellGroup);tensionBellGroup.visible=false;
+    const tensionBellMaterial=new T.MeshStandardMaterial({color:0x344f6b,roughness:.65,metalness:.12});
+    const tensionBellBody=mesh(new T.SphereGeometry(1,24,16),tensionBellMaterial,tensionBellGroup);tensionBellBody.position.y=-.43;tensionBellBody.scale.set(.34,.36,.29);
+    const tensionBellBase=mesh(new T.CylinderGeometry(.23,.25,.065,20),tensionBellMaterial,tensionBellGroup);tensionBellBase.position.y=-.72;
+    tube(tensionBellGroup,[[-.22,-.18,0],[-.30,0,0],[-.26,.19,0],[.26,.19,0],[.30,0,0],[.22,-.18,0]],.055,tensionBellMaterial,24);
+    function poseTensionSwingCat(m,phase){
+      const p=T.MathUtils.clamp(phase,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),smooth=(lo,hi,v)=>{const t=T.MathUtils.clamp((v-lo)/(hi-lo),0,1);return t*t*(3-2*t);},cat=m==='tension_cat';
+      tensionBellGroup.visible=!cat;previewEquipment.visible=false;equipment.visible=false;exerciseArms.visible=true;
+      torso.visible=head.visible=pelvis.visible=true;spineGuide.visible=false;ghost.visible=false;landmarks.forEach(o=>o.visible=false);arms.forEach(o=>o.node.visible=false);scapulae.forEach(o=>o.node.visible=true);
+      torso.children.forEach(o=>{if(o.isMesh&&o.material===ctxM)o.visible=false;});
+      floor.visible=true;floorRing.visible=false;floor.scale.set(cat?2.0:1.8,cat?3.5:2.5,1);
+      for(const k in regionMaterials)regionMaterials[k].color.setHex(k==='context'?palettes.context:palettes.ivory);
+      const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),legChecks=[],armChecks=[];
+      function footPoints(l){if(l.tensionFootPoints)return l.tensionFootPoints;model.updateMatrixWorld(true);const inverse=l.foot.matrixWorld.clone().invert(),points=[];l.foot.traverse(o=>{if(!o.isMesh)return;const matrix=inverse.clone().multiply(o.matrixWorld),a=o.geometry.attributes.position;for(let i=0;i<a.count;i++)points.push(new T.Vector3().fromBufferAttribute(a,i).applyMatrix4(matrix));});return l.tensionFootPoints=points;}
+      function fixLeg(l,H,K,A,footQ){
+        const fd=K.clone().sub(H),sd=A.clone().sub(K);l.root.position.copy(H);l.root.rotation.set(0,0,0);l.femur.quaternion.setFromUnitVectors(V(l.side*.10,-1.63,0).normalize(),fd.clone().normalize());l.femur.scale.set(1,1,1);l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(V(0,-1.31,.04).normalize(),sd.clone().normalize());l.shin.scale.set(1,1,1);l.root.updateMatrixWorld(true);l.foot.position.copy(l.shin.worldToLocal(A.clone()));l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(footQ);l.foot.scale.set(1,1,1);l.root.visible=l.femur.visible=l.shin.visible=l.foot.visible=true;l.femurMat.color.setHex(palettes.ivory);l.shinMat.color.setHex(palettes.context);l.footMat.color.setHex(palettes.ivory);
+        const minFoot=Math.min(...footPoints(l).map(v=>v.clone().applyQuaternion(footQ).add(A).y));legChecks.push({side:l.side,hip:H.toArray(),knee:K.toArray(),ankle:A.toArray(),femurLength:H.distanceTo(K),tibiaLength:K.distanceTo(A),footMinHeight:minFoot});
+      }
+      let origin,centreAt,angleAt,turn,pelvisPitch,gripCentre=null,swingAngle=0,flex=0;
+      if(!cat){
+        const extension=smooth(.02,.76,p),pitch=1.25*(1-extension);origin=V(0,2.75+.52*extension,-1.0*(1-extension));pelvisPitch=pitch*.78;
+        centreAt=r=>V(0,r,-.14+.025*Math.sin(r/2.5*Math.PI*2)).applyAxisAngle(V(1,0,0),pitch).add(origin);angleAt=()=>pitch;turn=v=>centreAt(v[1]).add(V(v[0],0,v[2]+.14).applyAxisAngle(V(1,0,0),pitch));
+        const S=turn([0,2.25,.02]),lat=1.04-.30,sag=Math.sqrt(2.22*2.22-lat*lat);swingAngle=-.68+2.14*smooth(.08,1,p);gripCentre=S.clone().add(V(0,-Math.cos(swingAngle)*sag,Math.sin(swingAngle)*sag));
+      }else{
+        flex=-Math.cos(Math.PI*p);pelvisPitch=Math.PI/2-.18*flex;
+        const hipY=1.70+.08*flex,kneeY=.20,kneeZ=-1.0,dx=.64-.51,hipZ=kneeZ-Math.sqrt(Math.max(.001,L1*L1-dx*dx-Math.pow(hipY-kneeY,2))),offset=V(0,-.17,.005).applyAxisAngle(V(1,0,0),pelvisPitch);origin=V(0,hipY-offset.y,hipZ-offset.z);
+        const startY=origin.y+.14,L=2.25,endY=2.30;
+        centreAt=r=>{const rr=Math.min(r,L),t=rr/L;let y=startY+(endY-startY)*t+.30*flex*Math.sin(Math.PI*t);if(r>L)y+=(r-L)*((endY-startY)/L-.30*flex*Math.PI/L);return V(0,y,origin.z+r);};
+        angleAt=r=>{const h=.004,d=centreAt(r+h).sub(centreAt(Math.max(0,r-h)));return Math.atan2(d.z,d.y);};turn=v=>centreAt(v[1]).add(V(v[0],0,v[2]+.14).applyAxisAngle(V(1,0,0),angleAt(v[1])));
+      }
+      pelvis.position.copy(origin);pelvis.rotation.set(pelvisPitch,0,0);pelvis.updateMatrixWorld(true);torso.position.copy(turn([0,1.42,0]));const torsoAngle=angleAt(1.85);torso.rotation.set(torsoAngle,0,0);torso.updateMatrixWorld(true);head.position.copy(turn([0,2.95,-.08]));head.rotation.set(angleAt(2.95),0,0);
+      for(const v of spineGroups){v.node.visible=true;v.node.position.copy(centreAt(v.y-3.3));v.node.rotation.set(angleAt(v.y-3.3),0,0);}
+      for(let i=0;i<ribs.length;i++){const r=ribs[i],level=2.35-Math.floor(i/2)*.132;r.position.copy(torso.worldToLocal(centreAt(level)));r.rotation.set(angleAt(level)-torsoAngle,0,0);r.scale.set(1,1,1);}sternum.position.copy(sternumRest);
+      for(const s of scapulae){const level=1.95,theta=angleAt(level),pro=cat?.22+.32*(flex+1)/2:.04,off=V(s.side*(.64+.14*pro),0,-.20+.23*pro).applyAxisAngle(V(1,0,0),theta);s.node.position.copy(torso.worldToLocal(centreAt(level).add(off)));s.node.rotation.set(theta-torsoAngle,-s.side*(.20+.58*pro),0);}
+      for(const l of legs){
+        const H=pelvis.localToWorld(V(l.side*.51,-.17,.005));let K,A,footQ;
+        if(cat){K=V(l.side*.64,.20,-1.0);footQ=new T.Quaternion().setFromAxisAngle(V(0,1,0),Math.PI);const minY=Math.min(...footPoints(l).map(v=>v.clone().applyQuaternion(footQ).y)),ay=.08-minY;A=V(l.side*.64,ay,K.z-Math.sqrt(L2*L2-Math.pow(ay-K.y,2)));}
+        else{footQ=new T.Quaternion();const minY=Math.min(...footPoints(l).map(v=>v.y));A=V(l.side*.68,.08-minY,.04);K=twoJoint(H,A,L1,L2,V(0,0,1));}
+        fixLeg(l,H,K,A,footQ);
+      }
+      for(const a of exArms){
+        const side=a.side,S=turn([side*1.04,2.25,.02]);let G,W,E,handDirection;
+        if(cat){G=V(side*1.04,.12,.87);W=G.clone().add(V(0,0,-.17));E=twoJoint(S,W,1.08,.98,V(side*.15,0,-1));handDirection=V(0,0,1);}
+        else{G=gripCentre.clone().add(V(side*.30,0,0));handDirection=G.clone().sub(S).normalize();W=G.clone().addScaledVector(handDirection,-.17);E=twoJoint(S,W,1.08,.98,V(side*.2,-1,.1));}
+        poseSegment(a.clavicle,turn([0,2.40,.30]),S);poseSegment(a.upper,S,E);poseSegment(a.fore,E,W);a.hand.position.copy(W);a.hand.quaternion.setFromUnitVectors(V(0,-1,0),handDirection);
+        armChecks.push({side,shoulder:S.toArray(),elbow:E.toArray(),wrist:W.toArray(),grip:G.toArray(),upperLength:S.distanceTo(E),foreLength:E.distanceTo(W),wristReach:S.distanceTo(W)});
+      }
+      if(!cat){tensionBellGroup.position.copy(gripCentre);tensionBellGroup.rotation.set(-swingAngle,0,0);}
+      model.updateMatrixWorld(true);tensionDebug={movement:m,phase:p,pelvisPitch,spine:[0,.5,1,1.5,2,2.5,2.95].map(r=>centreAt(r).toArray()),legs:legChecks,arms:armChecks,contacts:cat?{knees:legChecks.map(l=>l.knee),palms:armChecks.map(a=>a.grip),floor:.08}:{feet:legChecks.map(l=>l.ankle),floor:.08},bell:gripCentre?.toArray(),phaseLabel:cat?(flex>0?'Round':'Extend'):p<.30?'Backswing':p<.70?'Hip Drive':'Float',segmentalMotion:cat};
+    }
+
     function applyPose(amount=state.amount){
       const a=Math.max(-1,Math.min(1,amount)),chain=state.mode==='chain',selectedSide=state.side==='right'?-1:1,m=state.movement;
-      restoreStudyMaterials();previewEquipment.visible=false;previewDebug=null;
+      restoreStudyMaterials();for(const item of tensionSpineMeshes)item.mesh.material=item.original;previewEquipment.visible=false;previewDebug=null;tensionEquipment.visible=false;tensionBellGroup.visible=false;tensionDebug=null;
       exerciseArms.visible=false;equipment.visible=false;exerciseDebug=null;
       pelvis.rotation.set(0,0,0);pelvis.position.set(0,3.3,0);torso.rotation.set(0,0,0);torso.position.set(0,4.72,0);head.rotation.set(0,0,0);head.position.set(0,6.25,-.08);
       for(const l of legs){l.root.position.set(l.baseX,3.13,.01);l.root.rotation.set(0,0,0);l.femur.rotation.set(0,0,0);l.shin.position.set(l.side*.10,-1.63,0);l.shin.rotation.set(0,0,0);l.shin.scale.set(1,1,1);l.femur.scale.set(1,1,1);l.foot.position.set(0,-1.31,.04);l.foot.rotation.set(0,0,0);l.foot.scale.set(1,1,1);l.mid.rotation.set(0,0,0);l.mid.position.y=0;l.mid.scale.y=1;}
@@ -661,6 +827,7 @@
       spineGuide.rotation.x=0;spineGuide.position.z=0;
       for(const s of spineGroups){s.node.position.set(0,s.y,s.z);s.node.rotation.set(0,0,0);}
       pressureMarks.forEach(p=>p.node.visible=false);floor.visible=false;floorRing.visible=false;
+      if(tensionIds.has(m)){poseTension(m,Math.max(0,a));return;}
       if(previewIds.has(m)){posePreview(a);return;}
       if(exerciseIds.has(m)){poseExercise(Math.max(0,a));return;}
       function scap(pro){for(const s of scapulae){s.node.position.x=s.side*(.64+.14*pro);s.node.position.z=-.36+.23*pro;s.node.rotation.y=-s.side*(.20+.58*pro);s.node.rotation.z=s.side*pro*.045;}}
@@ -731,6 +898,7 @@
     applyPose(0);rebuildGhost();
     function focus(){
       const m=state.movement,chain=state.mode==='chain';
+      if(tensionIds.has(m)){const horizontal=['tension_pushup','tension_cat'].includes(m);target.set(0,horizontal?1.4:m==='tension_pogo'?3.5:3.15,m==='tension_swing'?.4:m==='tension_cat'?-.2:.2);distance=horizontal?Math.max(9.2,6.8/(2*Math.tan(17*Math.PI/180)*(width/height))*1.08):m==='tension_swing'?13.8:13.7;return;}
       if(previewIds.has(m)){target.set(0,3.15,.10);distance=13.8;return;}
       if(m==='lunge'){target.set(0,3.05,.05);distance=12.7;return;}
       if(m==='pushup'||m==='bench'){target.set(0,m==='pushup'?1.4:1.8,m==='pushup'?.2:-.25);distance=Math.max(m==='bench'?9.0:8.4,6.6/(2*Math.tan(17*Math.PI/180)*(width/height))*1.08);return;}
@@ -741,25 +909,26 @@
       else if(chain){target.set(0,3.34,.05);distance=12.4;}
       else{target.set(0,2.73,.05);distance=5.0;}
     }
-    function resize(){if(disposed)return;width=Math.max(150,container.clientWidth);height=Math.max(200,container.clientHeight||500);camera.aspect=width/height;if(renderer)renderer.setSize(width,height,false);else{const ratio=Math.min(window.devicePixelRatio||1,2);canvas.width=width*ratio;canvas.height=height*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);}render();}
+    function resize(){if(disposed)return;width=Math.max(150,container.clientWidth);height=Math.max(200,container.clientHeight||500);camera.aspect=width/height;if(tensionIds.has(state.movement))focus();if(renderer)renderer.setSize(width,height,false);else{const ratio=Math.min(window.devicePixelRatio||1,2);canvas.width=width*ratio;canvas.height=height*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);}render();}
     let drag=null;onCanvas('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';});onCanvas('pointermove',e=>{if(!drag)return;yaw-=(e.clientX-drag.x)*.008;pitch=Math.min(.7,Math.max(-.45,pitch+(e.clientY-drag.y)*.006));drag={x:e.clientX,y:e.clientY};render();});function end(){drag=null;canvas.style.cursor='grab';}onCanvas('pointerup',end);onCanvas('pointercancel',end);canvas.style.cursor='grab';
     onCanvas('wheel',e=>{e.preventDefault();distance=Math.max(2.0,Math.min(16,distance*(e.deltaY>0?1.06:.94)));render();},{passive:false});
     const ro=new ResizeObserver(resize);ro.observe(container);
     focus();applyPose();resize();
     return {
       update(next){const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();applyPose(0);rebuildGhost();}applyPose();render();},
-      setView(name){if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
+      setView(name){if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
       resetCamera(){yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
         if(disposed)return;disposed=true;drag=null;ro.disconnect();
         for(const off of canvasEvents.splice(0))off();
-        const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
+        const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,...tensionSpineMaterials.values(),steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
         scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});
         for(const geometry of geometries)geometry.dispose();
         for(const material of materials)material.dispose();
         if(renderer){renderer.setAnimationLoop?.(null);renderer.renderLists?.dispose?.();renderer.dispose();renderer.forceContextLoss?.();}
         container.replaceChildren();
       },
+      debugTension(){return tensionDebug;},
       debugPreview(){return previewDebug;},
       debugExercise(){return exerciseDebug;},
       debugPose(){model.updateMatrixWorld(true);return legs.map(l=>({side:l.side,hip:l.root.getWorldPosition(new T.Vector3()).toArray(),acetabulum:pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005)).toArray(),kneeFromFemur:l.femur.localToWorld(new T.Vector3(l.side*.10,-1.63,0)).toArray(),kneeFromShin:l.shin.getWorldPosition(new T.Vector3()).toArray(),ankle:l.foot.getWorldPosition(new T.Vector3()).toArray()}));},

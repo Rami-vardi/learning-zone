@@ -218,21 +218,75 @@
       between(shin,[s*.12,-.08,-.015],[s*.105,-1.27,.00],.025,.03,ctxM);
       sphere(shin,0,-1.24,.02,.075,.085,.075,ctxM);
       const foot=new T.Group();foot.position.set(0,-1.31,.04);shin.add(foot);
-      const heel=sphere(foot,0,-.006,-.075,.108,.087,.16,footM);heel.rotation.x=.12;
-      sphere(foot,0,.045,.045,.093,.075,.098,footM);
-      sphere(foot,-s*.042,.014,.145,.074,.058,.07,footM);
-      sphere(foot,s*.063,-.03,.155,.058,.05,.081,footM);
-      const mid=new T.Group();foot.add(mid);
-      for(let j=0;j<3;j++)sphere(mid,-s*(.078-j*.047),.004-j*.012,.217-j*.006,.033,.046,.054,footM);
-      const rays=[];
-      for(let j=0;j<5;j++){
-        const x=-s*(.10-j*.05);const z=.435-(j/4)*.075;const ray=new T.Group();mid.add(ray);rays.push(ray);
-        between(ray,[x,-.015,.22],[x*1.2,-.038,z],j===0?.027:.021,j===0?.030:.023,footM);
-        for(let k=0;k<(j===0?2:3);k++)sphere(ray,x*1.17,-.045,z+.052+k*(j===0?.064:.052),j===0?.030:.020,.025,j===0?.039:.030,footM);
+      // Seven individual tarsals, five metatarsals and fourteen phalanges.
+      // The lofted tarsals have distinct tuberosities, necks and wedge profiles;
+      // bone lengths stay fixed while the medial column articulates under load.
+      const footBones=[];
+      function tarsal(name,sections,x=0){
+        const radial=16,positions=[],indices=[];
+        for(const [z,y,rx,ry] of sections)for(let k=0;k<radial;k++){
+          const a=k/radial*Math.PI*2,c=Math.cos(a),v=Math.sin(a);
+          positions.push(x+Math.sign(c)*Math.pow(Math.abs(c),.76)*rx,y+Math.sign(v)*Math.pow(Math.abs(v),.85)*ry,z);
+        }
+        for(let i=0;i<sections.length-1;i++)for(let k=0;k<radial;k++){const j=(k+1)%radial,a=i*radial+k,b=i*radial+j,c=(i+1)*radial+k,d=(i+1)*radial+j;indices.push(a,b,c,b,d,c);}
+        for(let k=1;k<radial-1;k++){indices.push(0,k+1,k);const b=(sections.length-1)*radial;indices.push(b,b+k,b+k+1);}
+        const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();
+        const node=new T.Group();node.name=name;foot.add(node);mesh(g,footM,node);footBones.push(node);return node;
       }
+      const calcaneus=tarsal('Calcaneus',[[-.235,-.018,.050,.052],[-.205,-.015,.079,.072],[-.13,-.009,.090,.079],[-.035,.013,.079,.068],[.030,.015,.066,.051],[.070,.002,.053,.038]]);
+      const talus=tarsal('Talus',[[-.093,.071,.059,.046],[-.055,.080,.077,.052],[.005,.075,.073,.056],[.070,.044,.044,.037],[.112,.039,.053,.041]],-s*.012);
+      const navicular=tarsal('Navicular',[[.108,.026,.059,.035],[.130,.035,.074,.042],[.158,.028,.066,.039],[.178,.022,.051,.031]],-s*.053);
+      const cuboid=tarsal('Cuboid',[[.067,-.031,.034,.037],[.095,-.025,.043,.043],[.157,-.032,.045,.037],[.202,-.040,.035,.030]],s*.077);
+      const mid=new T.Group();foot.add(mid);const cuneiforms=[];
+      for(let j=0;j<3;j++){
+        const x=-s*(.100-j*.052),y=.011-j*.012,z=.174-j*.005;
+        const n=tarsal(['Medial cuneiform','Intermediate cuneiform','Lateral cuneiform'][j],[[z,y,.024,.030],[z+.025,y+.003,.029,.039],[z+.063,y-.007,.028,.031],[z+.079,y-.014,.025,.025]],x);
+        mid.add(n);cuneiforms.push(n);
+      }
+      const rays=[],rayData=[];
+      function longBone(parent,name,length,radius){
+        const g=new T.Group();g.name=name;parent.add(g);
+        sculptedShaft(g,[[0,0,0],[0,-length*.19,.004],[0,-length*.60,.009],[0,-length,0]],[radius*1.25,radius*.78,radius*.70,radius*1.10],footM);
+        sphere(g,0,-length*.025,0,radius*1.33,radius*1.05,radius*1.15,footM);
+        sphere(g,0,-length,0,radius*1.35,radius*1.10,radius*1.22,footM);
+        footBones.push(g);return g;
+      }
+      for(let j=0;j<5;j++){
+        const x=-s*(.103-j*.052),baseY=j<3?.004-j*.012:-.038,baseZ=.232-(j>2?(j-2)*.008:0),headY=-.046,headZ=.432-j*.014;
+        const ray=new T.Group();mid.add(ray);rays.push(ray);
+        const base=new T.Vector3(x,baseY,baseZ),head=new T.Vector3(x*1.25,headY,headZ),length=base.distanceTo(head),met=longBone(ray,'Metatarsal '+(j+1),length,j===0?.025:.018);
+        const phalanges=[],lengths=j===0?[.066,.049]:[.047-j*.002,.032-j*.001,.028-j*.001];
+        lengths.forEach((length,k)=>phalanges.push({node:longBone(ray,['Proximal','Middle','Distal'][j===0&&k===1?2:k]+' phalanx '+(j+1),length,j===0?.022-k*.003:.015-k*.002),length}));
+        rayData.push({base,head,length,met,phalanges,index:j});
+      }
+      function poseFootArch(amount){
+        // A positive amount models a lowering medial arch, mild abduction and
+        // forefoot splay. A negative amount raises the arch. These are selected
+        // loading examples, not a universal pressure or joint-angle prediction.
+        navicular.position.set(s*amount*.006,-amount*.036,amount*.008);navicular.rotation.z=s*amount*.035;
+        talus.position.set(s*amount*.004,-amount*.010,amount*.006);talus.rotation.y=-s*amount*.045;
+        calcaneus.rotation.z=s*amount*.045;
+        cuboid.position.y=-amount*.004;
+        for(let j=0;j<3;j++){const n=cuneiforms[j];n.position.set(s*amount*.004,-amount*(.035-j*.009),amount*.011);n.rotation.x=-amount*(.035-j*.008);}
+        for(const r of rayData){
+          const j=r.index,medial=1-j/5,b=r.base.clone(),h=r.head.clone();
+          b.y-=amount*.034*medial;b.z+=amount*.010;b.x+=s*amount*.004;
+          h.x+=s*amount*(j-1.5)*.004;
+          // Fixed-length metatarsal; flattening extends the arch forward.
+          h.z=b.z+Math.sqrt(Math.max(.001,r.length*r.length-(h.x-b.x)**2-(h.y-b.y)**2));
+          r.met.position.copy(b);r.met.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0),h.clone().sub(b).normalize());
+          const direction=new T.Vector3(j===0?-s*.018:s*(j-2)*.012,-.012,1).normalize(),at=h.clone().addScaledVector(direction,.013);
+          for(const ph of r.phalanges){ph.node.position.copy(at);ph.node.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0),direction);at.addScaledVector(direction,ph.length+.009);}
+        }
+      }
+      poseFootArch(0);
       const femurMat=femM.clone(),shinMat=ctxM.clone(),footMat=footM.clone();
       femur.traverse(o=>{if(o.isMesh)o.material=femurMat;});shin.traverse(o=>{if(o.isMesh)o.material=shinMat;});foot.traverse(o=>{if(o.isMesh)o.material=footMat;});
-      legs.push({side:s,root,femur,shin,foot,mid,rays,baseX:s*.51,femurMat,shinMat,footMat});
+      legs.push({side:s,root,femur,shin,foot,mid,rays,footBones,poseFootArch,navicular,baseX:s*.51,femurMat,shinMat,footMat});
+    }
+    function footWorldMinimum(l){
+      model.updateMatrixWorld(true);let min=Infinity;const v=new T.Vector3();
+      l.foot.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++)min=Math.min(min,v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld).y);});return min;
     }
     // Optional original-source anatomical meshes can replace schematic forms
     // while retaining the existing articulation groups and contact solution.
@@ -545,7 +599,18 @@
     const floor=mesh(new T.CircleGeometry(1.28,64),floorMat,scene);floor.rotation.x=-Math.PI/2;floor.position.y=.08;floor.scale.set(1,.65,1);
     const ringGeo=new T.RingGeometry(1.28,1.285,64);const floorRing=mesh(ringGeo,new T.MeshBasicMaterial({color:0xd1dced,transparent:true,opacity:.8,side:T.DoubleSide}),scene);floorRing.rotation.x=-Math.PI/2;floorRing.position.y=.081;floorRing.scale.set(1,.65,1);
     const pressureMarks=[];
-    for(const l of legs){const g=new T.Group();g.position.set(l.baseX,0.09,.11);scene.add(g);const m=mesh(new T.CircleGeometry(.16,32),new T.MeshBasicMaterial({color:0x3b9d97,transparent:true,opacity:.35,side:T.DoubleSide}),g);m.rotation.x=-Math.PI/2;m.scale.set(.65,1,1);pressureMarks.push({node:g,side:l.side});}
+    for(const l of legs){
+      const g=new T.Group();g.position.set(l.baseX+l.side*.10,.084,.045);g.name='Illustrative sole contact';scene.add(g);
+      const patches={};for(const name of ['heel','forefoot','lateral','medial']){
+        const material=new T.MeshBasicMaterial({color:0x378f9e,transparent:true,opacity:.34,depthWrite:false,side:T.DoubleSide});material.userData.azStudyAlpha=true;
+        const n=mesh(new T.CircleGeometry(1,40),material,g);n.rotation.x=-Math.PI/2;patches[name]=n;
+      }
+      patches.heel.position.set(0,0,-.13);patches.heel.scale.set(.074,.105,1);
+      patches.forefoot.position.set(-l.side*.005,0,.414);patches.forefoot.scale.set(.146,.062,1);
+      patches.lateral.position.set(l.side*.091,0,.170);patches.lateral.scale.set(.032,.190,1);
+      patches.medial.position.set(-l.side*.052,.001,.180);patches.medial.scale.set(.033,.133,1);
+      pressureMarks.push({node:g,side:l.side,patches});
+    }
     // The reference pose is an outline, not a second opaque skeleton.
     const ghost=new T.Group();scene.add(ghost);const ghostMaterial=new T.LineBasicMaterial({color:0x6f92bd,transparent:true,opacity:.15});
     function rebuildGhost(){
@@ -576,7 +641,7 @@
         if(movement==='hike')label(state.side==='right'?'Right reference leg':'Left reference leg',new T.Vector3(state.side==='right'?-1.1:1.1,1.0,.05));
       }
       if(['ribs','ribshift','scapula'].includes(movement)||(movement==='chain'&&state.mode==='chain')){label('Ribcage',torso.localToWorld(new T.Vector3(1.28,.3,0)));if(movement!=='ribs')label('Scapula',scapulae[0].node.localToWorld(new T.Vector3(-.45,.0,-.1)));}
-      if(movement==='foot'){label('Heel',legs[state.side==='right'?0:1].foot.localToWorld(new T.Vector3(-.38,.0,-.1)));label('Medial arch',legs[state.side==='right'?0:1].mid.localToWorld(new T.Vector3(.37,.0,.23)));}
+      if(movement==='foot'){const l=legs[state.side==='right'?0:1];label('Calcaneus',l.foot.localToWorld(new T.Vector3(l.side*.22,.0,-.16)));label('Medial arch',l.navicular.localToWorld(new T.Vector3(-l.side*.11,.05,.16)));}
     }
     const previewIds=new Set(['cgoblet','cheels','csafety']);
     let previewDebug=null;
@@ -821,12 +886,12 @@
       restoreStudyMaterials();for(const item of tensionSpineMeshes)item.mesh.material=item.original;previewEquipment.visible=false;previewDebug=null;tensionEquipment.visible=false;tensionBellGroup.visible=false;tensionDebug=null;
       exerciseArms.visible=false;equipment.visible=false;exerciseDebug=null;
       pelvis.rotation.set(0,0,0);pelvis.position.set(0,3.3,0);torso.rotation.set(0,0,0);torso.position.set(0,4.72,0);head.rotation.set(0,0,0);head.position.set(0,6.25,-.08);
-      for(const l of legs){l.root.position.set(l.baseX,3.13,.01);l.root.rotation.set(0,0,0);l.femur.rotation.set(0,0,0);l.shin.position.set(l.side*.10,-1.63,0);l.shin.rotation.set(0,0,0);l.shin.scale.set(1,1,1);l.femur.scale.set(1,1,1);l.foot.position.set(0,-1.31,.04);l.foot.rotation.set(0,0,0);l.foot.scale.set(1,1,1);l.mid.rotation.set(0,0,0);l.mid.position.y=0;l.mid.scale.y=1;}
+      for(const l of legs){l.root.position.set(l.baseX,3.13,.01);l.root.rotation.set(0,0,0);l.femur.rotation.set(0,0,0);l.shin.position.set(l.side*.10,-1.63,0);l.shin.rotation.set(0,0,0);l.shin.scale.set(1,1,1);l.femur.scale.set(1,1,1);l.foot.position.set(0,-1.31,.04);l.foot.rotation.set(0,0,0);l.foot.scale.set(1,1,1);l.mid.rotation.set(0,0,0);l.mid.position.y=0;l.mid.scale.y=1;l.poseFootArch(0);}
       for(let i=0;i<ribs.length;i++){const r=ribs[i];r.position.set(0,.93-Math.floor(i/2)*.132,-.30);r.rotation.x=0;r.scale.set(1,1,1);for(const c of r.children){if(c.isMesh&&c.userData.azRestPositions){c.geometry.attributes.position.array.set(c.userData.azRestPositions);c.geometry.attributes.position.needsUpdate=true;if(c.userData.azRestNormals){c.geometry.attributes.normal.array.set(c.userData.azRestNormals);c.geometry.attributes.normal.needsUpdate=true;}else c.geometry.computeVertexNormals();}}}
       for(const s of scapulae){s.node.position.set(s.side*.64,.53,-.36);s.node.rotation.set(0,-s.side*.20,0);}
       spineGuide.rotation.x=0;spineGuide.position.z=0;
       for(const s of spineGroups){s.node.position.set(0,s.y,s.z);s.node.rotation.set(0,0,0);}
-      pressureMarks.forEach(p=>p.node.visible=false);floor.visible=false;floorRing.visible=false;
+      pressureMarks.forEach(p=>p.node.visible=false);floor.visible=false;floorRing.visible=false;floor.position.set(0,.08,0);
       if(tensionIds.has(m)){poseTension(m,Math.max(0,a));return;}
       if(previewIds.has(m)){posePreview(a);return;}
       if(exerciseIds.has(m)){poseExercise(Math.max(0,a));return;}
@@ -842,7 +907,7 @@
       if(m==='ribs'){for(const r of ribs){r.rotation.x=-a*.105;r.scale.x=1+a*.055;r.scale.z=1+a*.035;}sternum.position.y+=a*.035;sternum.position.z+=a*.025;if(chain)spine(-a*.25);}
       if(m==='ribshift'){torso.position.z=-a*.19;if(chain){scap(a);spine(a*.7);pelvis.rotation.x=-a*.10;}}
       if(m==='scapula'){scap(a);if(chain){torso.position.z=-a*.15;spine(a*.5);}}
-      if(m==='foot'){const l=legs.find(l=>l.side===selectedSide);l.foot.rotation.z=l.side*a*.16;l.mid.position.y=-a*.024;l.mid.scale.y=1-a*.18;const p=pressureMarks.find(p=>p.side===selectedSide);p.node.position.x=l.baseX-l.side*a*.07;p.node.position.z=.13+a*.11;if(chain){l.shin.rotation.y=-l.side*a*.16;l.femur.rotation.y=-l.side*a*.11;pelvis.rotation.y=-selectedSide*a*.045;}}
+      if(m==='foot'){const l=legs.find(l=>l.side===selectedSide);l.foot.rotation.z=l.side*a*.055;l.poseFootArch(a);if(chain){l.shin.rotation.y=-l.side*a*.16;l.femur.rotation.y=-l.side*a*.11;pelvis.rotation.y=-selectedSide*a*.045;}}
       if(m==='chain'){pelvis.rotation.x=-a*.17;pelvis.position.z=-a*.07;if(chain){torso.position.z=-a*.19;torso.rotation.x=a*.055;scap(a);spine(a*.85);head.position.z=-.08-a*.10;head.rotation.x=a*.045;}}
       // Seat both femoral heads in the moving acetabula. For a frontal
       // pelvic shift, knee flexion accommodates height while feet stay down.
@@ -862,7 +927,11 @@
         pelvis.position.y=3.3-.055-.012*Math.abs(a);pelvis.position.x=-selectedSide*a*.025;pelvis.rotation.y=-selectedSide*a*.045;pelvis.rotation.z=selectedSide*a*.015;pelvis.updateMatrixWorld(true);
         const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04);
         for(const l of legs){
-          const selected=l.side===selectedSide,H=pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005)),A=new T.Vector3(l.side*.61,.19,.045),D=A.clone().sub(H),d=Math.min(L1+L2-.001,D.length()),axis=D.clone().normalize();
+          const selected=l.side===selectedSide,desiredFoot=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),selected?l.side*a*.055:0);
+          l.poseFootArch(selected?a:0);model.updateMatrixWorld(true);
+          const inverse=l.foot.matrixWorld.clone().invert();let minY=Infinity;
+          l.foot.traverse(o=>{if(!o.isMesh)return;const transform=inverse.clone().multiply(o.matrixWorld),v=new T.Vector3(),p=o.geometry.attributes.position;for(let i=0;i<p.count;i++)minY=Math.min(minY,v.fromBufferAttribute(p,i).applyMatrix4(transform).applyQuaternion(desiredFoot).y);});
+          const H=pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005)),A=new T.Vector3(l.side*.61,.092-minY,.045),D=A.clone().sub(H),d=Math.min(L1+L2-.001,D.length()),axis=D.clone().normalize();
           const along=(L1*L1-L2*L2+d*d)/(2*d),radius=Math.sqrt(Math.max(0,L1*L1-along*along));
           const bend=new T.Vector3(selected?-l.side*a*.95:0,0,1);bend.addScaledVector(axis,-bend.dot(axis)).normalize();
           const K=H.clone().addScaledVector(axis,along).addScaledVector(bend,radius),femDir=K.clone().sub(H),shinDir=A.clone().sub(K);
@@ -870,11 +939,25 @@
           const femTwist=new T.Quaternion().setFromAxisAngle(femDir.clone().normalize(),selected?l.side*a*.26:0);l.femur.quaternion.premultiply(femTwist);
           l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(new T.Vector3(0,-1.31,.04).normalize(),shinDir.clone().normalize());
           const tibTwist=new T.Quaternion().setFromAxisAngle(shinDir.clone().normalize(),selected?l.side*a*.20:0);l.shin.quaternion.premultiply(tibTwist);
-          const desiredFoot=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),selected?l.side*a*.14:0);
           l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(desiredFoot);
-          l.mid.rotation.z=selected?-l.side*a*.10:0;l.mid.position.y=selected?-a*.024:0;l.mid.scale.y=selected?1-a*.17:1;
+          l.poseFootArch(selected?a:0);
         }
       }
+      if(m==='foot'){
+        floor.visible=true;floor.scale.set(chain?1.15:.42,chain?.65:.55,1);floor.position.x=chain?0:selectedSide*.61;floor.position.z=.23;
+        model.updateMatrixWorld(true);
+        for(const l of legs){
+          if(!chain&&l.side!==selectedSide)continue;
+          const clearance=.012,dy=.08+clearance-footWorldMinimum(l);
+          // Translate the isolated shank as a unit. Chain mode already solves
+          // the ankle height before positioning the knee and the connected shin.
+          if(!chain)l.root.position.y+=dy;
+          const p=pressureMarks.find(p=>p.side===l.side),selected=l.side===selectedSide,t=selected?a:0;
+          p.node.visible=true;p.node.position.x=l.side*.61;
+          p.patches.medial.scale.x=.033+.031*t;p.patches.medial.material.opacity=.25+.22*t;
+          p.patches.forefoot.scale.x=.146+.012*t;p.patches.lateral.scale.x=.032-.004*t;
+        }
+      }else{floor.position.x=0;floor.position.z=0;}
       const active=m==='hike'||m==='tilt'||m==='hip'?'pelvis':m==='ribs'||m==='ribshift'?'thorax':m==='scapula'?'scapula':m==='foot'?'foot':'all';
       for(const key in regionMaterials){const material=regionMaterials[key];let color=palettes[key]||palettes.ivory;if(key==='ivory'||key==='context')color=key==='context'?palettes.context:palettes.ivory;else if(active!=='all'&&key!==active&&!(key==='femur'&&['hike','hip'].includes(m)))color=palettes.ivory;material.color.setHex(color);}
       for(const l of legs){const selected=l.side===selectedSide,linked=m==='foot'&&chain;
@@ -916,7 +999,7 @@
     focus();applyPose();resize();
     return {
       update(next){const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();applyPose(0);rebuildGhost();}applyPose();render();},
-      setView(name){if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
+      setView(name){if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
       resetCamera(){yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
         if(disposed)return;disposed=true;drag=null;ro.disconnect();
@@ -927,6 +1010,11 @@
         for(const material of materials)material.dispose();
         if(renderer){renderer.setAnimationLoop?.(null);renderer.renderLists?.dispose?.();renderer.dispose();renderer.forceContextLoss?.();}
         container.replaceChildren();
+      },
+      debugFoot(){
+        if(state.movement!=='foot')return null;model.updateMatrixWorld(true);
+        const l=legs.find(l=>l.side===(state.side==='right'?-1:1)),p=pressureMarks.find(p=>p.side===l.side);
+        return {side:state.side,amount:state.amount,boneCount:l.footBones.length,boneNames:l.footBones.map(n=>n.name),archHeight:l.navicular.localToWorld(new T.Vector3(-l.side*.053,.035,.13)).y-.08,minBoneHeight:footWorldMinimum(l),floorHeight:.08,contactVisible:p.node.visible,medialContactWidth:p.patches.medial.scale.x*2,contactCue:'Illustrative contact area, not measured pressure'};
       },
       debugTension(){return tensionDebug;},
       debugPreview(){return previewDebug;},

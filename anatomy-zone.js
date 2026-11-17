@@ -1,7 +1,7 @@
 /* Learning Zone Anatomy, lazy local asset entry. */
 (function(){
   'use strict';
-  const VERSION='20261117-foot-contact';
+  const VERSION='20261117-human-skins-3';
   if(window.LZAnatomy?.version===VERSION)return;
   const source=document.currentScript?.src||new URL('anatomy-zone.js',document.baseURI).href;
   const base=new URL('./anatomy/',source);
@@ -71,5 +71,10 @@
       throw error;
     }
   }
-  window.LZAnatomy={version:VERSION,mount};
+  let humanDependencies=null;
+  function loadHumanDependencies(){
+    if(!humanDependencies)humanDependencies=loadScript('vendor/BufferGeometryUtils-r160.js').then(()=>loadScript('vendor/GLTFLoader-r160.js')).then(()=>loadScript('human-skin.js')).catch(error=>{humanDependencies=null;throw error;});
+    return humanDependencies;
+  }
+  window.LZAnatomy={version:VERSION,mount,asset,loadHumanDependencies};
 })();

@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  function createCanvasViewer(container){
+  function createCanvasViewer(container,initial={}){
     const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
     const canvasEvents=[];function onCanvas(type,fn,options){canvas.addEventListener(type,fn,options);canvasEvents.push(()=>canvas.removeEventListener(type,fn,options));}
     let state={movement:'hike',amount:.55,mode:'local',side:'right',labels:false,ghost:false},yaw=0,pitch=.04,zoom=1,w=640,h=490,disposed=false;
@@ -91,14 +91,19 @@
     function draw(){if(disposed)return;ctx.clearRect(0,0,w,h);const m=state.movement;focusY=['ribs','ribshift','scapula'].includes(m)?5.0:m==='foot'?(state.mode==='chain'?3.34:.32):m==='chain'&&state.mode==='chain'?3.34:state.mode==='chain'?3.34:2.73;const span=['ribs','ribshift','scapula'].includes(m)?2.5:m==='foot'?(state.mode==='chain'?7.4:1.35):m==='chain'&&state.mode==='chain'?7.4:state.mode==='chain'?7.4:3.1;scale=(h-72)/span*zoom;if(['rdl','squat','press','row','pullup','dips'].includes(m)){focusY=m==='pullup'?4.0:3.1;scale=(h-72)/(m==='pullup'?9.0:7.6)*zoom;}const old=state.labels;if(state.ghost&&Math.abs(state.amount)>.1){state.labels=false;drawModel(0,.12);state.labels=old;}drawModel(state.amount);}
     function resize(){if(disposed)return;w=Math.max(150,container.clientWidth);h=Math.max(200,container.clientHeight||490);let r=Math.min(window.devicePixelRatio||1,2);canvas.width=w*r;canvas.height=h*r;ctx.setTransform(r,0,0,r,0,0);draw();}
     let drag=null;onCanvas('pointerdown',e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);});onCanvas('pointermove',e=>{if(!drag)return;yaw-=(e.clientX-drag[0])*.008;pitch=Math.max(-.45,Math.min(.65,pitch+(e.clientY-drag[1])*.006));drag=[e.clientX,e.clientY];draw();});onCanvas('pointerup',()=>drag=null);onCanvas('pointercancel',()=>drag=null);onCanvas('wheel',e=>{e.preventDefault();zoom=Math.max(.6,Math.min(1.7,zoom*(e.deltaY>0?.94:1.06)));draw();},{passive:false});const ro=new ResizeObserver(resize);ro.observe(container);resize();
-    return{update(next){if(next.movement&&next.movement!==state.movement)zoom=1;state=Object.assign({},state,next);draw();},setView(name){yaw=name==='front'?0:name==='back'?Math.PI:name==='side'?Math.PI/2:.45;pitch=.06;draw();},resetCamera(){yaw=0;pitch=.04;zoom=1;draw();},resize,dispose(){if(disposed)return;disposed=true;ro.disconnect();for(const off of canvasEvents.splice(0))off();canvas.remove();},isFallback:true};
+    let canvasSkin={requested:['male','female'].includes(initial.skin)?initial.skin:'johnny',active:'johnny',status:['male','female'].includes(initial.skin)?'unavailable':'ready',error:['male','female'].includes(initial.skin)?'Human skins need WebGL. Johnny remains available in this browser.':null};
+    return{async setSkin(type){type=['male','female'].includes(type)?type:'johnny';canvasSkin={requested:type,active:'johnny',status:type==='johnny'?'ready':'unavailable',error:type==='johnny'?null:'Human skins need WebGL. Johnny remains available in this browser.'};initial.onSkinState?.({...canvasSkin});return {...canvasSkin};},getSkinState:()=>({...canvasSkin}),update(next){if(next.movement&&next.movement!==state.movement)zoom=1;state=Object.assign({},state,next);draw();},setView(name){yaw=name==='front'?0:name==='back'?Math.PI:name==='side'?Math.PI/2:.45;pitch=.06;draw();},resetCamera(){yaw=0;pitch=.04;zoom=1;draw();},resize,dispose(){if(disposed)return;disposed=true;ro.disconnect();for(const off of canvasEvents.splice(0))off();canvas.remove();},isFallback:true};
   }
   window.createAnatomyViewer=function(container,initial={}){
     const T=window.THREE;
-    if(!T)return createCanvasViewer(container);
+    if(!T)return createCanvasViewer(container,initial);
     let state=Object.assign({movement:'hike',amount:0.35,mode:'local',side:'right',labels:false,ghost:false},initial);
     let width=600,height=500,disposed=false,yaw=initial.view==='side'?Math.PI/2:initial.view==='back'?Math.PI:initial.view==='oblique'?(initial.movement?.[0]==='c'?1.05:.75):0,pitch=initial.view==='oblique'?.10:.04,distance=7.3,target=new T.Vector3(0,2.7,0),lastMove='';
     const scene=new T.Scene(),camera=new T.PerspectiveCamera(34,1,.1,60);
+    let human=null,skinRequest=0;
+    let skinState={requested:'johnny',active:'johnny',status:'ready',error:null};
+    function skinChanged(){initial.onSkinState?.({...skinState});}
+
     const model=new T.Group();scene.add(model);
     const palettes={ivory:0xdcd9ce,context:0xc5c7c3,pelvis:0x709dbf,femur:0xdcd9ce,thorax:0x709dbf,scapula:0x709dbf,foot:0x709dbf};
     const regionMaterials={};
@@ -284,8 +289,8 @@
       femur.traverse(o=>{if(o.isMesh)o.material=femurMat;});shin.traverse(o=>{if(o.isMesh)o.material=shinMat;});foot.traverse(o=>{if(o.isMesh)o.material=footMat;});
       legs.push({side:s,root,femur,shin,foot,mid,rays,footBones,poseFootArch,navicular,baseX:s*.51,femurMat,shinMat,footMat});
     }
-    function footWorldMinimum(l){
-      model.updateMatrixWorld(true);let min=Infinity;const v=new T.Vector3();
+    function footWorldMinimum(l,updated=false){
+      if(!updated)model.updateMatrixWorld(true);let min=Infinity;const v=new T.Vector3();
       l.foot.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++)min=Math.min(min,v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld).y);});return min;
     }
     // Optional original-source anatomical meshes can replace schematic forms
@@ -632,7 +637,26 @@
       });tris.sort((a,b)=>a.order-b.order||b.z-a.z);for(const t of tris){ctx.beginPath();t.points.forEach((p,i)=>{const x=(p[0]*.5+.5)*width,y=(-p[1]*.5+.5)*height;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.globalAlpha=t.opacity;ctx.fillStyle=t.color;ctx.fill();}ctx.globalAlpha=1;
     }
     function cameraUpdate(){camera.position.set(target.x+Math.sin(yaw)*Math.cos(pitch)*distance,target.y+Math.sin(pitch)*distance,target.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.lookAt(target);camera.updateProjectionMatrix();}
-    function render(){if(disposed)return;cameraUpdate();if(renderer)renderer.render(scene,camera);else fallbackDraw();Object.values(labelNodes).forEach(el=>el.style.display='none');if(!state.labels)return;
+    const skinCues=new T.Group();skinCues.name='Human anatomy teaching cues';scene.add(skinCues);const skinCueMeshes=new Map();
+    function updateSkinCues(){
+      skinCues.visible=Boolean(human);if(!human)return;
+      const selected=new Map(),add=(node,opacity)=>node.traverse(o=>{if(o.isMesh)selected.set(o,opacity);});
+      const addVisible=(node,opacity)=>node.traverseVisible(o=>{if(o.isMesh)selected.set(o,opacity);});
+      const m=state.movement;
+      // Keep the original body-movement emphasis readable through either skin.
+      if(['hike','tilt','hip','chain'].includes(m)||(m==='foot'&&state.mode==='chain'))addVisible(pelvis,.28);
+      if(m==='chain'&&state.mode==='chain'){for(const r of ribs)addVisible(r,.28);for(const s of scapulae)addVisible(s.node,.50);}
+      if(tensionIds.has(m)){const emphasis=tensionDebug?.tensionEmphasis||0;for(const v of spineGroups)add(v.node,.20+.46*emphasis);add(pelvis,.16+.26*emphasis);if(m==='tension_pogo')for(const l of legs){add(l.foot,.35);add(l.shin,.25);}}
+      if(m==='bench'&&state.scenario==='b'){for(const r of ribs)add(r,.16);for(const s of scapulae)add(s.node,.70);}
+      if(m==='press')for(const s of scapulae)add(s.node,.58);
+      if(m==='lunge'||(m==='bench'&&state.scenario==='b'))for(const l of legs)if(l.footMat.color.getHex()!==palettes.ivory)add(l.foot,.34);
+      if(m==='ribs')for(const r of ribs)add(r,.28);
+      if(m==='scapula'||m==='ribshift')for(const s of scapulae)add(s.node,.50);
+      if(m==='foot')for(const l of legs)if(l.side===(state.side==='right'?-1:1))add(l.foot,.28);
+      for(const [source,clone] of skinCueMeshes)clone.visible=selected.has(source);
+      for(const [source,opacity] of selected){let clone=skinCueMeshes.get(source);if(!clone){clone=new T.Mesh(source.geometry,new T.MeshBasicMaterial({transparent:true,depthTest:false,depthWrite:false,side:T.DoubleSide}));clone.matrixAutoUpdate=false;clone.renderOrder=65;skinCues.add(clone);skinCueMeshes.set(source,clone);}clone.visible=true;clone.matrix.copy(source.matrixWorld);clone.matrixWorldNeedsUpdate=true;const material=Array.isArray(source.material)?source.material[0]:source.material;clone.material.color.copy(material.color);clone.material.opacity=opacity;}
+    }
+    function render(){if(disposed)return;cameraUpdate();if(human){human.update(captureSkinPose());model.visible=false;}updateSkinCues();if(renderer)renderer.render(scene,camera);else fallbackDraw();model.visible=true;Object.values(labelNodes).forEach(el=>el.style.display='none');if(!state.labels)return;
       const movement=state.movement;
       if(movement==='lunge'&&exerciseDebug){label('Pelvis',pelvis.localToWorld(new T.Vector3(1.06,.30,.08)));const f=exerciseDebug.legs.find(l=>l.side===-1),b=exerciseDebug.legs.find(l=>l.side===1);label('Right front',new T.Vector3(...f.ankle).add(new T.Vector3(-.35,.12,.18)));label('Left rear',new T.Vector3(...b.ankle).add(new T.Vector3(.35,.12,-.15)));return;}
       if(exerciseIds.has(movement)){label('Pelvis',pelvis.localToWorld(new T.Vector3(1.06,.15,.08)));label('Shoulder',torso.localToWorld(new T.Vector3(-1.28,.83,.02)));if(['pullup','dips'].includes(movement)&&exerciseDebug){const grip=exerciseDebug.arms[0].grip;label('Fixed grip',new T.Vector3(grip[0]-.44,grip[1]+.08,grip[2]));}else label('Ribcage',torso.localToWorld(new T.Vector3(1.22,.30,.06)));return;}
@@ -978,6 +1002,50 @@
       landmarks.forEach(x=>x.visible=state.labels&&['hike','tilt','hip'].includes(m));
       ghost.visible=state.ghost&&Math.abs(a)>.08;model.updateMatrixWorld(true);
     }
+    // The skin consumes these world transforms; it never writes to Johnny's rig.
+    function captureSkinPose(includeAnchors=false){
+      model.updateMatrixWorld(true);
+      const nodes={},point=(n,p=new T.Vector3())=>n.localToWorld(p).toArray();
+      const add=(key,node)=>{nodes[key]={matrix:node.matrixWorld.toArray(),visible:node.visible};if(includeAnchors&&/^foot_[lr](?:_\d+)?$/.test(key)){const box=new T.Box3().setFromObject(node);nodes[key].anchor=box.getCenter(new T.Vector3()).toArray();nodes[key].bounds={min:box.min.toArray(),max:box.max.toArray()};}};
+      add('pelvis',pelvis);add('torso',torso);add('head',head);
+      spineGroups.forEach((v,i)=>add('spine_'+i,v.node));
+      ribs.forEach((v,i)=>add('rib_'+i,v));scapulae.forEach(v=>add('scap_'+(v.side===1?'l':'r'),v.node));
+      const limb={};
+      for(const l of legs){
+        const key=l.side===1?'l':'r',a=arms.find(a=>a.side===l.side),e=exArms.find(a=>a.side===l.side),ex=exerciseArms.visible;
+        add('foot_'+key,l.foot);add('femur_'+key,l.femur);add('shin_'+key,l.shin);
+        l.footBones.forEach((node,i)=>add('foot_'+key+'_'+i,node));
+        limb[key]={hip:point(l.root),knee:point(l.shin),ankle:point(l.foot),
+          shoulder:ex?point(e.upper):point(a.node),elbow:ex?point(e.fore):point(a.node,new T.Vector3(l.side*.16,-1.06,.04)),
+          wrist:ex?point(e.hand):point(a.node,new T.Vector3(l.side*.08,-1.91,.18)),handFrame:(ex?e.hand:a.node).matrixWorld.toArray(),grip:ex?point(e.hand,new T.Vector3(0,-.17,0)):null,
+          handEnd:ex?point(e.hand,new T.Vector3(0,-.245,.08)):point(a.node,new T.Vector3(l.side*.08,-2.31,.25)),
+          footEnd:point(l.foot,new T.Vector3(0,-.045,.44)),footMinimum:footWorldMinimum(l,true),handMinimum:ex?new T.Box3().setFromObject(e.hand).min.y:null,
+          visible:{thigh:l.root.visible&&l.femur.visible,calf:l.root.visible&&l.shin.visible,foot:l.root.visible&&l.foot.visible,arm:ex||a.node.visible}};
+      }
+      return {movement:state.movement,amount:state.amount,mode:state.mode,side:state.side,nodes,limb,tensionEmphasis:tensionDebug?.tensionEmphasis||0};
+    }
+    const skinInitialState=state;state={...state,movement:'chain',mode:'chain',amount:0};applyPose(0);
+    const skinRest=captureSkinPose(true);state=skinInitialState;
+    async function setSkin(type='johnny'){
+      type=['male','female'].includes(type)?type:'johnny';
+      if(disposed)return {...skinState};
+      if(type===skinState.requested&&(skinState.status==='loading'||skinState.active===type))return {...skinState};
+      const request=++skinRequest;skinState={requested:type,active:'johnny',status:type==='johnny'?'ready':'loading',error:null};
+      human?.dispose();human=null;canvas.setAttribute('aria-label','Interactive schematic skeleton. Drag to rotate and scroll to zoom.');skinChanged();render();
+      if(type==='johnny')return {...skinState};
+      if(fallback){skinState={requested:type,active:'johnny',status:'unavailable',error:'Human skins need WebGL. Johnny remains available in this browser.'};skinChanged();return {...skinState};}
+      try{
+        await window.LZAnatomy.loadHumanDependencies();
+        if(disposed||request!==skinRequest)return {...skinState};
+        const next=await window.AZHumanSkin.create({type,rest:skinRest,pose:captureSkinPose(),asset:window.LZAnatomy.asset});
+        if(disposed||request!==skinRequest){next.dispose();return {...skinState};}
+        human=next;scene.add(human.group);canvas.setAttribute('aria-label','Interactive '+type+' human model. Drag to rotate and scroll to zoom.');skinState={requested:type,active:type,status:'ready',error:null};skinChanged();render();
+      }catch(error){
+        if(disposed||request!==skinRequest)return {...skinState};
+        human?.dispose();human=null;skinState={requested:type,active:'johnny',status:'error',error:'The '+type+' skin could not load. Johnny is still available. Try loading the skin again.'};skinChanged();render();console.warn('Human skin unavailable.',error);
+      }
+      return {...skinState};
+    }
     applyPose(0);rebuildGhost();
     function focus(){
       const m=state.movement,chain=state.mode==='chain';
@@ -997,12 +1065,18 @@
     onCanvas('wheel',e=>{e.preventDefault();distance=Math.max(2.0,Math.min(16,distance*(e.deltaY>0?1.06:.94)));render();},{passive:false});
     const ro=new ResizeObserver(resize);ro.observe(container);
     focus();applyPose();resize();
+    if(initial.skin&&initial.skin!=='johnny')setSkin(initial.skin);
     return {
+      setSkin,getSkinState:()=>({...skinState}),
+      debugSkin:()=>human?human.debug():{...skinState,bindings:[]},
+      debugPoseSnapshot:()=>captureSkinPose(),
+      debugSkinRest:()=>JSON.parse(JSON.stringify(skinRest)),
+      debugCamera:()=>({yaw,pitch,distance,target:target.toArray()}),
       update(next){const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();applyPose(0);rebuildGhost();}applyPose();render();},
       setView(name){if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
       resetCamera(){yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
-        if(disposed)return;disposed=true;drag=null;ro.disconnect();
+        if(disposed)return;disposed=true;skinRequest++;human?.dispose();human=null;drag=null;ro.disconnect();
         for(const off of canvasEvents.splice(0))off();
         const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,...tensionSpineMaterials.values(),steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
         scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});

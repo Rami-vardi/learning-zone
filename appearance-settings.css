@@ -96,9 +96,28 @@ html[data-lz-theme-ready] #student-learning-board input:is([type=range],[type=ch
 html[data-lz-theme-ready] #lz-anatomy-zone input:is([type=range],[type=checkbox]),
 html[data-lz-theme-ready] #lz-anatomy-tension input:is([type=range],[type=checkbox]){accent-color:var(--lz-blue)}
 html[data-lz-appearance=dark] .lzl-error{color:var(--lz-danger)!important}
+
+/* Lens identity and card depth remain readable under every appearance setting. */
+html[data-lz-appearance=dark] .lze-root{--lze-pattern:#a3c6ff;--lze-pattern-soft:#2a4264;--lze-muscle:#88d6c9;--lze-muscle-soft:#214740;--lze-elevation:0 3px 10px #00000024;--lze-elevation-hover:0 7px 18px #00000044}
+html[data-lz-theme-ready] .lze-root .lze-lenses .lze-button[data-tab=pattern]{background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-theme-ready] .lze-root .lze-lenses .lze-button[data-tab=muscle]{background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-theme-ready] .lze-root .lze-lenses .lze-button:is(.is-active,[aria-pressed=true]){background:var(--lze-lens-soft);color:var(--lze-lens);border-color:var(--lze-lens)}
+html[data-lz-theme-ready] .lze-root .lze-lenses .lze-button:hover{border-color:var(--lze-lens)}
+html[data-lz-theme-ready] .lze-root .lze-tile-icon{background:var(--lze-browse-soft);color:var(--lze-browse)}
+html[data-lz-contrast=high] .lze-root :is(.lze-tile,.lze-menu-tile,.lze-local-toolbar,.lze-lenses .lze-button,.lze-menu-nav .lze-button,.lze-path-list article){box-shadow:none;border-width:2px;transform:none}
+html[data-lz-contrast=high] .lze-root .lze-open small,html[data-lz-contrast=high] .lze-root .lze-lens-text small{color:var(--lz-sub)}
+html[data-lz-text=large] .lze-root .lze-lens-text strong,html[data-lz-text=large] .lze-root .lze-open strong{font-size:18px}
+html[data-lz-text=large] .lze-root .lze-lens-text small,html[data-lz-text=large] .lze-root .lze-open small,html[data-lz-text=large] .lze-root .lze-open-action{font-size:14px}
+html[data-lz-motion=reduced] .lze-root :is(.lze-tile,.lze-lenses .lze-button):hover{transform:none}
 /* Native board menus share the chosen interface surface. */
 html[data-lz-theme-ready] .lz-wb :is(.wb-more,.wb-format-menu,.wb-sheet-menu)>summary{background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
 html[data-lz-theme-ready] .lz-wb .wb-dropdown{background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
 html[data-lz-theme-ready] .lz-wb .wb-dropdown :is(button,select,input,label,summary){background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
 html[data-lz-theme-ready] .lz-wb .wb-dropdown .wb-danger{color:var(--lz-danger)}
 html[data-lz-appearance=dark] .lz-wb [data-wb-status]:not(.error){color:#9bd6b8}
+
+/* Add Case Study has its own requested green action color. */
+html[data-lz-theme-ready] .lzcases button.lzc-add[data-add-case]{background:#e4f4e9;color:#245d3c;border-color:#a5cdb1}
+html[data-lz-appearance=dark] .lzcases button.lzc-add[data-add-case]{background:#244333;color:#c5ead1;border-color:#76ad89}
+html[data-lz-contrast=high][data-lz-appearance=light] .lzcases button.lzc-add[data-add-case]{background:#d8f1e0;color:#133f26;border-color:#477b58}
+html[data-lz-contrast=high][data-lz-appearance=dark] .lzcases button.lzc-add[data-add-case]{background:#244333;color:#e0f8e7;border-color:#b0d6bc}

@@ -1,0 +1,104 @@
+/* Personal appearance. Content colors in drawings, PDFs and 3D models are not changed. */
+html[data-lz-theme-ready] body{background:var(--lz-bg);color:var(--lz-ink);color-scheme:inherit}
+html[data-lz-theme-ready] :is(button,input,select,textarea){border-color:var(--lz-line);color:var(--lz-ink)}
+html[data-lz-theme-ready] :where(button,input:not([type=color]),select,textarea){background-color:var(--lz-paper)}
+html[data-lz-theme-ready] :is(button,summary,input,select,textarea,a):focus-visible{outline:3px solid var(--lz-focus);outline-offset:3px}
+html[data-lz-theme-ready] :is(.app-topbar,.app-modal,.lze-dialog,.lzc-panel,.lzl-dialog){background:var(--lz-paper);color:var(--lz-ink)}
+html[data-lz-theme-ready] .app-brand-mark{background:var(--lz-blue);color:var(--lz-on-accent)}
+html[data-lz-theme-ready] .app-sidebar button{background:transparent;color:#c6d5e9}
+html[data-lz-theme-ready] .app-sidebar button[aria-current=page]{background:var(--lz-soft);color:var(--lz-blue)}
+html[data-lz-theme-ready] .app-sidebar button:hover{background:#263c58;color:#fff}
+html[data-lz-theme-ready] #appearance-settings-button{display:block;width:100%;text-align:left;font-size:13px;padding:10px 0;margin-bottom:2px}
+html[data-lz-theme-ready] :is(.primary,.btn-primary,.lze-button.is-active,.lzcases .lzc-primary,.lzlib .lzl-primary){background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
+html[data-lz-theme-ready] :is(.primary,.btn-primary):hover{background:var(--lz-blue);color:var(--lz-on-accent);filter:brightness(.95)}
+html[data-lz-theme-ready] #student-learning-board{--paper:var(--lz-paper);--ink:var(--lz-ink);--sub:var(--lz-sub);--line:var(--lz-line);--green:var(--lz-blue);--fill:var(--lz-soft);--blue:var(--lz-blue);--blue-soft:var(--lz-soft);color:var(--lz-ink);color-scheme:inherit}
+html[data-lz-theme-ready] #student-learning-board :is(section,.lz-account,.athlete-card,.day,.exercise,.set-editor,dialog){background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-theme-ready] #student-learning-board :is(.day-title,.lz-editing,.tabs button[aria-selected=true]){background:var(--lz-soft);color:var(--lz-blue)}
+html[data-lz-theme-ready] #student-learning-board :is(.primary,button[aria-selected=true].primary){background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
+html[data-lz-theme-ready] #student-learning-board :is(.exercise-summary strong,.mirror-exercise strong,.summary-text){color:inherit}
+/* Keep the exercise roles and floor / ceiling colors distinct. */
+html[data-lz-theme-ready] #student-learning-board :is(.role-primary,.role-secondary,.role-tertiary){background:var(--lz-paper)}
+html[data-lz-appearance=dark] #student-learning-board{--purple:#c5b3f2;--purple-soft:#3b3151;--amber:#f2ce76;--amber-soft:#453b22;--danger:#ffaaa5}
+html[data-lz-appearance=dark] #student-learning-board .role-tertiary{--green:#9bd6b8;--fill:#234337}
+html[data-lz-appearance=dark] #student-learning-board :is(tr.goal-floor,.goal-floor,.priority-floor){background:#234337;color:#c5ead7}
+html[data-lz-appearance=dark] #student-learning-board :is(tr.goal-ceiling,.goal-ceiling,.priority-ceiling){background:#453b22;color:#f2ddb0}
+html[data-lz-theme-ready] :is(.lze-tile,.lze-guide-top,.lze-guide-section,.lze-families,.lze-empty,.lzc-card,.lzl-item,.lzl-folders){background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-theme-ready] :is(.lze-tile-icon,.lze-classification,.lzc-count,.lzc-initials,.lzl-pdf-mark,.lzl-drop){background:var(--lz-soft);color:var(--lz-blue)}
+html[data-lz-theme-ready] .lze-root :is(input,select,textarea){background:var(--lz-paper);color:var(--lz-ink)}
+html[data-lz-theme-ready] :is(.lze-root,.lzcases,.lzlib) :is(p,small,label){color:var(--lz-sub)}
+html[data-lz-theme-ready] #lz-anatomy-zone{--azc-bg:var(--lz-bg);--azc-paper:var(--lz-paper);--azc-ink:var(--lz-ink);--azc-muted:var(--lz-sub);--azc-blue:var(--lz-blue);--azc-line:var(--lz-line);--azc-soft:var(--lz-soft);color-scheme:inherit}
+html[data-lz-theme-ready] #lz-anatomy-zone :is(.azc-toolbar,.azc-bottom,.azc-options-panel,.azc-stage-title){color:var(--lz-ink)}
+html[data-lz-theme-ready] #lz-anatomy-zone :is(select,button){background-color:var(--lz-paper);color:var(--lz-ink)}
+html[data-lz-theme-ready] #lz-anatomy-zone :is(.azc-mode button[aria-pressed=true],.azc-hike-option[aria-pressed=true],.azc-play){background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
+html[data-lz-theme-ready] #lz-anatomy-tension{background:var(--lz-bg);color:var(--lz-ink)}
+html[data-lz-theme-ready] #lz-anatomy-tension :is(.tf-model,.tf-options){background:var(--lz-paper);border-color:var(--lz-line)}
+html[data-lz-theme-ready] #lz-anatomy-tension :is(button,select){background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-theme-ready] #lz-anatomy-tension button[aria-pressed=true]{background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
+html[data-lz-theme-ready] #lz-anatomy-tension :is(.tf-degree,.tf-legend){background:var(--lz-soft);color:var(--lz-blue)}
+html[data-lz-theme-ready] #lz-anatomy-tension :is(.tf-subtitle,.tf-options p,summary,.tf-ends,.tf-motion label){color:var(--lz-sub)}
+/* Anatomy canvases retain the approved lighting; their caption remains readable over it. */
+html[data-lz-appearance=dark] #lz-anatomy-zone .azc-stage-area .azc-stage-title{color:#18304e}
+html[data-lz-appearance=dark] #lz-anatomy-zone .azc-stage-area .azc-stage-title :is(h2,span){color:#18304e}
+html[data-lz-appearance=dark] #lz-anatomy-zone .azc-stage-area.is-com .azc-stage-title :is(h2,span){color:var(--lz-ink)}
+html[data-lz-theme-ready] .lz-wb{--wb-bg:var(--lz-paper);--wb-soft:var(--lz-neutral);--wb-line:var(--lz-line);--wb-ink:var(--lz-ink);--wb-muted:var(--lz-sub);--wb-blue:var(--lz-blue)}
+html[data-lz-theme-ready] .lz-wb :is(.wb-top,.wb-toolbar,.wb-cell-line,.wb-tabs,.wb-menu,.wb-boards,.wb-library,.wb-dialog){background:var(--lz-paper);color:var(--lz-ink)}
+html[data-lz-theme-ready] .lz-wb :is(.wb-top,.wb-toolbar,.wb-tabs,.wb-menu,.wb-dialog) :where(button,select,input:not([type=color])){background:var(--lz-paper);color:var(--lz-ink)}
+html[data-lz-theme-ready] .lz-wb :is(button.active,.wb-primary){background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
+/* Paper cells and their user-selected fills remain unchanged. */
+html[data-lz-theme-ready] .lz-wb .wb-scroll{background:#fff;color:#18304c}
+html[data-lz-theme-ready] .lz-wb .wb-scroll input{color:inherit}
+html[data-lz-contrast=high] :is(.app-modal,.lze-tile,.lzc-card,.lzl-item,.lz-wb,.azc-explorer,.lze-guide-section,#student-learning-board section,#student-learning-board .day){box-shadow:none;border-width:2px}
+html[data-lz-contrast=high] :is(.app-breadcrumb,.app-heading p,.lze-count,.lze-muted,.summary-text){color:var(--lz-sub)}
+html[data-lz-text=large] .app-zone{font-size:17px}
+html[data-lz-text=large] :is(.lze-root,.lzcases,.lzlib,#lz-anatomy-zone){font-size:16px}
+html[data-lz-text=large] #student-learning-board{font-size:17px}
+html[data-lz-text=large] :is(.lze-open strong,.lze-button,.lze-root input,.lze-root select,.lze-guide p,.lze-guide-section li,#student-learning-board input,#student-learning-board select){font-size:16px}
+html[data-lz-text=large] :is(.lze-open small,.lze-muted,.lze-count,.lze-root label,.app-heading p,.lzc-card small,.lzl-item p){font-size:14px}
+html[data-lz-motion=reduced] :is(*,*::before,*::after){animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+.lz-appearance-dialog{width:min(510px,calc(100vw - 32px));max-height:90vh;overflow:auto;border:1px solid var(--lz-line);border-radius:15px;padding:24px;background:var(--lz-paper);color:var(--lz-ink);box-shadow:0 18px 70px #0003}
+.lz-appearance-dialog::backdrop{background:#0c172b88}
+.lz-appearance-dialog form{margin:0}.lz-appearance-dialog header{display:flex;align-items:start;justify-content:space-between;gap:16px;margin-bottom:20px}.lz-appearance-dialog h2{font-size:23px;margin:0 0 7px}.lz-appearance-dialog p{color:var(--lz-sub);font-size:13px;margin:0}.lz-appearance-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}.lz-appearance-fields>label{display:grid;gap:7px;color:var(--lz-ink);font-size:14px}.lz-appearance-fields select{width:100%;min-height:43px}.lz-appearance-fields .lz-appearance-check{display:flex;grid-column:1/-1;gap:10px;align-items:center}.lz-appearance-check input{width:18px;height:18px;accent-color:var(--lz-blue)}.lz-appearance-dialog .lz-appearance-note{margin-top:21px;line-height:1.6}.lz-appearance-dialog .lz-appearance-status{min-height:22px;margin-top:9px}.lz-appearance-dialog footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:15px}.lz-appearance-dialog button.lz-appearance-done{background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
+@media(max-width:430px){.lz-appearance-fields{grid-template-columns:1fr}.lz-appearance-fields .lz-appearance-check{grid-column:auto}.lz-appearance-dialog{padding:20px}}
+/* Semantic colors stay independent of the chosen app accent. */
+html[data-lz-theme-ready] #student-learning-board .role-primary{--blue:#315f91;--blue-soft:#eaf1ff}
+html[data-lz-theme-ready] #student-learning-board .role-secondary{--purple:#7051a0;--purple-soft:#f2ecfa}
+html[data-lz-theme-ready] #student-learning-board .role-tertiary{--green:#2b7252;--fill:#eaf5ee}
+html[data-lz-appearance=dark] #student-learning-board .role-primary{--blue:#a6cafa;--blue-soft:#243c59}
+html[data-lz-appearance=dark] #student-learning-board .role-secondary{--purple:#c9b4ee;--purple-soft:#3b3151}
+html[data-lz-appearance=dark] #student-learning-board .role-tertiary{--green:#9bd6b8;--fill:#234337}
+html[data-lz-appearance=dark] #student-learning-board section>.table-wrap tbody tr.goal-floor{background:#234337}
+html[data-lz-appearance=dark] #student-learning-board section>.table-wrap tbody tr.goal-ceiling{background:#453b22}
+html[data-lz-appearance=dark] #student-learning-board tr.goal-floor :is(input,select,button.remove){background:#19392d;border-color:#80b796;color:#d4f0df}
+html[data-lz-appearance=dark] #student-learning-board tr.goal-ceiling :is(input,select,button.remove){background:#3b311b;border-color:#bba365;color:#f2ddb0}
+html[data-lz-theme-ready] .lz-wb .wb-scroll td input{background:transparent}
+/* Table views follow the surrounding surface while meaningful goal fills remain. */
+html[data-lz-theme-ready] #student-learning-board :is(table th,.mirror-table th){background:var(--lz-neutral);color:var(--lz-ink)}
+html[data-lz-theme-ready] #student-learning-board section>.table-wrap tbody tr:nth-child(even):not(.goal-floor):not(.goal-ceiling){background:var(--lz-neutral)}
+html[data-lz-theme-ready] #student-learning-board :is(.mirror-workout,.goal-progression-card){background:var(--lz-paper);color:var(--lz-ink)}
+html[data-lz-theme-ready] #student-learning-board :is(.progression-table .actual-results input,.progression-table .actual-results textarea,.goal-progression-card td.actual-results,.goal-progression-card th.actual-results){background:var(--lz-neutral);color:var(--lz-ink)}
+html[data-lz-theme-ready] #student-learning-board :is(button[data-action="add-goal"],button[data-action="add-day"],button[data-add-ex]){background:var(--lz-soft);border-color:var(--lz-line);color:var(--lz-blue)}
+html[data-lz-theme-ready] :is(.app-modal [role=alert],#student-learning-board [data-progression-error],.lze-dialog [role=alert],.lzl-error,.lzl-delete){color:var(--lz-danger)}
+html[data-lz-appearance=light] #student-learning-board .priority-floor{background:#eaf5ee;color:#2b7252}
+html[data-lz-appearance=dark] #student-learning-board .priority-floor{background:#234337;color:#9bd6b8}
+
+/* Filled actions override neutral control surfaces, including in dark mode. */
+html[data-lz-theme-ready] .lz-appearance-dialog button.lz-appearance-done,
+html[data-lz-theme-ready] .lze-add-program .lze-button{background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
+/* Pattern and Muscle remain separate navigation identities in the dark palette. */
+html[data-lz-appearance=dark] .lze-lenses .lze-button[data-tab=pattern]{background:#243c59;color:#a6cafa;border-color:#6c95c5}
+html[data-lz-appearance=dark] .lze-lenses .lze-button[data-tab=muscle]{background:#193f3b;color:#72d5c7;border-color:#58a99e}
+/* Card borders retain their role identity after the panel border theme. */
+html[data-lz-theme-ready] #student-learning-board .exercise.role-primary{border-left-color:var(--blue)}
+html[data-lz-theme-ready] #student-learning-board .exercise.role-secondary{border-left-color:var(--purple)}
+html[data-lz-theme-ready] #student-learning-board .exercise.role-tertiary{border-left-color:var(--green)}
+html[data-lz-theme-ready] input:is([type=range],[type=checkbox]),
+html[data-lz-theme-ready] #student-learning-board input:is([type=range],[type=checkbox]),
+html[data-lz-theme-ready] #lz-anatomy-zone input:is([type=range],[type=checkbox]),
+html[data-lz-theme-ready] #lz-anatomy-tension input:is([type=range],[type=checkbox]){accent-color:var(--lz-blue)}
+html[data-lz-appearance=dark] .lzl-error{color:var(--lz-danger)!important}
+/* Native board menus share the chosen interface surface. */
+html[data-lz-theme-ready] .lz-wb :is(.wb-more,.wb-format-menu,.wb-sheet-menu)>summary{background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-theme-ready] .lz-wb .wb-dropdown{background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-theme-ready] .lz-wb .wb-dropdown :is(button,select,input,label,summary){background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-theme-ready] .lz-wb .wb-dropdown .wb-danger{color:var(--lz-danger)}
+html[data-lz-appearance=dark] .lz-wb [data-wb-status]:not(.error){color:#9bd6b8}

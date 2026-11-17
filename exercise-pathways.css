@@ -1,0 +1,23 @@
+/* Compact centered teaching pathways and their temporary stage order. */
+.lze-root .lze-lenses .lze-button,.lze-root .lze-menu-nav .lze-button{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.lze-root .lze-lenses .lze-button svg,.lze-root .lze-menu-nav .lze-button svg{width:21px;height:21px;flex:none}
+.lze-root .lze-path-pick{justify-content:center;align-items:center;margin:18px auto 14px;gap:10px}
+.lze-root .lze-path-pick .lze-button{min-width:150px;text-align:center}
+.lze-root .lze-path-heading{text-align:center;max-width:700px;margin:0 auto 16px}
+.lze-root .lze-path-heading h2{margin:12px 0 8px}
+.lze-root .lze-path-heading .lze-muted{margin-bottom:6px}
+.lze-root .lze-path-order-note{font-size:12px;color:var(--lz-sub,#63748a);margin:0}
+.lze-root .lze-path-list{max-width:720px;margin:0 auto;gap:11px}
+.lze-root .lze-path-list article{position:relative;display:flex;justify-content:center;align-items:center;min-height:88px;padding:14px 48px;border:1px solid var(--lz-line,#dbe4f2);border-radius:12px;background:var(--lz-paper,#fff);box-shadow:0 5px 16px #172e4c0b;gap:10px;text-align:center;transition:border-color .12s,box-shadow .12s}
+.lze-root .lze-path-list .lze-number{position:absolute;right:14px;top:13px;width:25px;height:25px;border-radius:7px;font-size:12px}
+.lze-root .lze-path-stage-content{width:100%;min-width:0}
+.lze-root .lze-path-stage-content h3{margin:0 0 8px;text-align:center;font-size:15px}
+.lze-root .lze-path-exercises{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap}
+.lze-root .lze-path-exercises .lze-button{padding:7px 11px;font-size:13px}
+.lze-root .lze-stage-drag{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:32px;height:40px;display:grid;place-items:center;padding:6px;border:0;border-radius:7px;background:transparent;color:var(--lz-sub,#63748a);cursor:grab;touch-action:none;user-select:none}
+.lze-root .lze-stage-drag:active{cursor:grabbing}
+.lze-root .lze-stage-drag svg{width:19px;height:19px}
+.lze-root .lze-path-list article.is-stage-dragging{opacity:.62}
+.lze-root .lze-path-list article.is-stage-target{border-color:var(--lz-blue,#365bbe);box-shadow:0 0 0 2px var(--lz-soft,#eaf1ff),0 5px 16px #172e4c12}
+@media(max-width:500px){.lze-root .lze-path-pick .lze-button{min-width:130px}.lze-root .lze-path-list article{padding:13px 43px}.lze-root .lze-path-exercises .lze-button{max-width:100%;white-space:normal}}
+@media(prefers-reduced-motion:reduce){.lze-root .lze-path-list article{transition:none}}

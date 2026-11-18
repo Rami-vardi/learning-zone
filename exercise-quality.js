@@ -10,18 +10,34 @@ function youtubeId(value){
  else if(/(^|\.)(youtube\.com|youtube-nocookie\.com)$/.test(host))id=u.searchParams.get('v')||u.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]+)(?:\/|$)/)?.[1]||'';
  return /^[A-Za-z0-9_-]{11}$/.test(id)?id:'';
 }
+function videoSeconds(value){
+ const text=String(value??'').trim().toLowerCase();if(!text)return null;
+ if(/^\d+(?:\.\d+)?$/.test(text))return Math.floor(Number(text));
+ const match=text.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)?$/);if(!match||!match.slice(1).some(Boolean))return null;
+ return Math.floor(Number(match[1]||0)*3600+Number(match[2]||0)*60+Number(match[3]||0));
+}
 function mediaInfo(value){
  const url=safeUrl(value);if(!url)return null;const u=new URL(url),host=u.hostname.toLowerCase(),id=youtubeId(url);
- if(id)return {kind:'youtube',id,url:'https://www.youtube.com/watch?v='+id,embed:'https://www.youtube-nocookie.com/embed/'+id};
- if(/(^|\.)vimeo\.com$/.test(host)){const match=u.pathname.match(/(?:^|\/)\b(\d+)\b(?:\/|$)/);if(match){const hash=u.searchParams.get('h')||u.pathname.match(new RegExp('/'+match[1]+'/([A-Za-z0-9]+)(?:/|$)'))?.[1]||'';return {kind:'vimeo',id:match[1],url,embed:'https://player.vimeo.com/video/'+match[1]+(hash?'?h='+encodeURIComponent(hash):'')};}}
+ if(id){
+  const fragment=new URLSearchParams(u.hash.replace(/^#/,'')),start=videoSeconds(u.searchParams.get('start')??u.searchParams.get('t')??fragment.get('t')),end=videoSeconds(u.searchParams.get('end')),query=new URLSearchParams();
+  if(start!==null&&start>0)query.set('start',String(start));if(end!==null&&end>(start||0))query.set('end',String(end));
+  return {kind:'youtube',id,url:'https://www.youtube.com/watch?v='+id,embed:'https://www.youtube-nocookie.com/embed/'+id+(query.size?'?'+query:'')};
+ }
+ if(/(^|\.)vimeo\.com$/.test(host)){
+  // Collection IDs can precede the video ID in showcase, album and group URLs.
+  const match=u.pathname.match(/\/(?:videos?|review)\/(\d+)(?:\/|$)/)||u.pathname.match(/(?:^|\/)(\d+)(?:\/[A-Za-z0-9]+)?\/?$/);
+  if(match){const hash=u.searchParams.get('h')||u.pathname.match(new RegExp('/'+match[1]+'/([A-Za-z0-9]+)(?:/|$)'))?.[1]||'',fragment=new URLSearchParams(u.hash.replace(/^#/,'')),start=videoSeconds(u.searchParams.get('t')??fragment.get('t'));
+   return {kind:'vimeo',id:match[1],url,embed:'https://player.vimeo.com/video/'+match[1]+(hash?'?h='+encodeURIComponent(hash):'')+(start!==null&&start>0?'#t='+start+'s':'')};
+  }
+ }
  if(u.protocol==='https:'&&/\.(mp4|webm)$/i.test(u.pathname))return {kind:'video',url};return {kind:'link',url};
 }
 function canonicalMediaUrl(value){const info=mediaInfo(value);return info?.url||'';}
 function correction(record){const data=root.LZExerciseQualityData||{},id=record?.id||record?.exerciseId;return data[id]||((record?.provider==='core'||String(id||'').startsWith('exercise:'))?data[root.LZIdentity?.resolve(record)?.id]:null)||null;}
-function applyRecord(record){const c=correction(record);if(!c)return record;return {...record,...(c.name?{name:c.name}:{}),aliases:[...new Set([...(record.aliases||[]),...(c.aliases||[])])]};}
+function applyRecord(record){const c=correction(record);if(!c)return record;return {...record,...(c.name?{name:c.name}:{}),...(['exercise','related','other'].includes(c.kind)?{kind:c.kind}:{}),aliases:[...new Set([...(record.aliases||[]),...(c.aliases||[])])]};}
 function displayName(record){return correction(record)?.name||root.LZIdentity?.displayName(record)||record?.name||'';}
 function matches(record,query){if(root.LZIdentity?.matches(record,query))return true;const n=root.LZIdentity?.normalize||((v)=>String(v||'').toLowerCase()),tokens=n(query).split(' ').filter(Boolean),aliases=correction(record)?.aliases||[];return aliases.some(value=>{const words=n(value).split(' ');return tokens.every(token=>words.some(word=>word.startsWith(token)));});}
-function guide(record,g,d){const c=correction(record);return {g:c?.guide?{...(g||{}),...c.guide}:g,d:{...d,...(c?.explanation?{explanation:c.explanation}:{}),...Object.fromEntries(['video','source','creator','title'].filter(k=>c&&Object.hasOwn(c,k)).map(k=>[k,c[k]]))}};}
+function guide(record,g,d){const c=correction(record);return {g:c?.guide?{...(g||{}),...c.guide}:g,d:{...d,...(c?.explanation?{explanation:c.explanation}:{}),...Object.fromEntries(['video','source','creator','title','playbackStatus','embedIssue'].filter(k=>c&&Object.hasOwn(c,k)).map(k=>[k,c[k]]))}};}
 function unavailable(value){const id=youtubeId(value),entries=root.LZExerciseUnavailableVideos||[];return entries.some(row=>typeof row==='string'?(row===id||canonicalMediaUrl(row)===canonicalMediaUrl(value)):row.videoId===id&&Boolean(id));}
 function excludedVideo(record,value){const key=canonicalMediaUrl(value);return (correction(record)?.excludeVideos||[]).some(url=>canonicalMediaUrl(url)===key);}
 function browseKey(record){if(record?.provider!=='core')return record?.id;return root.LZIdentity?.resolve(record)?.id||record.id;}

@@ -477,7 +477,7 @@ body{margin:0;background:#f3f6fa;font-family:Arial,sans-serif;color-scheme:light
 .lzl-folder-symbol{display:inline-flex;flex-shrink:0;color:var(--lz-blue,#245bba)}
 .lzl-upload-category{display:grid;gap:6px;margin:0 0 16px;font-size:13px;color:var(--lz-sub,#63748a)}
 .lzl-upload-category select,.lzl-dialog select{display:block;width:100%;padding:10px;border:1px solid var(--lz-line,#dce5f0);border-radius:8px;background:var(--lz-paper,#fff);color:var(--lz-ink,#182b45);font:inherit}
-</style><link rel="stylesheet" href="whiteboard-v2.css?v=20261119-cell-color"><link rel="stylesheet" href="appearance-settings.css?v=20261119-studio-2"><link rel="stylesheet" href="exercise-pathways.css?v=20261117-visual-polish"><meta name="learning-zone-build" content="20261119-studio-release-1"><link rel="stylesheet" href="learning-zone-design.css?v=20261119-studio-shell"></head><body><div class="app-shell"><a class="app-skip-link" href="#workspace-content">Skip to workspace</a><aside class="app-sidebar"><div class="app-brand"><span class="app-brand-mark"><i data-lucide="book-open" aria-hidden="true"></i></span><div><b>Learning Zone</b><small>RAMI VARDI</small></div></div><div id="workspace-navigation" hidden><div class="nav-caption">YOUR WORKSPACE</div><nav class="app-nav" aria-label="Main navigation"><button data-nav="programs" aria-current="page"><i data-lucide="notebook-pen" aria-hidden="true"></i>Program Builder</button><button data-nav="exercises"><i data-lucide="dumbbell" aria-hidden="true"></i>Exercise Zone</button><button data-nav="anatomy"><i data-lucide="bone" aria-hidden="true"></i>Anatomy Zone</button><button data-nav="cases"><i data-lucide="users" aria-hidden="true"></i>Case Studies</button><button data-nav="library"><i data-lucide="library" aria-hidden="true"></i>Library Zone</button><button data-nav="whiteboard"><i data-lucide="notebook-pen" aria-hidden="true"></i>Whiteboard Zone</button><button data-nav="students"><i data-lucide="user-round-cog" aria-hidden="true"></i>Student Dashboard</button></nav></div><div class="app-sidebar-footer"><strong id="account-name">Not signed in</strong><span id="account-role">Username access</span><br><button id="help-button">Help & Online Storage</button><br><button id="shell-signout" hidden>Sign Out</button><br><button id="complete-backup" hidden>Export Accounts & Programs</button></div></aside><div class="app-main"><header class="app-topbar"><span class="app-breadcrumb" id="breadcrumb">Sign in</span></header><main class="app-zone" id="workspace-content" tabindex="-1"><div id="zone-heading" class="app-heading" hidden><div class="eyebrow">YOUR PROGRAMMING WORKSPACE</div><h1>Program Builder</h1><p>Create practice athletes, define their goals, and build training programs.</p></div><div id="student-learning-board">
+</style><link rel="stylesheet" href="whiteboard-v2.css?v=20261119-cell-color"><link rel="stylesheet" href="appearance-settings.css?v=20261119-studio-2"><link rel="stylesheet" href="exercise-pathways.css?v=20261119-studio-2"><meta name="learning-zone-build" content="20261119-studio-release-2"><link rel="stylesheet" href="learning-zone-design.css?v=20261119-studio-shell"></head><body><div class="app-shell"><a class="app-skip-link" href="#workspace-content">Skip to workspace</a><aside class="app-sidebar"><div class="app-brand"><span class="app-brand-mark"><i data-lucide="book-open" aria-hidden="true"></i></span><div><b>Learning Zone</b><small>RAMI VARDI</small></div></div><div id="workspace-navigation" hidden><div class="nav-caption">YOUR WORKSPACE</div><nav class="app-nav" aria-label="Main navigation"><button data-nav="programs" aria-current="page"><i data-lucide="notebook-pen" aria-hidden="true"></i>Program Builder</button><button data-nav="exercises"><i data-lucide="dumbbell" aria-hidden="true"></i>Exercise Zone</button><button data-nav="anatomy"><i data-lucide="bone" aria-hidden="true"></i>Anatomy Zone</button><button data-nav="cases"><i data-lucide="users" aria-hidden="true"></i>Case Studies</button><button data-nav="library"><i data-lucide="library" aria-hidden="true"></i>Library Zone</button><button data-nav="whiteboard"><i data-lucide="notebook-pen" aria-hidden="true"></i>Whiteboard Zone</button><button data-nav="students"><i data-lucide="user-round-cog" aria-hidden="true"></i>Student Dashboard</button></nav></div><div class="app-sidebar-footer"><strong id="account-name">Not signed in</strong><span id="account-role">Username access</span><br><button id="help-button">Help & Online Storage</button><br><button id="shell-signout" hidden>Sign Out</button><br><button id="complete-backup" hidden>Export Accounts & Programs</button></div></aside><div class="app-main"><header class="app-topbar"><span class="app-breadcrumb" id="breadcrumb">Sign in</span></header><main class="app-zone" id="workspace-content" tabindex="-1"><div id="zone-heading" class="app-heading" hidden><div class="eyebrow">YOUR PROGRAMMING WORKSPACE</div><h1>Program Builder</h1><p>Create practice athletes, define their goals, and build training programs.</p></div><div id="student-learning-board">
 
 
 
@@ -1352,7 +1352,11 @@ return [...map.values()].map(e=>window.LZExerciseQuality?.applyRecord(e)||e);}
 let base=makeRecords();
 const classificationCache=new WeakMap();
 function classify(e){if(classificationCache.has(e))return classificationCache.get(e);const reviewed=e.kind==='exercise'&&e.id.startsWith('source:')?window.LZExerciseQuality?.correction(e)?.classification:null;const result=reviewed||window.ExerciseLens?.classify({...e,exerciseId:e.id})||{pattern:null,muscle:null,patternStatus:'needs-review',muscleStatus:'needs-review'};classificationCache.set(e,result);return result;}
-function memberships(e){return window.LZExerciseQuality.memberships(e,classify(e));}
+const membershipsCache=new WeakMap();
+function memberships(e){
+ if(!membershipsCache.has(e))membershipsCache.set(e,window.LZExerciseQuality.memberships(e,classify(e)));
+ return membershipsCache.get(e);
+}
 const mobilityRegions=[['neck','Neck'],['upperback','Upper Back'],['lowerback','Lower Back'],['shoulder','Shoulders'],['elbow','Elbows and Forearms'],['wrist','Wrists'],['hip','Hips'],['knee','Knees'],['ankle','Ankles'],['foot','Feet and Toes'],['whole','Whole Body'],['other','Other Mobility']];
 function mobilityRegionsFor(e){if(e.bodyRegion)return [e.bodyRegion];const n=norm([e.name,...(e.sections||[])].join(' ')),out=[];const rules={neck:/neck|cervical/,upperback:/thoracic|upper back/,lowerback:/lumbar|lower back|pelvic tilt/,shoulder:/shoulder|scapul|overhead|front rack/,elbow:/elbow|forearm|pronation|supination/,wrist:/wrist/,hip:/hip|adductor|groin|glute|hamstring|pigeon|90 ?90/,knee:/knee|quadricep|quad stretch/,ankle:/ankle|calf|dorsiflex|plantar/,foot:/foot|feet|toe/,whole:/whole body|full body|march|world.?s greatest/};for(const [id,re]of Object.entries(rules))if(re.test(n))out.push(id);return out.length?out:['other'];}
 function parentFor(e,cat){if(cat==='jumps')return 'jump';if(cat==='gymnastics')return 'skills';if(cat==='weightlifting')return 'weightlifting';return classify(e).pattern;}
@@ -1361,7 +1365,7 @@ function safeLink(url){if(window.LZExerciseQuality)return window.LZExerciseQuali
 function media(url,label){const info=window.LZExerciseQuality?.mediaInfo(url);if(!info)return '';if(info.kind==='youtube'||info.kind==='vimeo')return '<iframe class="lze-video" title="'+esc(label)+'" src="'+esc(info.embed)+'" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';if(info.kind==='video')return '<video class="lze-video" controls preload="metadata" src="'+esc(info.url)+'"></video>';return '';}
 async function mount(host,opts={}){
 let region='all';
-let tab='catalog',cat='all',group='all',family='all',kind='exercise',q='',page=0,detail=null,path='Nordic',favoritesOnly=false,recentOnly=false,restore=null;
+let tab='catalog',cat='all',group='all',family='all',kind='exercise',q='',page=0,detail=null,path='Nordic',favoritesOnly=false,recentOnly=false;
 const pathOrders={};let stageDrag=null;
 const user=opts.username||window.LZCloud?.currentMember()?.id;
 let content,unsubscribe=()=>{},personalModal=null,destroyed=false;let saved={favorites:[],recent:[],personal:[],edits:{}};const lifecycle=new AbortController(),abortMount=()=>lifecycle.abort();if(opts.signal?.aborted)lifecycle.abort();else opts.signal?.addEventListener('abort',abortMount,{once:true});const stopped=()=>destroyed||lifecycle.signal.aborted,releaseSignal=()=>opts.signal?.removeEventListener('abort',abortMount),emptyHandle=()=>({flush:async()=>{},destroy:async()=>{}});if(stopped()){releaseSignal();return emptyHandle();}
@@ -1373,13 +1377,83 @@ const get=id=>records().find(e=>e.id===id);
 const browseKey=id=>{const e=get(id);return e?(window.LZExerciseQuality?.browseKey(e)||id):id;};
 const containsSaved=(items,id)=>items.some(value=>browseKey(value)===browseKey(id));function guideEdit(id){if(Object.hasOwn(saved.edits,id))return saved.edits[id]||{};const key=browseKey(id),alias=Object.keys(saved.edits).find(savedId=>browseKey(savedId)===key);return alias?saved.edits[alias]||{}:{};}
 const favorite=id=>containsSaved(saved.favorites,id);
-const recentRank=id=>saved.recent.findIndex(value=>browseKey(value)===browseKey(id));
+const pageSize=30;
 const button=(label,attr='',active=false)=>'<button type="button" class="lze-button '+(active?'is-active':'')+'" '+attr+'>'+label+'</button>';
 function categoriesMarkup(){return categories.map(([id,label])=>button(label,'data-cat="'+id+'"',cat===id)).join('');}
-function selected(){let filtered=records().filter(e=>{if(e.kind!==kind&&kind!=='all')return false;if(cat!=='all'&&!memberships(e).includes(cat))return false;if(tab==='catalog'&&cat==='mobility'&&family!=='all'&&!mobilityRegionsFor(e).includes(family))return false;if(tab==='muscle'&&region!=='all'&&window.ExerciseLens.regionFor(classify(e).muscle)!==region)return false;if(favoritesOnly&&!favorite(e.id))return false;if(recentOnly&&recentRank(e.id)<0)return false;const c=classify(e);if(tab==='pattern'&&!patternMatch(e))return false;if(tab==='muscle'&&group!=='all'&&(group==='review'?c.muscle:c.muscle!==group))return false;if(tab!=='pattern'&&cat!=='mobility'&&family!=='all'){const parent=tab==='pattern'&&group!=='all'?group:cat==='jumps'?'jump':cat==='gymnastics'?'skills':cat==='weightlifting'?'weightlifting':parentFor(e,cat);if(!window.ExerciseTaxonomy.subgroups(e,parent).includes(family))return false;}return !q||(window.LZExerciseQuality?window.LZExerciseQuality.matches(e,q):window.LZIdentity?window.LZIdentity.matches(e,q):[e.name,...(e.sections||[])].join(' ').toLowerCase().includes(q.toLowerCase()));});if(recentOnly)filtered.sort((a,b)=>recentRank(a.id)-recentRank(b.id));const seen=new Set();return filtered.filter(e=>{const key=window.LZExerciseQuality?.browseKey(e)||e.id;if(seen.has(key))return false;seen.add(key);return true;});}
+function selected(){
+ const query=q.trim(),quality=window.LZExerciseQuality;
+ const recent=new Map(recentOnly?saved.recent.map((id,i)=>[browseKey(id),i]):[]);
+ const filtered=records().filter(e=>{
+  if(kind!=='all'&&e.kind!==kind)return false;
+  if(cat!=='all'&&!memberships(e).includes(cat))return false;
+  if(tab==='catalog'&&cat==='mobility'&&family!=='all'&&!mobilityRegionsFor(e).includes(family))return false;
+  if(tab==='pattern'&&!patternMatch(e))return false;
+  if(tab==='muscle'){
+   const muscle=classify(e).muscle;
+   if(region!=='all'&&window.ExerciseLens.regionFor(muscle)!==region)return false;
+   if(group!=='all'&&(group==='review'?muscle:muscle!==group))return false;
+  }
+  if(tab==='catalog'&&cat!=='mobility'&&family!=='all'&&!window.ExerciseTaxonomy.subgroups(e,parentFor(e,cat)).includes(family))return false;
+  if(favoritesOnly&&!favorite(e.id))return false;
+  if(recentOnly&&!recent.has(quality.browseKey(e)))return false;
+  return !query||quality.matches(e,query);
+ });
+ if(recentOnly)filtered.sort((a,b)=>recent.get(quality.browseKey(a))-recent.get(quality.browseKey(b)));
+ else if(query){
+  const normalized=window.LZIdentity.normalize(query);
+  const ranking=new Map(filtered.map(e=>{
+   const name=window.LZIdentity.normalize(displayName(e));
+   const rank=name===normalized?2:name.startsWith(normalized)?1:0;
+   return [e,rank*2+(e.provider==='core'?1:0)];
+  }));
+  filtered.sort((a,b)=>ranking.get(b)-ranking.get(a));
+ }
+ const seen=new Set();
+ return filtered.filter(e=>{
+  const key=quality.browseKey(e);
+  if(seen.has(key))return false;
+  seen.add(key);
+  return true;
+ });
+}
 function familiesMarkup(){if(cat==='mobility')return menuRows(mobilityRegions,'data-family');const parent=tab==='pattern'&&group!=='all'?group:cat==='jumps'?'jump':cat==='gymnastics'?'skills':cat==='weightlifting'?'weightlifting':null,rows=window.ExerciseTaxonomy?.families[parent];return rows?'<div class="lze-families"><span>Subcategories</span>'+button('All','data-family="all"',family==='all')+rows.map(([id,label])=>button(esc(label),'data-family="'+id+'"',family===id)).join('')+'</div>':'';}
 function groupMarkup(){const rows=tab==='pattern'?window.ExerciseLens.patterns:window.ExerciseLens.regions.flatMap(r=>r[2]);return '<div class="lze-groups">'+button('All','data-group="all"',group==='all')+rows.map(([id,label])=>button(label,'data-group="'+id+'"',group===id)).join('')+button('Other / needs review','data-group="review"',group==='review')+'</div>';}
-function results(){const result=selected(),total=result.length;page=Math.min(page,Math.max(0,Math.ceil(total/30)-1));const rows=result.slice(page*30,page*30+30);host.querySelector('[data-results]').innerHTML='<div class="lze-count">'+total+' results'+(total?' · '+(page*30+1)+' to '+Math.min(total,(page+1)*30):'')+'</div><div class="lze-grid">'+rows.map(e=>{const c=classify(e),text=e.kind==='exercise'?(window.ExerciseLens.patterns.find(p=>p[0]===c.pattern)?.[1]||(c.patternStatus==='not-applicable'?'No Single Movement Pattern':'Pattern Needs Review')):(e.kind==='related'?'Technique video':'Source video');return '<article class="lze-tile"><button class="lze-open" data-open="'+esc(e.id)+'"><span class="lze-tile-icon">'+icon(memberships(e).includes('jumps')?'activity':'dumbbell')+'</span><span class="lze-open-copy"><strong>'+esc(displayName(e))+'</strong><small>'+esc(text)+' · '+esc(e.provider==='core'?'Core library':e.provider)+'</small></span><span class="lze-open-action">'+(e.kind==='exercise'?'Open exercise':'Open content')+icon('arrow-up-right')+'</span></button></article>';}).join('')+'</div>'+(!rows.length?'<p class="lze-empty">No exercises match these filters.</p>':'')+'<div class="lze-paging">'+button('Previous','data-page="-1" '+(page===0?'disabled':''))+button('Next','data-page="1" '+((page+1)*30>=total?'disabled':''))+'</div>';iconify();}
+function refreshResults(){
+ const container=host.querySelector('[data-results]');
+ const status=host.querySelector('[data-result-status]');
+ const browsing=host.querySelector('[data-browse-menu]');
+ const searching=Boolean(q.trim()||recentOnly||favoritesOnly);
+ browsing.hidden=searching;
+ if(!readyForResults()){
+  status.textContent='';
+  status.hidden=true;
+  container.innerHTML='';
+  return;
+ }
+ const result=selected(),total=result.length;
+ page=Math.max(0,Math.min(page,Math.ceil(total/pageSize)-1));
+ const start=page*pageSize,end=Math.min(start+pageSize,total);
+ status.hidden=false;
+ status.textContent=total===1?'1 result':total+' results'+(total>pageSize?' · '+(start+1)+' to '+end:'');
+ if(!total){
+  const empty=q.trim()?'No results for “'+esc(q.trim())+'”.':recentOnly?'No recently viewed items in this view.':'No items match these filters.';
+  container.innerHTML='<div class="lze-empty"><p>'+empty+'</p>'+(q.trim()?button('Clear Search','data-clear-search'):'')+'</div>';
+  return;
+ }
+ const providers={core:'Core library',catalyst:'Catalyst Athletics',monkey:'The Monkey Method',personal:'Personal exercise'};
+ const cards=result.slice(start,end).map(e=>{
+  const c=classify(e),text=e.kind==='exercise'?(window.ExerciseLens.patterns.find(p=>p[0]===c.pattern)?.[1]||
+   (c.patternStatus==='not-applicable'?'No single movement pattern':'Pattern needs review')):e.kind==='related'?'Technique video':'Source video';
+  const symbol=e.kind!=='exercise'?'play':memberships(e).includes('jumps')?'activity':'dumbbell';
+  return '<article class="lze-tile"><button type="button" class="lze-open" data-open="'+esc(e.id)+'">'+
+   '<span class="lze-tile-icon">'+icon(symbol)+'</span><span class="lze-open-copy"><strong>'+esc(displayName(e))+'</strong>'+
+   '<small>'+esc(text)+' · '+esc(providers[e.provider]||e.provider)+'</small></span></button></article>';
+ });
+ const pagination=total>pageSize?'<nav class="lze-paging" aria-label="Result pages">'+
+  button('Previous','data-page="-1" '+(page===0?'disabled':''))+button('Next','data-page="1" '+(end===total?'disabled':''))+'</nav>':'';
+ container.innerHTML='<div class="lze-grid">'+cards.join('')+'</div>'+pagination;
+ iconify();
+}
 const patternMenu=[['squat','Squat'],['hinge','Hinge'],['push','Push'],['pull','Pull'],['midline','Midline']];
 const patternChildren={squat:[['squat','Squat'],['lunge','Lunge']],hinge:[['vertical','Vertical'],['horizontal','Horizontal']],push:[['horizontal','Horizontal'],['vertical','Vertical']],pull:[['horizontal','Horizontal'],['vertical','Vertical']],midline:[['rotation','Rotation and Anti Rotation'],['flexion','Flexion'],['holds','Holds']]};
 function patternMatch(e){const c=classify(e),n=norm(e.name),p=c.pattern;
@@ -1405,21 +1479,70 @@ function menuRows(rows,attr){return '<div class="lze-menu-grid">'+rows.map(([id,
 function menuTitle(){if(tab==='pattern')return patternChildren[group]?.find(x=>x[0]===family)?.[1]||patternMenu.find(x=>x[0]===group)?.[1]||'Movement Patterns';if(tab==='muscle')return window.ExerciseLens.regions.flatMap(r=>r[2]).find(x=>x[0]===group)?.[1]||window.ExerciseLens.regions.find(r=>r[0]===region)?.[1]||'Muscle Groups';return cat==='all'?'Main Categories':cat==='mobility'&&family!=='all'?mobilityRegions.find(x=>x[0]===family)?.[1]||'Mobility and Warm Up':categories.find(x=>x[0]===cat)?.[1]||'Main Categories';}
 function categoryContent(){if(tab==='catalog')return cat==='all'?menuRows(categories.filter(x=>x[0]!=='all'),'data-cat'):familiesMarkup();if(tab==='pattern')return group==='all'?menuRows(patternMenu,'data-group'):menuRows(patternChildren[group],'data-family');if(tab==='muscle'){const regions=window.ExerciseLens.regions;return region==='all'?menuRows(regions.map(r=>[r[0],r[1]]),'data-region'):menuRows(regions.find(r=>r[0]===region)[2],'data-group');}return '';}
 function insideCategory(){return tab==='catalog'?cat!=='all':tab==='pattern'?group!=='all':region!=='all';}
-function readyForResults(){return insideCategory()&&((tab==='catalog'&&(cat!=='mobility'||family!=='all'))||group!=='all'&&(tab==='muscle'||family!=='all')||q.trim()||favoritesOnly||recentOnly);}
+function readyForResults(){
+ if(q.trim()||favoritesOnly||recentOnly||kind!=='exercise')return true;
+ if(!insideCategory())return false;
+ if(tab==='catalog')return cat!=='mobility'||family!=='all';
+ return group!=='all'&&(tab==='muscle'||family!=='all');
+}
 function controlIcon(id){return id==='pattern'?'<svg class="lze-control-symbol" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="19" cy="5" r="3"/><path d="m17 10-5 7 10 4v7h7M12 17l-6 5 4 6h5m2-17 6 4 5-2"/></svg>':icon(id==='muscle'?'biceps-flexed':id==='pathways'?'ladder':'box');}
-function draw(){host.classList.add('lze-root');if(detail){drawGuide(get(detail));paintCloudStatus();return;}const title=menuTitle(),inside=insideCategory();host.innerHTML='<header class="lze-heading"><div><small>EXPLORE MOVEMENT</small><h1>Exercise Zone</h1><p>Explore by category, movement pattern, or muscle.</p></div></header><nav class="lze-lenses" aria-label="Exercise lenses">'+[['pattern','Pattern Lens'],['muscle','Muscle Lens']].map(([id,label])=>button('<span class="lze-lens-icon">'+controlIcon(id)+'</span><span class="lze-lens-text"><strong>'+label+'</strong><small>'+(id==='pattern'?'Browse the movement':'Browse the muscle')+'</small></span>','data-tab="'+id+'" aria-pressed="'+(tab===id)+'"',tab===id)).join('')+'</nav><nav class="lze-menu-nav" aria-label="Exercise views">'+[['catalog','Main Categories'],['pathways','Progression / Regression']].map(([id,label])=>button(controlIcon(id)+label,'data-tab="'+id+'" aria-pressed="'+(tab===id)+'"',tab===id)).join('')+'</nav>'+(tab==='pathways'?pathways():'<div class="lze-menu-heading"><h2>'+esc(title)+'</h2>'+(inside?button('Back','data-menu-back'):'')+'</div>'+(inside?'<div class="lze-toolbar lze-local-toolbar"><label class="lze-local-search">Search Exercises<input type="search" data-search value="'+esc(q)+'" placeholder="Search within '+esc(title)+'"></label><label>Content<select data-kind>'+[['exercise','Exercises'],['related','Technique Videos'],['other','Other Source Videos'],['all','All Content']].map(([id,label])=>'<option value="'+id+'" '+(kind===id?'selected':'')+'>'+label+'</option>').join('')+'</select></label>'+button('Recently Viewed','data-recent aria-pressed="'+recentOnly+'"',recentOnly)+'</div>':'')+categoryContent()+'<div data-results aria-live="polite"></div>');if(tab!=='pathways'&&readyForResults())results();iconify();paintCloudStatus();}
+function draw(){
+ host.classList.add('lze-root');
+ if(detail){drawGuide(get(detail));paintCloudStatus();return;}
+ const title=menuTitle(),inside=insideCategory();
+ const lenses=[['pattern','Pattern Lens','Browse by movement'],['muscle','Muscle Lens','Browse by muscle']];
+ const browseViews=[['catalog','Main Categories'],['pathways','Progression / Regression']];
+ const contentKinds=[['exercise','Exercises'],['related','Technique Videos'],['other','Other Source Videos'],['all','All Content']];
+ host.innerHTML='<header class="lze-heading"><div><h1>Exercise Zone</h1><p>Explore by category, movement pattern, or muscle.</p></div></header>'+
+  '<nav class="lze-lenses" aria-label="Exercise lenses">'+lenses.map(([id,label,description])=>
+   button('<span class="lze-lens-icon">'+controlIcon(id)+'</span><span class="lze-lens-text"><strong>'+label+'</strong><small>'+description+'</small></span>',
+    'data-tab="'+id+'" aria-pressed="'+(tab===id)+'"',tab===id)).join('')+'</nav>'+
+  '<nav class="lze-menu-nav" aria-label="Exercise views">'+browseViews.map(([id,label])=>
+   button(controlIcon(id)+label,'data-tab="'+id+'" aria-pressed="'+(tab===id)+'"',tab===id)).join('')+'</nav>'+
+  (tab==='pathways'?pathways():
+   '<div class="lze-menu-heading"><h2 tabindex="-1" data-browse-heading>'+esc(title)+'</h2>'+
+    (inside?button('Back','data-menu-back'):'')+'</div>'+
+   '<div class="lze-toolbar lze-local-toolbar" role="search" aria-label="Exercise library">'+
+    '<label class="lze-local-search">'+(inside?'Search this view':'Search Exercise Library')+
+     '<input type="search" data-search value="'+esc(q)+'" placeholder="Try a name or abbreviation"></label>'+
+    '<label>Content<select data-kind>'+contentKinds.map(([id,label])=>'<option value="'+id+'" '+(kind===id?'selected':'')+'>'+label+'</option>').join('')+'</select></label>'+
+    button('Recently Viewed','data-recent aria-pressed="'+recentOnly+'"',recentOnly)+'</div>'+
+   '<div data-browse-menu>'+categoryContent()+'</div>'+
+   '<p class="lze-count" data-result-status role="status" tabindex="-1" hidden></p><div data-results></div>');
+ if(tab!=='pathways')refreshResults();
+ iconify();
+ paintCloudStatus();
+}
 
 function pathwayOrder(){return pathOrders[path]||(pathOrders[path]=pathData[path].map((_,i)=>i));}
 function resetPathOrders(){for(const key of Object.keys(pathOrders))delete pathOrders[key];stageDrag=null;}
 function pathwayRecord(name){const available=records(),resolved=window.LZIdentity?.resolve(name);return available.find(e=>e.id===resolved?.id)||available.find(e=>norm(e.name)===norm(name)||norm(displayName(e))===norm(name))||null;}
-function pathways(){return '<div class="lze-path-pick">'+Object.keys(pathData).map(name=>button(name,'data-path="'+name+'"',path===name)).join('')+'</div><div class="lze-path-heading"><h2>'+esc(path)+'</h2><p class="lze-muted">'+esc(pathRules[path]||'Explore each stage. Support, range, and execution can change the demands within a variation.')+'</p><p class="lze-path-order-note">Drag a handle to try another order. The order resets when you leave this view.</p></div><div class="lze-path-list">'+pathwayOrder().map((stageId,i)=>{const [label,targets]=pathData[path][stageId],names=Array.isArray(targets)?targets:[targets];return '<article data-stage-id="'+stageId+'"><button type="button" class="lze-stage-drag" data-stage-drag="'+stageId+'" aria-label="Reorder '+esc(label)+'. Drag or use Alt and Arrow keys." draggable="false">'+icon('grip-vertical')+'</button><span class="lze-number">'+(i+1)+'</span><div class="lze-path-stage-content"><h3>'+esc(label)+'</h3><div class="lze-path-exercises">'+names.map(name=>{const e=pathwayRecord(name);return e?button('Open '+esc(displayName(e)),'data-open="'+esc(e.id)+'"'):'<span>Guide not available</span>';}).join(' ')+'</div></div></article>';}).join('')+'</div>';}
+function pathways(){
+ const picker=Object.keys(pathData).map(name=>button(name,'data-path="'+esc(name)+'" aria-pressed="'+(path===name)+'"',path===name)).join('');
+ const stages=pathwayOrder().map((stageId,i)=>{
+  const [label,targets]=pathData[path][stageId],names=Array.isArray(targets)?targets:[targets];
+  const guides=names.map(name=>{
+   const e=pathwayRecord(name);
+   return e?button('Open '+esc(displayName(e)),'data-open="'+esc(e.id)+'"'):'<span>Guide unavailable</span>';
+  });
+  return '<article data-stage-id="'+stageId+'"><button type="button" class="lze-stage-drag" data-stage-drag="'+stageId+
+   '" aria-label="Reorder '+esc(label)+'" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" draggable="false">'+icon('grip-vertical')+
+   '</button><span class="lze-number">'+(i+1)+'</span><div class="lze-path-stage-content"><h3>'+esc(label)+
+   '</h3><div class="lze-path-exercises">'+guides.join('')+'</div></div></article>';
+ });
+ return '<div class="lze-path-pick" role="group" aria-label="Training pathway">'+picker+'</div><div class="lze-path-heading">'+
+  '<h2 tabindex="-1" data-browse-heading>'+esc(path)+'</h2>'+
+  '<p class="lze-muted">Explore how support, range of motion, and execution change the demands of each variation.</p>'+
+  '<p class="lze-path-order-note">Drag a handle or press Alt with an arrow key to try another order. The order resets when you leave this view.</p></div>'+
+  '<div class="lze-path-list">'+stages.join('')+'</div>';
+}
 function movePathStage(id,target,after=false){const order=pathwayOrder(),from=order.indexOf(id);if(from<0||id===target)return false;order.splice(from,1);const to=order.indexOf(target);if(to<0){order.splice(from,0,id);return false;}order.splice(to+(after?1:0),0,id);return true;}
 function redrawPathway(focusId){const left=window.scrollX||0,top=window.scrollY||0;draw();host.querySelector('[data-stage-drag="'+focusId+'"]')?.focus({preventScroll:true});window.scrollTo?.({left,top,behavior:'instant'});}
 function clearStageDrag(){host.querySelectorAll('.is-stage-dragging,.is-stage-target').forEach(el=>el.classList.remove('is-stage-dragging','is-stage-target'));stageDrag=null;}
 host.onpointerdown=ev=>{const handle=ev.target.closest('[data-stage-drag]');if(!handle||tab!=='pathways'||detail||ev.button!==0)return;ev.preventDefault();handle.focus({preventScroll:true});stageDrag={id:Number(handle.dataset.stageDrag),y:ev.clientY,path,started:false,target:null,after:false};handle.setPointerCapture?.(ev.pointerId);};
 host.onpointermove=ev=>{if(!stageDrag)return;if(Math.abs(ev.clientY-stageDrag.y)<5&&!stageDrag.started)return;ev.preventDefault();stageDrag.started=true;host.querySelector('[data-stage-id="'+stageDrag.id+'"]')?.classList.add('is-stage-dragging');const target=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-stage-id]');host.querySelectorAll('.is-stage-target').forEach(el=>el.classList.remove('is-stage-target'));stageDrag.target=target&&host.contains(target)?Number(target.dataset.stageId):null;if(target&&stageDrag.target!==stageDrag.id){const rect=target.getBoundingClientRect();stageDrag.after=ev.clientY>rect.top+rect.height/2;target.classList.add('is-stage-target');}};
 host.onpointerup=ev=>{if(!stageDrag)return;const drag=stageDrag;clearStageDrag();if(drag.started&&drag.path===path&&drag.target!==null&&movePathStage(drag.id,drag.target,drag.after)){ev.preventDefault();redrawPathway(drag.id);}};
-host.onpointercancel=clearStageDrag;
+host.onpointercancel=host.onlostpointercapture=clearStageDrag;
 host.onkeydown=ev=>{const handle=ev.target.closest('[data-stage-drag]');if(!handle||tab!=='pathways'||detail||!(ev.altKey||ev.ctrlKey)||!['ArrowUp','ArrowDown'].includes(ev.key))return;ev.preventDefault();const id=Number(handle.dataset.stageDrag),order=pathwayOrder(),from=order.indexOf(id),to=from+(ev.key==='ArrowUp'?-1:1);if(to<0||to>=order.length)return;[order[from],order[to]]=[order[to],order[from]];redrawPathway(id);};
 function drawGuide(e){
  if(!e){detail=null;return draw();}
@@ -1476,15 +1599,100 @@ function drawGuide(e){
    '<button class="lze-button">Save Guide</button><p data-save-status role="status"></p></form></details>');
  }
  host.innerHTML='<div class="lze-guide"><div class="lze-guide-top">'+button(tab==='pathways'?'Back to Progression / Regression':'Back to Exercises','data-back')+
-  '</div><h1>'+esc(displayName(e))+'</h1>'+sections.join('')+'</div>';
+  '</div><h1 tabindex="-1" data-guide-heading>'+esc(displayName(e))+'</h1>'+sections.join('')+'</div>';
  iconify();
 }
-host.onclick=ev=>{const b=ev.target.closest('button');if(!b)return;if(b.hasAttribute('data-retry-cloud-save')){content.retry().catch(()=>{});return;}if(b.hasAttribute('data-export-cloud-draft')){window.LZCloudContent.download(content);return;}if(b.dataset.open){detail=b.dataset.open;saved.recent=[detail,...saved.recent.filter(x=>browseKey(x)!==browseKey(detail))].slice(0,30);persist();draw();}else if(b.hasAttribute('data-back')){detail=null;draw();}else if(b.dataset.fav){const id=b.dataset.fav;saved.favorites=favorite(id)?saved.favorites.filter(x=>browseKey(x)!==browseKey(id)):[...saved.favorites,id];persist();draw();}else if(b.hasAttribute('data-menu-back')){q='';favoritesOnly=recentOnly=false;if(tab==='pattern'){if(family!=='all')family='all';else group='all';}else if(tab==='muscle'){if(group!=='all')group='all';else region='all';}else{if(family!=='all')family='all';else cat='all';}page=0;draw();}else if(b.dataset.region){region=b.dataset.region;group='all';q='';page=0;draw();}else if(b.dataset.tab){if(tab==='pathways'&&b.dataset.tab!=='pathways')resetPathOrders();tab=b.dataset.tab;cat=group=family=region='all';q='';favoritesOnly=recentOnly=false;page=0;draw();}else if(b.dataset.cat){cat=b.dataset.cat;family='all';q='';page=0;draw();}else if(b.dataset.group){group=b.dataset.group;family='all';q='';page=0;draw();}else if(b.dataset.family){family=b.dataset.family;q='';page=0;draw();}else if(b.hasAttribute('data-favorites')){favoritesOnly=!favoritesOnly;recentOnly=false;page=0;draw();}else if(b.hasAttribute('data-recent')){recentOnly=!recentOnly;favoritesOnly=false;page=0;draw();}else if(b.dataset.page){page+=Number(b.dataset.page);results();}else if(b.dataset.path){path=b.dataset.path;draw();}else if(b.dataset.addProgram){const e=get(b.dataset.addProgram);const canonical=window.LZIdentity?.resolve(e.id);opts.onAddExercise?.({name:displayName(e),id:canonical?.id||e.id,exerciseId:canonical?.id||e.id,sourceId:e.id});}else if(b.hasAttribute('data-add-personal')){personalDialog();}};
-host.oninput=ev=>{if(ev.target.hasAttribute('data-search')){q=ev.target.value;page=0;if(readyForResults())results();else host.querySelector('[data-results]').innerHTML='';}};
-host.onchange=ev=>{if(ev.target.hasAttribute('data-kind')){kind=ev.target.value;page=0;if(readyForResults())results();else host.querySelector('[data-results]').innerHTML='';}};
+host.onclick=async ev=>{
+ const b=ev.target.closest('button');
+ if(!b||b.disabled)return;
+ if(b.hasAttribute('data-retry-cloud-save')){content.retry().catch(()=>{});return;}
+ if(b.hasAttribute('data-export-cloud-draft')){window.LZCloudContent.download(content);return;}
+ if(b.dataset.open){
+  detail=b.dataset.open;
+  saved.recent=[detail,...saved.recent.filter(id=>browseKey(id)!==browseKey(detail))].slice(0,30);
+  persist();
+  draw();
+  host.querySelector('[data-guide-heading]')?.focus();
+  return;
+ }
+ if(b.hasAttribute('data-back')){
+  const id=detail;
+  detail=null;
+  draw();
+  const prior=[...host.querySelectorAll('[data-open]')].find(card=>card.dataset.open===id);
+  (prior||host.querySelector('[data-browse-heading]'))?.focus();
+  return;
+ }
+ if(b.hasAttribute('data-clear-search')){
+  const search=host.querySelector('[data-search]');
+  q=search.value='';
+  page=0;
+  refreshResults();
+  search.focus();
+  return;
+ }
+ if(b.dataset.page){
+  page+=Number(b.dataset.page);
+  refreshResults();
+  host.querySelector('[data-result-status]')?.focus();
+  return;
+ }
+ if(b.dataset.addProgram){
+  const e=get(b.dataset.addProgram);
+  if(!e||!opts.onAddExercise)return;
+  const id=window.LZIdentity?.resolve(e.id)?.id||e.id;
+  b.disabled=true;
+  try{await opts.onAddExercise({name:displayName(e),id,exerciseId:id,sourceId:e.id});}
+  finally{b.disabled=false;}
+  return;
+ }
+ if(b.hasAttribute('data-add-personal')){personalDialog();return;}
+ if(b.dataset.fav){
+  const id=b.dataset.fav;
+  saved.favorites=favorite(id)?saved.favorites.filter(item=>browseKey(item)!==browseKey(id)):[...saved.favorites,id];
+  persist();
+ }else if(b.hasAttribute('data-menu-back')){
+  q='';favoritesOnly=recentOnly=false;
+  if(tab==='pattern'){if(family!=='all')family='all';else group='all';}
+  else if(tab==='muscle'){if(group!=='all')group='all';else region='all';}
+  else if(family!=='all')family='all';
+  else cat='all';
+ }else if(b.dataset.region){region=b.dataset.region;group='all';q='';}
+ else if(b.dataset.tab){
+  if(tab===b.dataset.tab){
+   if(tab!=='catalog'||!insideCategory())return;
+  }
+  if(tab==='pathways'&&b.dataset.tab!=='pathways')resetPathOrders();
+  tab=b.dataset.tab;cat=group=family=region='all';q='';favoritesOnly=recentOnly=false;
+ }else if(b.dataset.cat){cat=b.dataset.cat;family='all';q='';}
+ else if(b.dataset.group){group=b.dataset.group;family='all';q='';}
+ else if(b.dataset.family){family=b.dataset.family;q='';}
+ else if(b.hasAttribute('data-favorites')){favoritesOnly=!favoritesOnly;recentOnly=false;}
+ else if(b.hasAttribute('data-recent')){recentOnly=!recentOnly;favoritesOnly=false;}
+ else if(b.dataset.path){path=b.dataset.path;}
+ else return;
+ page=0;
+ draw();
+ if(b.hasAttribute('data-recent'))host.querySelector('[data-recent]')?.focus({preventScroll:true});
+ else host.querySelector('[data-browse-heading]')?.focus({preventScroll:true});
+};
+host.oninput=ev=>{
+ if(ev.target.hasAttribute('data-search')){
+  q=ev.target.value;
+  page=0;
+  refreshResults();
+ }
+};
+host.onchange=ev=>{
+ if(ev.target.hasAttribute('data-kind')){
+  kind=ev.target.value;
+  page=0;
+  refreshResults();
+ }
+};
 host.onsubmit=ev=>{if(!ev.target.matches('[data-edit-guide]'))return;ev.preventDefault();const data=new FormData(ev.target),url=data.get('video').trim();if(url&&!safeLink(url)){ev.target.querySelector('[data-save-status]').textContent='Enter a valid HTTP or HTTPS address without a username or password.';return;}saved.edits[detail]={explanation:data.get('explanation').trim(),video:url};ev.target.querySelector('[data-save-status]').dataset.guideSaveStarted='true';persist();paintCloudStatus();};
 function personalDialog(){if(destroyed)return;personalModal?.close();let dialog=document.createElement('dialog');personalModal=dialog;dialog.className='lze-dialog';dialog.innerHTML='<form><h2>Add Personal Exercise</h2><label>Name<input name="name" required maxlength="160"></label><label>Collection<select name="collection">'+categories.filter(c=>c[0]!=='all').map(([id,title])=>'<option value="'+id+'">'+title+'</option>').join('')+'</select></label><label>Explanation<textarea name="explanation" rows="4"></textarea></label><label>Demonstration URL<input name="video" type="url" placeholder="https://"></label><div class="lze-guide-top">'+button('Cancel','data-cancel')+'<button class="lze-button">Save personal exercise</button></div><p role="alert" data-error></p></form>';document.body.append(dialog);dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();dialog.onclose=()=>{if(personalModal===dialog)personalModal=null;dialog.remove();};dialog.querySelector('form').onsubmit=ev=>{ev.preventDefault();if(destroyed)return;const data=new FormData(ev.target),name=data.get('name').trim(),video=data.get('video').trim();if(!name)return;if(video&&!safeLink(video)){dialog.querySelector('[data-error]').textContent='Enter a valid video URL.';return;}const id='personal:'+Date.now()+':'+Math.random().toString(36).slice(2);saved.personal.push({id,name,kind:'exercise',provider:'personal',collection:data.get('collection'),sections:[]});saved.edits[id]={explanation:data.get('explanation').trim(),video};if(persist()){detail=id;dialog.close();draw();}};dialog.showModal();}
-draw();unsubscribe=content.subscribe(state=>{if(state.state==='saved')saved=content.value;paintCloudStatus();});return {refresh:draw,flush:()=>content.flush(),async destroy(options={}){if(destroyed)return;destroyed=true;lifecycle.abort();releaseSignal();unsubscribe();personalModal?.close();personalModal=null;host.onclick=host.oninput=host.onchange=host.onsubmit=host.onpointerdown=host.onpointermove=host.onpointerup=host.onpointercancel=host.onkeydown=null;resetPathOrders();try{await content.close(options);}finally{host.innerHTML='';}}};
+draw();unsubscribe=content.subscribe(state=>{if(state.state==='saved')saved=content.value;paintCloudStatus();});return {refresh:draw,flush:()=>content.flush(),async destroy(options={}){if(destroyed)return;destroyed=true;lifecycle.abort();releaseSignal();unsubscribe();personalModal?.close();personalModal=null;host.onclick=host.oninput=host.onchange=host.onsubmit=host.onpointerdown=host.onpointermove=host.onpointerup=host.onpointercancel=host.onlostpointercapture=host.onkeydown=null;resetPathOrders();try{await content.close(options);}finally{host.innerHTML='';}}};
 }
 window.LZExercises={mount,categories,baseRecords:()=>base,refreshBase(){base=makeRecords();},classify,memberships,mobilityRegions,mobilityRegionsFor,paths:pathData};
 })();

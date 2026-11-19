@@ -93,12 +93,22 @@ window.LZAnatomyRuntime={mount(host,opts={}){
   viewer=window.createAnatomyViewer(q('#azc-stage'));
   const state={movement:'lunge',amount:.45,mode:'chain',scenario:'a',frontHipHike:false,side:'right',labels:false,ghost:false,minimal:true,skin:'johnny'};
   let playing=false,frame=0,last=0,direction=1,destroyed=false,skinSex='male',skinSceneError=null;
+  let lastSkinProblem=null;
   function listen(el,type,fn,options){el.addEventListener(type,fn,options);listeners.push(()=>el.removeEventListener(type,fn,options));}
   function activeSkinViewers(){return tensionActive?(tension?[tension]:[]):comparisonActive?comparisonViewers.map(x=>x.viewer):viewer?[viewer]:[];}
   function refreshSkinUI(){
     if(destroyed)return;
-    const results=activeSkinViewers().map(v=>v.getSkinState?.()||{requested:state.skin,active:'johnny',status:'unavailable',error:'Human skins need WebGL. Johnny remains available in this browser.'});
-    const problem=skinSceneError?{status:'unavailable',error:skinSceneError}:results.find(v=>v.status==='error'||v.status==='unavailable');
+    const viewers=activeSkinViewers();
+    const results=viewers.map(v=>v.getSkinState?.()||{requested:state.skin,active:'johnny',status:'unavailable',error:'Human skins need WebGL. Johnny remains available in this browser.'});
+    const failure=results.find(v=>v.requested===state.skin&&(v.status==='unavailable'||v.status==='error'));
+    if(state.skin!=='johnny'&&failure){
+      lastSkinProblem={status:failure.status,error:failure.error};
+      state.skin='johnny';
+      for(const model of viewers)model.setSkin?.('johnny');
+      refreshSkinUI();
+      return;
+    }
+    const problem=skinSceneError?{status:'unavailable',error:skinSceneError}:lastSkinProblem;
     const loading=state.skin!=='johnny'&&(!results.length||results.some(v=>v.requested!==state.skin||v.status==='loading')||(comparisonActive&&results.length<3));
     const human=state.skin!=='johnny';
     q('#azc-skin-toggle').setAttribute('aria-pressed',String(human));q('#azc-skin-sex-field').hidden=!human;q('#azc-skin-sex').value=skinSex;
@@ -108,7 +118,7 @@ window.LZAnatomyRuntime={mount(host,opts={}){
   }
   function skinCallback(){Promise.resolve().then(refreshSkinUI);}
   function applySkin(model){Promise.resolve(model.setSkin?.(state.skin)).then(refreshSkinUI);refreshSkinUI();}
-  function setSkin(type){state.skin=['male','female'].includes(type)?type:'johnny';if(state.skin!=='johnny')skinSex=state.skin;for(const model of activeSkinViewers())applySkin(model);refreshSkinUI();}
+  function setSkin(type){lastSkinProblem=null;state.skin=['male','female'].includes(type)?type:'johnny';if(state.skin!=='johnny')skinSex=state.skin;for(const model of activeSkinViewers())applySkin(model);refreshSkinUI();}
   const comparison=()=>state.movement==='squatcom';
   const applied=()=>Boolean(exercises[state.movement]);
   const wholeChainOnly=()=>Boolean(exercises[state.movement]?.wholeChainOnly);
@@ -200,7 +210,7 @@ window.LZAnatomyRuntime={mount(host,opts={}){
   function tick(now){if(!playing||destroyed)return;if(comparison()&&last&&comparisonViewers.some(item=>item.viewer.isFallback)&&now-last<110){frame=requestAnimationFrame(tick);return;}const dt=last?Math.min((now-last)/1000,comparison()?.25:.06):0;last=now;state.amount+=direction*dt*(applied()?.20:.28);const minimum=applied()?0:-1;if(state.amount>=1){state.amount=1;direction=-1;}else if(state.amount<=minimum){state.amount=minimum;direction=1;}render();frame=requestAnimationFrame(tick);}
   function setAmount(value){direction=value<state.amount?-1:1;pause();state.amount=Math.max(applied()?0:-1,Math.min(1,value));render();}
   function defaultView(){if(applied())return exercises[state.movement].view;return ['tilt','ribshift'].includes(state.movement)?'side':state.movement==='scapula'?'back':state.movement==='foot'?(state.mode==='chain'?'front':'oblique'):'front';}
-  function selectMovement(value){skinSceneError=null;if(value==='tension'){openTension();return;}if(!anatomy[value]&&!exercises[value])return;leaveTension();pause();direction=1;state.frontHipHike=false;state.movement=value;state.amount=comparison()?1:applied()?.12:.55;if(applied()){state.mode='chain';state.scenario=wholeChainOnly()||['pullup','dips'].includes(state.movement)?'b':'a';state.ghost=false;q('#azc-ghost').checked=false;}q('#azc-body-movement').value=applied()?'':value;q('#azc-exercise').value=applied()?value:'';const view=defaultView();q('#azc-camera').value=view;render();setCamera(view);}
+  function selectMovement(value){skinSceneError=null;lastSkinProblem=null;if(value==='tension'){openTension();return;}if(!anatomy[value]&&!exercises[value])return;leaveTension();pause();direction=1;state.frontHipHike=false;state.movement=value;state.amount=comparison()?1:applied()?.12:.55;if(applied()){state.mode='chain';state.scenario=wholeChainOnly()||['pullup','dips'].includes(state.movement)?'b':'a';state.ghost=false;q('#azc-ghost').checked=false;}q('#azc-body-movement').value=applied()?'':value;q('#azc-exercise').value=applied()?value:'';const view=defaultView();q('#azc-camera').value=view;render();setCamera(view);}
   listen(q('#azc-skin-toggle'),'click',()=>setSkin(state.skin==='johnny'?skinSex:'johnny'));
   listen(q('#azc-skin-sex'),'change',e=>setSkin(e.target.value));
   listen(q('#azc-body-movement'),'change',e=>selectMovement(e.target.value));listen(q('#azc-exercise'),'change',e=>selectMovement(e.target.value));

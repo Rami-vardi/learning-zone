@@ -19,67 +19,196 @@ function load(url){
 }
 function adapter(gltf,rest,type){
  const group=gltf.scene;group.name='Johnny '+type+' skin';group.updateMatrixWorld(true);
- const meshes=[],bones=new Map(),source=new Map(),restTarget=new Map(),originalLocal=new Map();
+ const meshes=[],bones=new Map(),source=new Map(),originalLocal=new Map();
  group.traverse(o=>{if(o.isSkinnedMesh){meshes.push(o);o.frustumCulled=false;}if(o.isBone){bones.set(o.name,o);source.set(o.name,o.matrixWorld.clone());originalLocal.set(o.name,o.matrix.clone());}});
  if(!meshes.length)throw Error('The human model has no weighted surface.');
  for(const name of ['pelvis','spine_01','spine_02','spine_03','neck_01','head','upperarm_l','lowerarm_l','hand_l','thigh_l','calf_l','foot_l','ball_l','upperarm_r','lowerarm_r','hand_r','thigh_r','calf_r','foot_r','ball_r'])if(!bones.has(name))throw Error('Missing human joint '+name);
- const sourcePos=name=>pos(source.get(name)),node=(p,n)=>M(p.nodes[n].matrix),np=(p,n,v)=>new T.Vector3(...v).applyMatrix4(node(p,n));
+ const sourcePos=name=>pos(source.get(name)),node=(p,n)=>M(p.nodes[n].matrix);
  const sourceBounds=new T.Box3().setFromObject(group);
- const sourceScale=(np(rest,'head',[0,.50,0]).y-.08)/sourceBounds.getSize(new T.Vector3()).y;
- const defs={pelvis:{a:p=>pos(node(p,'pelvis')),b:p=>pos(node(p,'spine_0')),next:'spine_01',frame:'pelvis'},
-  spine_01:{a:p=>pos(node(p,'spine_0')),b:p=>pos(node(p,'spine_5')),next:'spine_02',frame:'spine_0'},
-  spine_02:{a:p=>pos(node(p,'spine_5')),b:p=>pos(node(p,'spine_9')),next:'spine_03',frame:'spine_5'},
-  spine_03:{a:p=>pos(node(p,'spine_9')),b:p=>np(p,'head',[0,-.40,0]),next:'neck_01',frame:'torso'},
-  neck_01:{a:p=>np(p,'head',[0,-.40,0]),b:p=>np(p,'head',[0,-.15,0]),next:'head',frame:'head'},
-  head:{a:p=>np(p,'head',[0,-.15,0]),b:p=>np(p,'head',[0,.40,0]),frame:'head'}};
- for(const key of ['l','r']){
-  const a=(p,n)=>V(p.limb[key][n]);
-  defs['clavicle_'+key]={a:p=>np(p,'torso',[0,1,.18]),b:p=>a(p,'shoulder'),next:'upperarm_'+key,frame:'torso'};
-  defs['upperarm_'+key]={a:p=>a(p,'shoulder'),b:p=>a(p,'elbow'),next:'lowerarm_'+key};
-  defs['lowerarm_'+key]={a:p=>a(p,'elbow'),b:p=>a(p,'wrist'),next:'hand_'+key};
-  defs['hand_'+key]={a:p=>a(p,'wrist'),b:p=>a(p,'handEnd')};
-  defs['thigh_'+key]={a:p=>a(p,'hip'),b:p=>a(p,'knee'),next:'calf_'+key,frame:'femur_'+key};
-  defs['calf_'+key]={a:p=>a(p,'knee'),b:p=>a(p,'ankle'),next:'foot_'+key,frame:'shin_'+key};
-  defs['foot_'+key]={a:p=>a(p,'ankle'),b:p=>a(p,'footEnd'),next:'ball_'+key,frame:'foot_'+key};
-  defs['ball_'+key]={a:p=>a(p,'footEnd'),b:p=>np(p,'foot_'+key,[0,-.045,.60]),frame:'foot_'+key};
+ const restTop=new T.Vector3(0,.5,0).applyMatrix4(node(rest,'head')).y;
+ const sourceScale=(restTop-.08)/sourceBounds.getSize(new T.Vector3()).y;
+ const sourceHip=sourcePos('thigh_l').lerp(sourcePos('thigh_r'),.5);
+ const uniform=new T.Vector3(sourceScale,sourceScale,sourceScale);
+ const unitY=new T.Vector3(0,1,0);
+ const sourceRot=new Map(),restRot=new Map(),inverseSource=new Map();
+ for(const [key,mat] of source){sourceRot.set(key,new T.Quaternion().setFromRotationMatrix(new T.Matrix4().extractRotation(mat)));inverseSource.set(key,mat.clone().invert());}
+ for(const key of ['pelvis','spine_0','spine_5','spine_9','torso','head','foot_l','foot_r','femur_l','femur_r','shin_l','shin_r']){
+  restRot.set(key,new T.Quaternion().setFromRotationMatrix(new T.Matrix4().extractRotation(node(rest,key))).invert());
  }
+ const graspScenes=new Set(['rdl','squat','press','row','pullup','dips','bench','cgoblet','cheels','csafety','tension_deadlift','tension_swing']);
+ const floorHandScenes=new Set(['pushup','tension_pushup','tension_cat']);
  const palmFits={};
- for(const key of ['l','r']){const wrist=sourcePos('hand_'+key),center=new T.Vector3();for(const finger of ['index','middle','pinky'])center.add(sourcePos(finger+'_01_'+key));center.divideScalar(3);
-  const direction=center.clone().sub(wrist),Y=direction.clone().normalize(),X=sourcePos('index_01_'+key).sub(sourcePos('pinky_01_'+key));X.addScaledVector(Y,-X.dot(Y)).normalize();
-  palmFits[key]={wrist,length:direction.length(),basis:new T.Matrix4().makeBasis(X,Y,new T.Vector3().crossVectors(X,Y).normalize())};
+ for(const key of ['l','r']){
+  const wrist=sourcePos('hand_'+key),center=new T.Vector3();
+  for(const finger of ['index','middle','pinky'])center.add(sourcePos(finger+'_01_'+key));
+  center.divideScalar(3);
+  const direction=center.clone().sub(wrist),Y=direction.clone().normalize(),X=sourcePos('index_01_'+key).sub(sourcePos('pinky_01_'+key));
+  X.addScaledVector(Y,-X.dot(Y)).normalize();
+  palmFits[key]={wrist,length:direction.length(),direction,basis:new T.Matrix4().makeBasis(X,Y,new T.Vector3().crossVectors(X,Y).normalize())};
  }
- function palmTarget(p,key){const l=p.limb[key],W=V(l.wrist);return l.grip?V(l.grip):W.clone().lerp(V(l.handEnd),.60);}
- function handFit(p,key){const fit=palmFits[key],W=V(p.limb[key].wrist),G=palmTarget(p,key),Y=G.clone().sub(W).normalize(),frame=M(p.limb[key].handFrame),X=new T.Vector3(1,0,0).transformDirection(frame).multiplyScalar(key==='l'?-1:1);X.addScaledVector(Y,-X.dot(Y)).normalize();
-  const basis=new T.Matrix4().makeBasis(X,Y,new T.Vector3().crossVectors(X,Y).normalize()),scale=new T.Matrix4().makeScale(sourceScale,W.distanceTo(G)/fit.length,sourceScale);
-  return new T.Matrix4().makeTranslation(W.x,W.y,W.z).multiply(basis).multiply(scale).multiply(fit.basis.clone().transpose()).multiply(new T.Matrix4().makeTranslation(-fit.wrist.x,-fit.wrist.y,-fit.wrist.z)).multiply(source.get('hand_'+key));
+ function palmTarget(p,key){const l=p.limb[key],W=V(l.wrist);return l.grip?V(l.grip):W.clone().lerp(V(l.handEnd),.6);}
+ function gripTarget(p,key,wrist){
+  if(p.movement!=='press')return palmTarget(p,key);
+  const direction=palmTarget(p,key).sub(V(p.limb[key].wrist)).normalize();
+  return wrist.clone().addScaledVector(direction,palmFits[key].length*sourceScale);
  }
- // Capture a fitted rest skeleton once. Animation always uses Johnny's targets.
- for(const [name,d] of Object.entries(defs)){
-  const original=source.get(name),a=sourcePos(name),b=d.next?sourcePos(d.next):a.clone().add(new T.Vector3(0,1,0).transformDirection(original).multiplyScalar(name==='head'?.13:name.startsWith('hand')?.09:.035));
-  const A=d.a(rest),B=d.b(rest),q=new T.Quaternion(),sc=new T.Vector3();original.decompose(new T.Vector3(),q,sc);
-  const rotation=new T.Quaternion().setFromUnitVectors(b.clone().sub(a).normalize(),B.clone().sub(A).normalize()).multiply(q);
-  const scale=new T.Vector3(sourceScale,A.distanceTo(B)/Math.max(.001,a.distanceTo(b)),sourceScale);
-  restTarget.set(name,new T.Matrix4().compose(A,rotation,scale));
-  d.restDirection=B.clone().sub(A).normalize();d.restFrame=d.frame?node(rest,d.frame):null;
+ function handFit(p,key,wrist){
+  const fit=palmFits[key],target=gripTarget(p,key,wrist),Y=target.clone().sub(wrist).normalize();
+  const X=new T.Vector3(1,0,0);
+  if(p.movement!=='press')X.transformDirection(M(p.limb[key].handFrame));
+  X.multiplyScalar(key==='l'?-1:1);X.addScaledVector(Y,-X.dot(Y)).normalize();
+  const basis=new T.Matrix4().makeBasis(X,Y,new T.Vector3().crossVectors(X,Y).normalize()),scale=new T.Matrix4().makeScale(sourceScale,wrist.distanceTo(target)/fit.length,sourceScale);
+  return new T.Matrix4().makeTranslation(wrist.x,wrist.y,wrist.z).multiply(basis).multiply(scale).multiply(fit.basis.clone().transpose()).multiply(new T.Matrix4().makeTranslation(-fit.wrist.x,-fit.wrist.y,-fit.wrist.z)).multiply(source.get('hand_'+key));
+ }
+ function rotationDelta(p,key){
+  const current=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().extractRotation(node(p,key)));
+  return current.multiply(restRot.get(key));
+ }
+ // Map the authored bone axis to the solved segment. Bone-local +Y is not the
+ // joint-to-joint axis for all bind matrices in these exported human rigs.
+ function aimedBone(name,sourceEnd,start,end,frame){
+  const original=sourcePos(name),sourceVector=sourceEnd.clone().sub(original),direction=end.clone().sub(start);
+  const length=direction.length(),restLength=sourceVector.length();
+  if(length<1e-6||restLength<1e-6)return new T.Matrix4().compose(start,frame.clone().multiply(sourceRot.get(name)),uniform);
+  sourceVector.divideScalar(restLength);direction.divideScalar(length);
+  const swing=new T.Quaternion().setFromUnitVectors(sourceVector.clone().applyQuaternion(frame),direction).multiply(frame);
+  const fromAxis=new T.Quaternion().setFromUnitVectors(unitY,sourceVector);
+  return new T.Matrix4().makeTranslation(start.x,start.y,start.z)
+   .multiply(new T.Matrix4().makeRotationFromQuaternion(swing))
+   .multiply(new T.Matrix4().makeRotationFromQuaternion(fromAxis))
+   .multiply(new T.Matrix4().makeScale(sourceScale,length/restLength,sourceScale))
+   .multiply(new T.Matrix4().makeRotationFromQuaternion(fromAxis.invert()))
+   .multiply(new T.Matrix4().makeTranslation(-original.x,-original.y,-original.z)).multiply(source.get(name));
+ }
+ // Position a knee or elbow with the source limb lengths, using Johnny's
+ // articulating joint as the bend pole. This keeps both soft-tissue segments
+ // connected to the prescribed ankle, palm or grip at every phase.
+ function jointBetween(base,end,pole,upper,lower,fallback){
+  const axis=end.clone().sub(base),length=Math.max(axis.length(),1e-6);axis.divideScalar(length);
+  if(length>upper+lower){const stretch=length/(upper+lower);upper*=stretch;lower*=stretch;}
+  const along=clamp((upper*upper-lower*lower+length*length)/(2*length),-upper,upper);
+  const offset=pole.clone().sub(base);offset.addScaledVector(axis,-offset.dot(axis));
+  if(offset.lengthSq()<1e-8){offset.copy(fallback);offset.addScaledVector(axis,-offset.dot(axis));}
+  return base.clone().addScaledVector(axis,along).addScaledVector(offset.normalize(),Math.sqrt(Math.max(0,upper*upper-along*along)));
+ }
+ // A planted human foot has a deeper sole than the skeleton's landmark.
+ // Cache its anatomical support points once and move the ankle as a whole.
+ const feet={};
+ for(const key of ['l','r']){
+  const foot='foot_'+key,ball='ball_'+key,ankle=sourcePos(foot),forefoot=sourcePos(ball);
+  const points=[],seen=new Set();
+  for(const mesh of meshes){
+   const {position,skinWeight,skinIndex}=mesh.geometry.attributes;
+   for(let i=0;i<position.count;i++){
+    let footWeight=0,toeWeight=0;
+    for(let j=0;j<4;j++){
+     const name=mesh.skeleton.bones[skinIndex.getComponent(i,j)].name,weight=skinWeight.getComponent(i,j);
+     if(name===foot)footWeight+=weight;
+     if(name===ball)toeWeight+=weight;
+    }
+    if(footWeight+toeWeight<.55)continue;
+    const point=new T.Vector3().fromBufferAttribute(position,i).applyMatrix4(mesh.bindMatrix);
+    const id=point.toArray().join(',');if(seen.has(id))continue;seen.add(id);
+    points.push({offset:point.clone().sub(ankle).multiplyScalar(sourceScale),toeOffset:point.sub(forefoot).multiplyScalar(sourceScale),toeWeight:toeWeight/(footWeight+toeWeight)});
+   }
+  }
+  feet[key]={points,ballOffset:forefoot.sub(ankle).multiplyScalar(sourceScale)};
+ }
+ function fitFoot(pose,key,ankle,frame){
+  const {points,ballOffset}=feet[key],minimum=pose.limb[key].footMinimum;
+  const toeFrame=frame.clone();
+  // The toes of the rear foot stay in contact as the heel rises in a lunge.
+  // The ball is their pivot. The human rig provides an independent toe joint.
+  if(pose.movement==='lunge'&&key==='l'){
+   const forward=new T.Vector3(0,0,1).applyQuaternion(frame);
+   const pitch=Math.asin(clamp(-forward.y,-1,1));
+   toeFrame.multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),-clamp(pitch,0,1)));
+  }
+  const ball=ballOffset.clone().applyQuaternion(frame),p=new T.Vector3(),t=new T.Vector3();
+  let sole=Infinity;
+  for(const {offset,toeOffset,toeWeight} of points){
+   const y=p.copy(offset).applyQuaternion(frame).y;
+   const toeY=t.copy(toeOffset).applyQuaternion(toeFrame).y+ball.y;
+   sole=Math.min(sole,y+(toeY-y)*toeWeight);
+  }
+  if(Number.isFinite(sole)&&Number.isFinite(minimum))ankle.y=minimum-sole;
+  return toeFrame;
  }
  function targets(pose){
-  const out=new Map();
-  for(const [name,d] of Object.entries(defs)){
-   if(name.startsWith('hand_')&&graspScenes.has(pose.movement)){out.set(name,handFit(pose,name.slice(-1)));continue;}
-   const A=d.a(pose),B=d.b(pose),r=restTarget.get(name),q=new T.Quaternion(),scale=new T.Vector3();r.decompose(new T.Vector3(),q,scale);
-   if(d.frame){const rq=new T.Quaternion(),cq=new T.Quaternion();d.restFrame.decompose(new T.Vector3(),rq,new T.Vector3());node(pose,d.frame).decompose(new T.Vector3(),cq,new T.Vector3());q.premultiply(cq.multiply(rq.invert()));}
-   else q.premultiply(new T.Quaternion().setFromUnitVectors(d.restDirection,B.clone().sub(A).normalize()));
-   // Preserve the frame's twist while aligning the surface bone to the exact
-   // solved endpoints, including body scenes with independently positioned knees.
-   const axis=new T.Vector3(0,1,0).applyQuaternion(q),direction=B.clone().sub(A).normalize();
-   q.premultiply(new T.Quaternion().setFromUnitVectors(axis.normalize(),direction));
-   // Length changes come from the existing solved segment, including its scale.
-   scale.y*=A.distanceTo(B)/Math.max(.0001,d.a(rest).distanceTo(d.b(rest)));
-   out.set(name,new T.Matrix4().compose(A,q,scale));
+  const out=new Map(),pelvisFrame=rotationDelta(pose,'pelvis'),torsoFrame=rotationDelta(pose,'torso');
+  const hipMid=V(pose.limb.l.hip).lerp(V(pose.limb.r.hip),.5);
+  const pelvisPos=sourcePos('pelvis').sub(sourceHip).multiplyScalar(sourceScale).applyQuaternion(pelvisFrame).add(hipMid);
+  function setRigid(name,location,frame){out.set(name,new T.Matrix4().compose(location,frame.clone().multiply(sourceRot.get(name)),uniform));}
+  function onParent(name,parent){return sourcePos(name).applyMatrix4(inverseSource.get(parent)).applyMatrix4(out.get(parent));}
+  setRigid('pelvis',pelvisPos,pelvisFrame);
+  // Keep the model's authored lumbar, thoracic, neck and clavicle lengths.
+  // Independent stretching of these short joints creates pinches in the
+  // waist. Johnny supplies rotations, while the human hierarchy supplies shape.
+  for(const [name,parent,driver] of [['spine_01','pelvis','spine_0'],['spine_02','spine_01','spine_5'],['spine_03','spine_02','torso'],['neck_01','spine_03','torso'],['head','neck_01','head']]){
+   setRigid(name,onParent(name,parent),rotationDelta(pose,driver));
+  }
+  for(const key of ['l','r']){
+   const side=key==='l'?1:-1,l=pose.limb[key];
+   const thigh='thigh_'+key,calf='calf_'+key,foot='foot_'+key,ball='ball_'+key;
+   const hip=onParent(thigh,'pelvis'),ankle=V(l.ankle);
+   const footFrame=rotationDelta(pose,foot),toeFrame=fitFoot(pose,key,ankle,footFrame);
+   // Keep the demonstration's knee trajectory while accounting for the
+   // human pelvis width and sole thickness at its two anchoring joints.
+   const knee=V(l.knee).addScaledVector(hip.clone().sub(V(l.hip)),.5).addScaledVector(ankle.clone().sub(V(l.ankle)),.5);
+   out.set(thigh,aimedBone(thigh,sourcePos(calf),hip,knee,rotationDelta(pose,'femur_'+key)));
+   out.set(calf,aimedBone(calf,sourcePos(foot),knee,ankle,rotationDelta(pose,'shin_'+key)));
+   setRigid(foot,ankle,footFrame);setRigid(ball,onParent(ball,foot),toeFrame);
+   const clavicle='clavicle_'+key,upper='upperarm_'+key,fore='lowerarm_'+key,hand='hand_'+key;
+   const clav=onParent(clavicle,'spine_03');
+   const shoulder=onParent(upper,'spine_03');
+   const restShoulder=V(rest.limb[key].shoulder).applyMatrix4(node(rest,'torso').invert()).applyMatrix4(node(pose,'torso'));
+   const shoulderTravel=V(l.shoulder).sub(restShoulder);
+   if(shoulderTravel.length()>.25)shoulderTravel.setLength(.25);
+   shoulder.add(shoulderTravel);
+   if(pose.movement==='press'){
+    const up=new T.Vector3(0,1,0).applyQuaternion(torsoFrame);
+    const elevation=V(l.elbow).sub(V(l.shoulder)).normalize().dot(up);
+    shoulder.addScaledVector(up,.22*clamp((elevation+.35)/1.35,0,1));
+   }
+   out.set(clavicle,aimedBone(clavicle,sourcePos(upper),clav,shoulder,torsoFrame));
+   const upperLength=sourcePos(upper).distanceTo(sourcePos(fore))*sourceScale,foreLength=sourcePos(fore).distanceTo(sourcePos(hand))*sourceScale;
+   const fixedHands=graspScenes.has(pose.movement)||floorHandScenes.has(pose.movement);
+   let wrist,elbow;
+   if(fixedHands&&pose.movement!=='press'){
+    wrist=V(l.wrist);elbow=jointBetween(shoulder,wrist,V(l.elbow),upperLength,foreLength,new T.Vector3(side,0,-.4).applyQuaternion(torsoFrame));
+   }else{
+    const upperDir=V(l.elbow).sub(V(l.shoulder)).normalize(),foreDir=V(l.wrist).sub(V(l.elbow)).normalize();
+    if(pose.movement==='lunge'){
+     // Unloaded arms follow gravity with a soft elbow and a little clearance
+     // from the hips, rather than duplicating Johnny's straight schematic rods.
+     const rearLoad=clamp(-hipMid.z/.30,0,1);
+     const clearance=key==='r'?1:rearLoad;
+     upperDir.set(side*(.15+.13*clearance),-.974,-.11).normalize();
+     foreDir.set(side*(.08+.17*clearance),-.951,.275).normalize();
+    }
+    elbow=shoulder.clone().addScaledVector(upperDir,upperLength);
+    wrist=elbow.clone().addScaledVector(foreDir,foreLength);
+   }
+   out.set(upper,aimedBone(upper,sourcePos(fore),shoulder,elbow,torsoFrame));
+   out.set(fore,aimedBone(fore,sourcePos(hand),elbow,wrist,torsoFrame));
+   if(graspScenes.has(pose.movement))out.set(hand,handFit(pose,key,wrist));
+   else if(pose.movement==='lunge'){
+    // With the arms hanging, the palms face the thighs and thumbs point
+    // forward. Matching the width axis keeps fingers clear of the shorts.
+    const Y=wrist.clone().sub(elbow).normalize(),X=new T.Vector3(0,0,1);
+    X.addScaledVector(Y,-X.dot(Y)).normalize();
+    const basis=new T.Matrix4().makeBasis(X,Y,new T.Vector3().crossVectors(X,Y).normalize());
+    const fit=palmFits[key];
+    out.set(hand,new T.Matrix4().makeTranslation(wrist.x,wrist.y,wrist.z).multiply(basis)
+     .multiply(new T.Matrix4().makeScale(sourceScale,sourceScale,sourceScale)).multiply(fit.basis.clone().transpose())
+     .multiply(new T.Matrix4().makeTranslation(-fit.wrist.x,-fit.wrist.y,-fit.wrist.z)).multiply(source.get(hand)));
+   }else{
+    const end=wrist.clone().addScaledVector(fixedHands?V(l.handEnd).sub(V(l.wrist)).normalize():wrist.clone().sub(elbow).normalize(),palmFits[key].length*sourceScale);
+    out.set(hand,aimedBone(hand,palmFits[key].wrist.clone().add(palmFits[key].direction),wrist,end,torsoFrame));
+   }
   }
   return out;
  }
- const graspScenes=new Set(['rdl','squat','press','row','pullup','dips','bench','cgoblet','cheels','csafety','tension_deadlift','tension_swing']);
  const fingerCurl=[];
  for(const key of ['l','r']){const index=source.get('index_01_'+key),pinky=source.get('pinky_01_'+key);if(!index||!pinky)continue;const across=pos(pinky).sub(pos(index)).normalize().multiplyScalar(key==='l'?1:-1);
   for(const [name,bone] of bones){const match=name.match(/^(thumb|index|middle|ring|pinky)_0([123])_([lr])$/);if(!match||match[3]!==key)continue;const q=new T.Quaternion();source.get(name).decompose(new T.Vector3(),q,new T.Vector3());fingerCurl.push({bone,axis:across.clone().applyQuaternion(q.invert()),angle:match[1]==='thumb'?[.30,.58,.38][Number(match[2])-1]:[.48,.91,.72][Number(match[2])-1]});}
@@ -105,17 +234,6 @@ function adapter(gltf,rest,type){
   const skeleton=new T.Skeleton(old.bones,old.bones.map(b=>b.matrixWorld.clone().invert()));mesh.bind(skeleton,new T.Matrix4());
   geometry.computeVertexNormals();mesh.userData.azIndexCache=new Map();mesh.userData.azFullIndex=geometry.index?Array.from(geometry.index.array):Array.from({length:attr.count},(_,i)=>i);
  }
- // Fit the bare-foot envelope to the actual Johnny contact geometry before
- // assigning the detailed anatomical weights. No pose or contact solver changes.
- const footBoxes={l:new T.Box3(),r:new T.Box3()},footVertices=[];
- for(const mesh of meshes){const a=mesh.geometry.attributes.position,si=mesh.geometry.attributes.skinIndex,sw=mesh.geometry.attributes.skinWeight;
-  for(let i=0;i<a.count;i++){let footWeight={l:0,r:0};for(let j=0;j<4;j++){const name=mesh.skeleton.bones[si.getComponent(i,j)].name;if(/^(foot|ball)_[lr]$/.test(name))footWeight[name.slice(-1)]+=sw.getComponent(i,j);}
-   const key=footWeight.l>footWeight.r?'l':'r';if(footWeight[key]>.5){const p=new T.Vector3().fromBufferAttribute(a,i);footBoxes[key].expandByPoint(p);footVertices.push({mesh,i,key,p});}}
- }
- for(const v of footVertices){const src=footBoxes[v.key],target=rest.nodes['foot_'+v.key].bounds,lo=V(target.min),hi=V(target.max);hi.y+=.012;lo.x-=.018;hi.x+=.018;lo.z-=.012;hi.z+=.012;
-  const size=src.getSize(new T.Vector3()),q=v.p.clone().sub(src.min).divide(size).multiply(hi.sub(lo)).add(lo);v.mesh.geometry.attributes.position.setXYZ(v.i,q.x,q.y,q.z);
- }
- for(const mesh of meshes)mesh.geometry.computeVertexNormals();
  const contacts={foot_l:[],foot_r:[],hand_l:[],hand_r:[]};
  const extras=[],counts={foot:0,rib:0,scapula:0,spine:0},samples={foot:[],rib:[],scapula:[],spine:[]};
  const extraKeys=Object.keys(rest.nodes).filter(k=>/^foot_[lr]_\d+$/.test(k)||/^rib_\d+$/.test(k)||/^scap_[lr]$/.test(k)||/^spine_\d+$/.test(k));
@@ -142,13 +260,13 @@ function adapter(gltf,rest,type){
     const key=dominant.slice(-1),keys=extraKeys.filter(n=>n.startsWith('foot_'+key+'_'));
     // Every tarsal, metatarsal and phalanx receives nearby surface vertices.
     const local=p.clone().applyMatrix4(node(rest,'foot_'+key).invert());
-    const candidates=nearest(keys,p,3);add=candidates.map(v=>({index:extraIndex.get(v.key),w:1/Math.pow(.025+v.d,3)}));blend=clamp((.22-local.y)/.18,.12,1);kind='foot';
+    const candidates=nearest(keys,p,3);add=candidates.map(v=>({index:extraIndex.get(v.key),w:1/Math.pow(.025+v.d,3)}));blend=.12*clamp((.22-local.y)/.18,0,1);kind='foot';
    }else if(dominant==='torso'){
     const local=p.clone().applyMatrix4(node(rest,'torso').invert());
     const scapKey='scap_'+(p.x>=0?'l':'r'),scapDist=Math.hypot(Math.abs(local.x)-.64,(local.y-.53)*.85,(local.z+.36)*1.4);
-    if(local.z<-.13&&scapDist<.61){add=[{index:extraIndex.get(scapKey),w:1}];blend=.72*Math.pow(1-scapDist/.61,.6);kind='scapula';}
-    else if(local.y>-.58&&local.y<1.14&&Math.abs(local.x)>.12){const side=p.x>=0?1:0,keys=extraKeys.filter(k=>/^rib_\d+$/.test(k)&&Number(k.slice(4))%2===side);add=nearest(keys,p,2).map(v=>({index:extraIndex.get(v.key),w:1/(.06+v.d)**3}));blend=.85;kind='rib';}
-    else {add=nearest(extraKeys.filter(k=>k.startsWith('spine_')),p,2).map(v=>({index:extraIndex.get(v.key),w:1/(.08+v.d)**3}));blend=.72;kind='spine';}
+    if(local.z<-.13&&scapDist<.61){add=[{index:extraIndex.get(scapKey),w:1}];blend=.15*Math.pow(1-scapDist/.61,.6);kind='scapula';}
+    else if(local.y>-.58&&local.y<1.14&&Math.abs(local.x)>.12){const side=p.x>=0?1:0,keys=extraKeys.filter(k=>/^rib_\d+$/.test(k)&&Number(k.slice(4))%2===side);add=nearest(keys,p,2).map(v=>({index:extraIndex.get(v.key),w:1/(.06+v.d)**3}));blend=.10;kind='rib';}
+    else {add=nearest(extraKeys.filter(k=>k.startsWith('spine_')),p,2).map(v=>({index:extraIndex.get(v.key),w:1/(.08+v.d)**3}));blend=.08;kind='spine';}
    }
    const total=add.reduce((s,x)=>s+x.w,0);const merged=base.map(x=>({index:x.index,w:x.w*(1-blend)})).concat(add.map(x=>({index:x.index,w:blend*x.w/total}))).sort((x,y)=>y.w-x.w).slice(0,4),sum=merged.reduce((s,x)=>s+x.w,0);
    for(let j=0;j<4;j++){indices.push(merged[j]?.index||0);weights.push((merged[j]?.w||0)/sum);}
@@ -202,13 +320,16 @@ function adapter(gltf,rest,type){
  }
  function vertex(mesh,index){const v=new T.Vector3().fromBufferAttribute(mesh.geometry.attributes.position,index);mesh.applyBoneTransform(index,v);return v.applyMatrix4(mesh.matrixWorld).toArray();}
  function debug(){
-  const bindings=[];for(const [name,d] of Object.entries(defs)){const b=bones.get(name),expected=d.a(latest),actual=b.getWorldPosition(new T.Vector3());bindings.push({name,expected:expected.toArray(),actual:actual.toArray(),error:actual.distanceTo(expected)});}
-  const palms=(graspScenes.has(latest.movement)?['l','r']:[]).map(key=>{const actual=new T.Vector3();for(const finger of ['index','middle','pinky'])actual.add(bones.get(finger+'_01_'+key).getWorldPosition(new T.Vector3()));actual.divideScalar(3);const expected=palmTarget(latest,key);return {side:key,actual:actual.toArray(),expected:expected.toArray(),error:actual.distanceTo(expected)};});
+  const bindings=[];for(const [name,matrix] of targets(latest)){const b=bones.get(name),expected=pos(matrix),actual=b.getWorldPosition(new T.Vector3());bindings.push({name,expected:expected.toArray(),actual:actual.toArray(),error:actual.distanceTo(expected)});}
+  const palms=(graspScenes.has(latest.movement)?['l','r']:[]).map(key=>{const actual=new T.Vector3();for(const finger of ['index','middle','pinky'])actual.add(bones.get(finger+'_01_'+key).getWorldPosition(new T.Vector3()));actual.divideScalar(3);const expected=gripTarget(latest,key,bones.get('hand_'+key).getWorldPosition(new T.Vector3()));return {side:key,actual:actual.toArray(),expected:expected.toArray(),error:actual.distanceTo(expected)};});
   const surface={};for(const [kind,list] of Object.entries(samples))surface[kind]=list.map(s=>{const mesh=meshes.find(m=>m.name===s.mesh);return {...s,position:vertex(mesh,s.index)};});
   return {type,bindings,palms,supplemental:counts,surface,boneCount:meshes[0].skeleton.bones.length,meshCount:meshes.length,contactCorrections,grip:graspScenes.has(latest.movement)?'equipment':'open'};
  }
  update(rest);
- return {group,update,debug,dispose(){if(disposed)return;disposed=true;resources(group);}};
+ function dumbbellGrip(key){
+  return gripTarget(latest,key,bones.get('hand_'+key).getWorldPosition(new T.Vector3()));
+ }
+ return {group,update,debug,dumbbellGrip,dispose(){if(disposed)return;disposed=true;resources(group);}};
 }
 window.AZHumanSkin={async create({type,rest,pose,asset}){const gltf=await load(asset('human/'+type+'.glb'));let result;try{result=adapter(gltf,rest,type);result.update(pose);return result;}catch(e){resources(gltf.scene);throw e;}},createFromGLTF:adapter};
 })();

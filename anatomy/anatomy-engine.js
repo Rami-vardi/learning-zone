@@ -646,26 +646,15 @@
       });tris.sort((a,b)=>a.order-b.order||b.z-a.z);for(const t of tris){ctx.beginPath();t.points.forEach((p,i)=>{const x=(p[0]*.5+.5)*width,y=(-p[1]*.5+.5)*height;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.globalAlpha=t.opacity;ctx.fillStyle=t.color;ctx.fill();}ctx.globalAlpha=1;
     }
     function cameraUpdate(){camera.position.set(target.x+Math.sin(yaw)*Math.cos(pitch)*distance,target.y+Math.sin(pitch)*distance,target.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.lookAt(target);camera.updateProjectionMatrix();}
-    const skinCues=new T.Group();skinCues.name='Human anatomy teaching cues';scene.add(skinCues);const skinCueMeshes=new Map();
-    function updateSkinCues(){
-      skinCues.visible=Boolean(human);if(!human)return;
-      const selected=new Map(),add=(node,opacity)=>node.traverse(o=>{if(o.isMesh)selected.set(o,opacity);});
-      const addVisible=(node,opacity)=>node.traverseVisible(o=>{if(o.isMesh)selected.set(o,opacity);});
-      const m=state.movement;
-      // Keep the original body-movement emphasis readable through either skin.
-      if(['hike','tilt','hip','chain'].includes(m)||(m==='foot'&&state.mode==='chain'))addVisible(pelvis,.28);
-      if(m==='chain'&&state.mode==='chain'){for(const r of ribs)addVisible(r,.28);for(const s of scapulae)addVisible(s.node,.50);}
-      if(tensionIds.has(m)){const emphasis=tensionDebug?.tensionEmphasis||0;for(const v of spineGroups)add(v.node,.20+.46*emphasis);add(pelvis,.16+.26*emphasis);if(m==='tension_pogo')for(const l of legs){add(l.foot,.35);add(l.shin,.25);}}
-      if(m==='bench'&&state.scenario==='b'){for(const r of ribs)add(r,.16);for(const s of scapulae)add(s.node,.70);}
-      if(m==='press')for(const s of scapulae)add(s.node,.58);
-      if(m==='lunge'||(m==='bench'&&state.scenario==='b'))for(const l of legs)if(l.footMat.color.getHex()!==palettes.ivory)add(l.foot,.34);
-      if(m==='ribs')for(const r of ribs)add(r,.28);
-      if(m==='scapula'||m==='ribshift')for(const s of scapulae)add(s.node,.50);
-      if(m==='foot')for(const l of legs)if(l.side===(state.side==='right'?-1:1))add(l.foot,.28);
-      for(const [source,clone] of skinCueMeshes)clone.visible=selected.has(source);
-      for(const [source,opacity] of selected){let clone=skinCueMeshes.get(source);if(!clone){clone=new T.Mesh(source.geometry,new T.MeshBasicMaterial({transparent:true,depthTest:false,depthWrite:false,side:T.DoubleSide}));clone.matrixAutoUpdate=false;clone.renderOrder=65;skinCues.add(clone);skinCueMeshes.set(source,clone);}clone.visible=true;clone.matrix.copy(source.matrixWorld);clone.matrixWorldNeedsUpdate=true;const material=Array.isArray(source.material)?source.material[0]:source.material;clone.material.color.copy(material.color);clone.material.opacity=opacity;}
-    }
-    function render(){if(disposed)return;cameraUpdate();if(human){human.update(captureSkinPose());model.visible=false;}updateSkinCues();if(renderer)renderer.render(scene,camera);else fallbackDraw();model.visible=true;Object.values(labelNodes).forEach(el=>el.style.display='none');if(!state.labels)return;
+    function render(){if(disposed)return;cameraUpdate();if(human){human.update(captureSkinPose());model.visible=false;}
+      // Free weights follow the hands of the selected model. Fixed apparatus
+      // and Johnny's exercise solution retain their original coordinates.
+      if(state.movement==='press')for(const db of dumbbells){
+        const arm=exArms.find(a=>a.side===db.side);
+        const grip=human?.dumbbellGrip?.(db.side===1?'l':'r')||arm.hand.localToWorld(new T.Vector3(0,-.17,0));
+        db.node.position.copy(grip);
+      }
+      if(renderer)renderer.render(scene,camera);else fallbackDraw();model.visible=true;Object.values(labelNodes).forEach(el=>el.style.display='none');if(!state.labels)return;
       const movement=state.movement;
       if(movement==='lunge'&&exerciseDebug){label('Pelvis',pelvis.localToWorld(new T.Vector3(1.06,.30,.08)));const f=exerciseDebug.legs.find(l=>l.side===-1),b=exerciseDebug.legs.find(l=>l.side===1);label('Right front',new T.Vector3(...f.ankle).add(new T.Vector3(-.35,.12,.18)));label('Left rear',new T.Vector3(...b.ankle).add(new T.Vector3(.35,.12,-.15)));return;}
       if(exerciseIds.has(movement)){label('Pelvis',pelvis.localToWorld(new T.Vector3(1.06,.15,.08)));label('Shoulder',torso.localToWorld(new T.Vector3(-1.28,.83,.02)));if(['pullup','dips'].includes(movement)&&exerciseDebug){const grip=exerciseDebug.arms[0].grip;label('Fixed grip',new T.Vector3(grip[0]-.44,grip[1]+.08,grip[2]));}else label('Ribcage',torso.localToWorld(new T.Vector3(1.22,.30,.06)));return;}

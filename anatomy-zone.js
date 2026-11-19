@@ -20,7 +20,7 @@
   function loadStyle(){
     if(style)return style;
     style=new Promise((resolve,reject)=>{
-      const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('anatomy-zone.css?v=b645a1f6',base).href;
+      const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('anatomy-zone.css?v=acfcd35cf445',base).href;
       link.onload=()=>{link.onload=link.onerror=null;resolve();};
       link.onerror=()=>{link.remove();style=null;reject(Error('Anatomy Zone styles could not load. Open the zone again to retry.'));};
       document.head.appendChild(link);

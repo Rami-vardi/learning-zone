@@ -1248,7 +1248,8 @@
       if(armChecks&&fitShoulderGirdle&&exerciseArms.visible){
         for(const sample of armChecks){
           const arm=exArms.find(item=>item.side===sample.side);
-          const upper=arm.fore.position.clone().sub(arm.upper.position), fore=arm.hand.position.clone().sub(arm.fore.position);
+          const upper=arm.fore.position.clone().sub(arm.upper.position);
+          const fore=new T.Vector3(0,-arm.fore.scale.y,0).applyQuaternion(arm.fore.quaternion);
           sample.elbow=arm.fore.position.toArray();sample.wrist=arm.hand.position.toArray();
           sample.upperLength=upper.length();sample.foreLength=fore.length();
           if('elbowAngle' in sample)sample.elbowAngle=180-T.MathUtils.radToDeg(upper.angleTo(fore));

@@ -162,6 +162,7 @@
       }
     }
     const sternum=between(torso,[0,.99,.39],[0,-.02,.59],.058,.045,thorM),sternumRest=sternum.position.clone();
+    const fitCostalCartilage=window.azAttachThorax?.(T,ribs,sternum);
     const scapulae=[];
     for(const s of [-1,1]){
       const g=new T.Group();torso.add(g);scapulae.push({node:g,side:s});
@@ -904,6 +905,10 @@
     }
 
     function applyPose(amount=state.amount){
+      setJointPose(amount);
+      fitCostalCartilage?.();
+    }
+    function setJointPose(amount){
       const a=Math.max(-1,Math.min(1,amount)),chain=state.mode==='chain',selectedSide=state.side==='right'?-1:1,m=state.movement;
       restoreStudyMaterials();for(const item of tensionSpineMeshes)item.mesh.material=item.original;previewEquipment.visible=false;previewDebug=null;tensionEquipment.visible=false;tensionBellGroup.visible=false;tensionDebug=null;
       exerciseArms.visible=false;equipment.visible=false;exerciseDebug=null;
@@ -914,6 +919,7 @@
       spineGuide.rotation.x=0;spineGuide.position.z=0;
       for(const s of spineGroups){s.node.position.set(0,s.y,s.z);s.node.rotation.set(0,0,0);}
       pressureMarks.forEach(p=>p.node.visible=false);floor.visible=false;floorRing.visible=false;floor.position.set(0,.08,0);
+      sternum.position.copy(sternumRest);
       if(tensionIds.has(m)){poseTension(m,Math.max(0,a));return;}
       if(previewIds.has(m)){posePreview(a);return;}
       if(exerciseIds.has(m)){poseExercise(Math.max(0,a));return;}
@@ -925,7 +931,6 @@
       }
       if(m==='tilt'){pelvis.rotation.x=a*.18;pelvis.position.z=a*.04;spine(-a*.55);if(chain){torso.rotation.x=a*.08;torso.position.z=a*.10;for(const l of legs){l.femur.rotation.y=-l.side*a*.20;l.shin.rotation.y=-l.side*a*.14;l.foot.rotation.y=-l.side*a*.14;}}}
       if(m==='hip'){const l=legs.find(l=>l.side===selectedSide);l.femur.rotation.y=-l.side*a*.32;l.shin.rotation.y=-l.side*a*.24;l.foot.rotation.y=-l.side*a*.24;if(chain){pelvis.rotation.y=-selectedSide*a*.13;pelvis.rotation.z=-selectedSide*a*.055;l.foot.rotation.z=l.side*a*.12;l.mid.position.y=-a*.020;l.mid.scale.y=1-a*.15;}}
-      sternum.position.copy(sternumRest);
       if(m==='ribs'){for(const r of ribs){r.rotation.x=-a*.105;r.scale.x=1+a*.055;r.scale.z=1+a*.035;}sternum.position.y+=a*.035;sternum.position.z+=a*.025;if(chain)spine(-a*.25);}
       if(m==='ribshift'){torso.position.z=-a*.19;if(chain){scap(a);spine(a*.7);pelvis.rotation.x=-a*.10;}}
       if(m==='scapula'){scap(a);if(chain){torso.position.z=-a*.15;spine(a*.5);}}

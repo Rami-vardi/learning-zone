@@ -1,7 +1,7 @@
 /* Learning Zone Anatomy, lazy local asset entry. */
 (function(){
   'use strict';
-  const VERSION='20261119-anatomy-detail';
+  const VERSION='20261119-johnny-thorax';
   if(window.LZAnatomy?.version===VERSION)return;
   const source=document.currentScript?.src||new URL('anatomy-zone.js',document.baseURI).href;
   const base=new URL('./anatomy/',source);
@@ -30,6 +30,7 @@
     if(dependencies)return dependencies;
     dependencies=Promise.all([loadStyle(),loadScript('vendor/three-r160.min.js').then(()=>Promise.all([
       loadScript('anatomy-meshes.js'),loadScript('anatomy-mesh-attach.js'),
+      loadScript('anatomy-thorax.js').catch(error=>console.warn('Thorax surfaces unavailable.',error)),
       loadScript('anatomy-engine.js'),loadScript('anatomy-tension.js'),loadScript('anatomy-runtime.js')
     ]))]).catch(error=>{dependencies=null;throw error;});
     return dependencies;

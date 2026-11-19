@@ -95,7 +95,8 @@ window.azAttachUpperSkeleton = function(parts) {
   }
   const shift=new T.Vector3(), radial=new T.Vector3(), probe=new T.Vector3(), before=new T.Vector3();
   const axisX=vector(1,0,0), axisY=vector(0,1,0), axisZ=vector(0,0,1), increment=new T.Quaternion();
-  function seatBlade(frame,pivot,ribs,markers) {
+  const ribAverage=new T.Vector3();
+  function seatBlade(frame,pivot,ribs,markers,exercise) {
     for (const sample of ribs) {
       sample.frame.updateMatrix();
       sample.point.fromBufferAttribute(sample.vertices,sample.index).applyMatrix4(sample.frame.matrix);
@@ -105,15 +106,23 @@ window.azAttachUpperSkeleton = function(parts) {
       let xx=.10, yy=.10, zz=.32, xy=0, xz=0, yz=0, bx=0, by=0, bz=0;
       for (const marker of markers) {
         probe.copy(marker).applyMatrix4(frame.matrix);
-        let best=Infinity, nearest;
+        let best=Infinity, nearest, total=0;
+        ribAverage.set(0,0,0);
         for (const {point} of ribs) {
           const distance=point.distanceToSquared(probe);
           if (distance<best) {best=distance;nearest=point;}
+          if (exercise) {
+            const weight=1/(.035+distance)**3;
+            ribAverage.addScaledVector(point,weight);
+            total+=weight;
+          }
         }
         if (!nearest) continue;
+        if (exercise) nearest=ribAverage.divideScalar(total);
         radial.set(nearest.x,0,nearest.z+.04).normalize();
         const clearance=shift.copy(probe).sub(nearest).dot(radial);
-        const error=.055-clearance, weight=clearance<.015?3:1;
+        const error=.055-clearance;
+        const weight=exercise?3-2*T.MathUtils.smoothstep(clearance,-.015,.045):clearance<.015?3:1;
         shift.copy(probe).sub(before);
         const dx=radial.z*shift.y, dy=radial.x*shift.z-radial.z*shift.x, dz=-radial.x*shift.y;
         xx+=weight*dx*dx; xy+=weight*dx*dy; yy+=weight*dy*dy;
@@ -189,28 +198,110 @@ window.azAttachUpperSkeleton = function(parts) {
     fibula.name = 'BodyParts3D fibula';
   }
 
-  const flatHands = new Set(['pushup', 'tension_pushup', 'tension_cat', 'lunge', 'tension_pogo']);
+  const floorHands = new Set(['pushup', 'tension_pushup', 'tension_cat']);
+  const openHands = new Set([...floorHands, 'lunge', 'tension_pogo']);
+  const backSquats = new Set(['squat','cheels']);
   const joint = new T.Vector3(), target = new T.Vector3(), start = new T.Vector3(), end = new T.Vector3();
   const armAxis = new T.Vector3(), forearmAxis = new T.Vector3(), hinge = new T.Vector3(), forward = new T.Vector3();
+  const lateral = new T.Vector3(), torsoAcross = new T.Vector3();
   const basis = new T.Matrix4(), rotation = new T.Quaternion();
   const clavicleLength = .914;
   const shoulderOffset = new T.Vector3(), collarAxis = new T.Vector3();
   const acromionOffset = new T.Vector3(), acromionArc = new T.Vector3(), collarRotation = new T.Quaternion();
+  const palmFrame = new T.Quaternion().setFromRotationMatrix(basis.makeBasis(vector(-1,0,0),vector(0,0,-1),vector(0,-1,0)));
+  // The supplied neutral hand has curved fingers. Level the palm and fingers
+  // together using the same wrist reference for all three floor exercises.
+  palmFrame.multiply(new T.Quaternion().setFromAxisAngle(axisX,.37));
+  const palmVertices = geometry('handOpen').attributes.position;
+  let palmBottom=Infinity;
+  for (let i=0;i<palmVertices.count;i++) {
+    probe.fromBufferAttribute(palmVertices,i).applyQuaternion(palmFrame);
+    palmBottom=Math.min(palmBottom,probe.y);
+  }
+  const gripCentre = vector(0,-.168,.112);
+  const gripAcross = new T.Vector3(), handUp = new T.Vector3(), palmNormal = new T.Vector3();
+  const wristPoint = new T.Vector3(), elbowPole = new T.Vector3(), armReach = new T.Vector3();
+  function fitHand(exercise,movement) {
+    const {side,upper,fore,hand,contact} = exercise;
+    exercise.fittedContact=null;
+    if (!contact) return;
+    const palm=floorHands.has(movement), cup=movement==='cgoblet';
+    if (palm) {
+      hand.quaternion.copy(palmFrame);
+      wristPoint.copy(hand.position);
+      wristPoint.y=.08-palmBottom;
+      exercise.fittedContact=vector(contact.x,.08,contact.z);
+    } else {
+      const across=gripAcross.set(-1,0,0);
+      const up=handUp.subVectors(fore.position,hand.position);
+      if (backSquats.has(movement)) {
+        up.set(0,-1,-.08).applyQuaternion(torso.quaternion);
+      } else if (cup) {
+        up.set(0,-1,-.16).applyQuaternion(torso.quaternion);
+        palmNormal.set(-side,0,0).applyQuaternion(torso.quaternion);
+        across.crossVectors(up,palmNormal).normalize();
+      } else if (movement==='dips') {
+        across.set(0,0,side);
+      } else if (movement==='csafety') {
+        across.set(0,side*.10,-side*.25).applyQuaternion(torso.quaternion).normalize();
+        up.set(0,-.9,.42).applyQuaternion(torso.quaternion);
+      } else if (movement==='bench') {
+        up.set(0,-1,.07);
+      } else if (movement==='tension_swing') {
+        across.copy(exercise.contactAxis).negate();
+      }
+      up.addScaledVector(across,-up.dot(across)).normalize();
+      palmNormal.crossVectors(across,up).normalize();
+      hand.quaternion.setFromRotationMatrix(basis.makeBasis(across,up,palmNormal));
+      wristPoint.copy(gripCentre);
+      if(cup)wristPoint.z=.057;
+      wristPoint.applyQuaternion(hand.quaternion).negate().add(contact);
+      exercise.fittedContact=contact;
+    }
+
+    // Resolve the elbow after fitting the wrist, keeping the original bend
+    // side and maintaining both bone lengths wherever the contact is reachable.
+    let upperLength=upper.position.distanceTo(fore.position);
+    let foreLength=fore.position.distanceTo(hand.position);
+    armReach.subVectors(wristPoint,upper.position);
+    const distance=armReach.length();
+    armReach.divideScalar(distance);
+    const extension=Math.max(1,distance/(upperLength+foreLength-.0001));
+    upperLength*=extension;foreLength*=extension;
+    const along=(upperLength**2-foreLength**2+distance**2)/(2*distance);
+    elbowPole.subVectors(fore.position,upper.position);
+    if(backSquats.has(movement)) elbowPole.set(side*.45,-1,-.4).applyQuaternion(torso.quaternion);
+    else if(movement==='bench') elbowPole.set(side,-.5,.60);
+    else if(movement==='tension_swing') elbowPole.set(side,0,0);
+    elbowPole.addScaledVector(armReach,-elbowPole.dot(armReach)).normalize();
+    fore.position.copy(upper.position).addScaledVector(armReach,along)
+      .addScaledVector(elbowPole,Math.sqrt(Math.max(0,upperLength**2-along**2)));
+    hand.position.copy(wristPoint);
+    upper.scale.y=upper.position.distanceTo(fore.position);
+    fore.scale.y=fore.position.distanceTo(hand.position);
+  }
+
   function orientElbow(upper, forearm, wrist) {
-    // The ulna bends around the humeral trochlea. Preserve this hinge axis
-    // when the exercise turns the arm into a different movement plane.
+    // Choose the sign of the flexion axis relative to the torso. As the
+    // flexion plane becomes ambiguous, fade toward that reference direction.
     armAxis.subVectors(upper.position, forearm.position).normalize();
     forearmAxis.subVectors(forearm.position, wrist.position).normalize();
     hinge.crossVectors(forearmAxis, armAxis);
-    // The flexion plane becomes indeterminate near full extension. Fade
-    // smoothly back to the unrolled segment frame in that small interval.
-    const blend = T.MathUtils.smoothstep(hinge.length(), .035, .115);
-    if (blend === 0) return;
+    const flexion=T.MathUtils.smoothstep(hinge.length(),.12,.55);
     hinge.normalize();
-    forward.crossVectors(hinge, armAxis);
-    upper.quaternion.slerp(rotation.setFromRotationMatrix(basis.makeBasis(hinge,armAxis,forward)), blend);
-    forward.crossVectors(hinge, forearmAxis);
-    forearm.quaternion.slerp(rotation.setFromRotationMatrix(basis.makeBasis(hinge,forearmAxis,forward)), blend);
+    torsoAcross.copy(axisX).applyQuaternion(torso.quaternion);
+    orientSegment(upper,armAxis,flexion);
+    orientSegment(forearm,forearmAxis,flexion);
+  }
+  function orientSegment(segment,axis,flexion) {
+    lateral.copy(torsoAcross).addScaledVector(axis,-torsoAcross.dot(axis));
+    if (lateral.lengthSq()<.0001) lateral.crossVectors(axisY,axis);
+    lateral.normalize();
+    const agreement=hinge.dot(lateral);
+    const blend=flexion*T.MathUtils.smoothstep(Math.abs(agreement),.12,.72);
+    if(blend>0)lateral.multiplyScalar(1-blend).addScaledVector(hinge,Math.sign(agreement)*blend).normalize();
+    forward.crossVectors(lateral,axis);
+    segment.quaternion.copy(rotation.setFromRotationMatrix(basis.makeBasis(lateral,axis,forward)));
   }
 
   function alignClavicle(scapula, headCentre, acromion, allowGlide) {
@@ -249,6 +340,7 @@ window.azAttachUpperSkeleton = function(parts) {
       scapula.updateMatrix();
       joint.copy(headCentre).applyMatrix4(scapula.matrix);
       if (exerciseArms.visible) {
+        fitHand(exercise,movement);
         orientElbow(exercise.upper, exercise.fore, exercise.hand);
         // The exercise solver fixes the hands on their apparatus. Seat the
         // glenoid at the corresponding shoulder while retaining blade rotation.
@@ -256,7 +348,7 @@ window.azAttachUpperSkeleton = function(parts) {
         scapula.position.add(target.sub(joint));
         scapula.updateMatrix();
       }
-      if (scapula.visible && torso.visible) seatBlade(scapula,headCentre,chest,bladePoints);
+      if (scapula.visible && torso.visible) seatBlade(scapula,headCentre,chest,bladePoints,exerciseArms.visible);
       arm.clavicle.visible = exerciseArms.visible || scapula.visible || arm.node.visible;
       sternum.updateMatrix();
       start.copy(sternoclavicular).applyMatrix4(sternum.matrix);
@@ -266,7 +358,7 @@ window.azAttachUpperSkeleton = function(parts) {
       arm.clavicle.position.copy(start);
       arm.clavicle.scale.y = clavicleLength;
       arm.clavicle.quaternion.setFromUnitVectors(down, end.normalize());
-      exerciseHand.geometry = geometry(flatHands.has(movement) ? 'handOpen' : 'handGrip', arm.side);
+      exerciseHand.geometry = geometry(openHands.has(movement) ? 'handOpen' : 'handGrip', arm.side);
     }
   };
   fit.dispose = () => {

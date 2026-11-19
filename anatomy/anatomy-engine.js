@@ -740,6 +740,7 @@
       const triangles=[];
       const projection=new T.Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
       scene.traverseVisible(mesh=>{
+        if(mesh===balanceLine||mesh===comDot)return;
         if(!mesh.isMesh||!mesh.material.visible||mesh.material.opacity<=0)return;
         const geometry=mesh.geometry,{position,color}=geometry.attributes,index=geometry.index;
         const material=mesh.material,vertexColors=material.vertexColors&&color;
@@ -798,6 +799,30 @@
       }
       if(ghost.visible)drawGhostOutline(projection);
       ctx.globalAlpha=1;
+      if(previewEquipment.visible&&comDot.visible)drawBalanceGuide(projection);
+    }
+    function drawBalanceGuide(projection){
+      // Project the same guide as WebGL. A single canvas fill keeps the dot
+      // solid at the small sizes used in the three comparison panels.
+      const center=ma.set(0,0,0).applyMatrix4(comDot.matrixWorld).applyMatrix4(projection);
+      const base=mb.set(0,-.5,0).applyMatrix4(balanceLine.matrixWorld).applyMatrix4(projection);
+      const toX=x=>(x*.5+.5)*width, toY=y=>(.5-y*.5)*height;
+      const x=toX(center.x), y=toY(center.y);
+      const depth=-mc.setFromMatrixPosition(comDot.matrixWorld).applyMatrix4(camera.matrixWorldInverse).z;
+      if(depth<=0)return;
+      const pixelsPerUnit=camera.projectionMatrix.elements[5]*height/(2*depth);
+      ctx.strokeStyle=balanceLine.material.color.getStyle();
+      ctx.lineWidth=Math.max(1,2*balanceLine.geometry.parameters.radiusTop*pixelsPerUnit);
+      ctx.globalAlpha=balanceLine.material.opacity;
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(toX(base.x),toY(base.y));
+      ctx.stroke();
+      ctx.globalAlpha=1;
+      ctx.fillStyle=comDot.material.color.getStyle();
+      ctx.beginPath();
+      ctx.arc(x,y,Math.max(2,comDot.geometry.parameters.radius*pixelsPerUnit),0,Math.PI*2);
+      ctx.fill();
     }
     function drawGhostOutline(projection){
       ctx.globalAlpha=ghostMaterial.opacity;
@@ -852,26 +877,27 @@
     const previewFoam=new T.MeshStandardMaterial({color:0x1d3046,roughness:.92});
     const goblet=new T.Group();previewEquipment.add(goblet);between(goblet,[0,-.28,0],[0,.28,0],.065,.065,previewSteel);for(const y of[-.28,.28]){const g=mesh(new T.CylinderGeometry(.23,.23,.16,6),previewSteel,goblet);g.position.y=y;}
     const straight=new T.Group();previewEquipment.add(straight);between(straight,[-1.6,0,0],[1.6,0,0],.04,.04,previewSteel);for(const x of[-1.40,1.40]){const p=mesh(new T.CylinderGeometry(.27,.27,.12,20),previewSteel,straight);p.rotation.z=Math.PI/2;p.position.x=x;}
-    const safety=new T.Group();previewEquipment.add(safety);between(safety,[-1.10,0,-.12],[1.10,0,-.12],.055,.055,previewMetal);
+    const safety=new T.Group(), safetyPlateCenter=new T.Vector3();previewEquipment.add(safety);between(safety,[-1.10,0,-.12],[1.10,0,-.12],.055,.055,previewMetal);
     for(const x of[-.62,0,.62]){const pad=mesh(new T.CylinderGeometry(.13,.13,x===0?.37:.53,18),previewFoam,safety);pad.rotation.z=Math.PI/2;pad.position.set(x,0,-.12);}
     for(const side of[-1,1]){
       between(safety,[side*1.10,0,-.12],[side*1.30,-.12,-.12],.055,.055,previewMetal);
       between(safety,[side*1.30,-.12,-.12],[side*1.49,-.42,.38],.055,.055,previewMetal);
       between(safety,[side*1.30,-.42,.38],[side*1.75,-.42,.38],.055,.055,previewMetal);
       const plate=mesh(new T.CylinderGeometry(.30,.30,.15,24),previewSteel,safety);plate.rotation.z=Math.PI/2;plate.position.set(side*1.49,-.42,.38);
+      safetyPlateCenter.addScaledVector(plate.position,.5);
       between(safety,[side*.56,0,-.12],[side*.56,-.40,.84],.042,.042,previewMetal);
       between(safety,[side*.56,-.30,.59],[side*.56,-.40,.84],.068,.068,previewFoam);
     }
     const wedges=[];{const shape=new T.Shape();shape.moveTo(-.26,0);shape.lineTo(-.26,.20);shape.lineTo(.72,0);shape.closePath();const geometry=new T.ExtrudeGeometry(shape,{depth:2.24,bevelEnabled:false});const wedge=mesh(geometry,previewSteel,previewEquipment);wedge.rotation.y=-Math.PI/2;wedge.position.set(1.12,.08,0);wedges.push(wedge);}
-    const balanceLine=mesh(new T.CylinderGeometry(.008,.008,1,6),new T.MeshBasicMaterial({color:0x7195b0,transparent:true,opacity:.55}),previewEquipment);
-    const comDot=mesh(new T.SphereGeometry(.075,16,12),new T.MeshBasicMaterial({color:0x315bc1,depthTest:false}),previewEquipment);comDot.renderOrder=60;
+    const balanceLine=mesh(new T.CylinderGeometry(.019,.019,1,8),new T.MeshBasicMaterial({color:0x466c99,toneMapped:false,transparent:true,opacity:.9,depthTest:false,depthWrite:false}),previewEquipment);
+    const comDot=mesh(new T.SphereGeometry(.075,16,12),new T.MeshBasicMaterial({color:0x315bc1,toneMapped:false,transparent:true,depthTest:false,depthWrite:false}),previewEquipment);
+    balanceLine.renderOrder=59;comDot.renderOrder=60;
     function posePreview(a){
-      const m=state.movement,p=T.MathUtils.clamp(a,0,1),signed=T.MathUtils.clamp(a,-1,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),smooth=(lo,hi,x)=>{const t=T.MathUtils.clamp((x-lo)/(hi-lo),0,1);return t*t*(3-2*t);};
+      const m=state.movement,p=T.MathUtils.clamp(a,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
       previewEquipment.visible=true;for(const o of previewEquipment.children)o.visible=false;
       pelvis.visible=torso.visible=head.visible=true;for(const l of legs){l.root.visible=l.femur.visible=l.shin.visible=l.foot.visible=true;l.root.rotation.set(0,0,0);l.femurMat.color.setHex(palettes.ivory);l.shinMat.color.setHex(palettes.context);l.footMat.color.setHex(palettes.ivory);}arms.forEach(x=>x.node.visible=true);scapulae.forEach(x=>x.node.visible=true);spineGroups.forEach(v=>v.node.visible=true);spineGuide.visible=false;ghost.visible=false;landmarks.forEach(x=>x.visible=false);torso.children.forEach(o=>{if(o.isMesh&&o.material===ctxM)o.visible=true;});
       for(const key in regionMaterials)regionMaterials[key].color.setHex(key==='context'?palettes.context:palettes.ivory);
       floor.visible=true;floor.scale.set(1.5,1.2,1);floorRing.visible=false;
-      pelvis.updateMatrixWorld(true);for(const l of legs)l.root.position.copy(pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005)));
       const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),joints=[];
       const toeAngle=Math.PI/18;
       function footCalibration(l,heel){
@@ -887,33 +913,108 @@
         if(radius<.00001||n<.00001)return twoJoint(H,A,L1,L2,V(side*.20,0,1));across.divideScalar(n);const component=normal.dot(A.clone().sub(centre))/(radius*n);if(Math.abs(component)>1)return twoJoint(H,A,L1,L2,V(side*.20,0,1));
         const forward=V().crossVectors(axis,across).normalize();if(forward.z<0)forward.negate();return centre.addScaledVector(across,radius*component).addScaledVector(forward,radius*Math.sqrt(Math.max(0,1-component*component)));
       }
-      function leg(l,H,A,frame,bend){
-        const K=deepKnee(H,A,l.side),fd=K.clone().sub(H),sd=A.clone().sub(K);
+      function placeLeg({l,H,K,A,frame}){
+        const fd=K.clone().sub(H),sd=A.clone().sub(K);
         l.root.position.copy(H);l.femur.quaternion.setFromUnitVectors(V(l.side*.10,-1.63,0).normalize(),fd.clone().normalize());l.femur.scale.set(1,1,1);
         l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(V(0,-1.31,.04).normalize(),sd.clone().normalize());l.shin.scale.set(1,1,1);l.root.updateMatrixWorld(true);
         l.foot.position.copy(l.shin.worldToLocal(A.clone()));l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(frame.q);l.foot.scale.set(1,1,1);
         const footPoints=frame.pts.map(p=>p.clone().add(A));let footMin=Infinity,supportGap=Infinity;for(const p of footPoints){footMin=Math.min(footMin,p.y);supportGap=Math.min(supportGap,p.y-(frame.intercept-frame.slope*p.z));}
         joints.push({side:l.side,hip:H.toArray(),knee:K.toArray(),ankle:A.toArray(),footPitch:frame.pitch,toeOutDegrees:10,footMinHeight:footMin,supportGap,footBounds:{minX:Math.min(...footPoints.map(p=>p.x)),maxX:Math.max(...footPoints.map(p=>p.x)),minZ:Math.min(...footPoints.map(p=>p.z)),maxZ:Math.max(...footPoints.map(p=>p.z))},hipBelowKnee:H.y<K.y});
       }
-      let modelCom=null,bodyCom=null,loadPoint=null;
-      if(m[0]==='c'){
-        const kind=m,heel=kind==='cheels',angle=(kind==='cgoblet'?.30:kind==='cheels'?.38:kind==='csafety'?.40:.60)*p,hy=3.25-2.35*p+(heel?.10:0),Q=new T.Quaternion().setFromAxisAngle(V(1,0,0),angle);
-        let z=-.15;let computed;
-        function compute(hz){const O=V(0,hy,hz),turn=(x,y,z)=>V(x,y,z).applyQuaternion(Q).add(O),points=[],checks=[];const add=(v,mass)=>points.push({v,mass});
-          add(turn(0,1.05,-.03),40);add(turn(0,2.95,-.08),6);
-          const load=kind==='cgoblet'?turn(0,1.95,.65):kind==='csafety'?turn(0,1.93,.38):turn(0,2.35,-.30);
-          for(const l of legs){const frame=footCalibration(l,heel),bend=V(l.side*Math.sin(toeAngle)*1.5,0,Math.cos(toeAngle)),H=V(l.side*.51,hy-.17,hz+.005),A=V(l.side*.78,frame.ankleY,.04),K=deepKnee(H,A,l.side);add(H.clone().lerp(K,.5),8);add(K.clone().lerp(A,.5),4);add(V(0,-.02,.22).applyQuaternion(frame.q).add(A),1);checks.push({l,H,A,K,frame,bend});}
-          const armJoints=[];for(const arm of exArms){const s=arm.side,S=turn(s*1.04,2.25,.02),G=kind==='cgoblet'?turn(s*.205,2.20,.65):kind==='csafety'?turn(s*.56,2.00,.715):turn(s*1.25,2.35,-.30),W=G.clone().add(V(0,-.13,0)),E=twoJoint(S,W,1.08,.98,V(s*.25,-1,-.25));add(S.clone().lerp(E,.5),2);add(E.clone().lerp(W,.5),1.5);add(W.clone().lerp(G,.5),.5);armJoints.push({arm,S,E,W,G});}
-          const sum=V();for(const x of points)sum.addScaledVector(x.v,x.mass);const body=sum.clone().divideScalar(80),combined=sum.clone().addScaledVector(load,20).divideScalar(100);return {O,turn,load,body,combined,checks,armJoints};}
-        for(let i=0;i<9;i++){computed=compute(z);z+=(.18-computed.combined.z)*1.10;}computed=compute(z);
-        pelvis.position.copy(computed.O);pelvis.rotation.set(0,0,0);pelvis.updateMatrixWorld(true);torso.position.copy(computed.turn(0,1.42,0));torso.quaternion.copy(Q);head.position.copy(computed.turn(0,2.95,-.08));head.quaternion.copy(Q);for(const v of spineGroups){v.node.position.copy(computed.turn(0,v.y-3.3,v.z));v.node.quaternion.copy(Q);}arms.forEach(x=>x.node.visible=false);exerciseArms.visible=true;
-        for(const v of computed.checks)leg(v.l,v.H,v.A,v.frame,v.bend);
-        for(const a of computed.armJoints){poseSegment(a.arm.clavicle,computed.turn(0,2.4,.3),a.S);poseSegment(a.arm.upper,a.S,a.E);poseSegment(a.arm.fore,a.E,a.W);poseHand(a.arm,a.W,a.G.clone().sub(a.W).normalize(),a.G);}
-        if(kind==='cgoblet'){goblet.visible=true;goblet.position.copy(computed.load);goblet.quaternion.copy(Q);}else if(kind==='csafety'){safety.visible=true;safety.position.copy(computed.turn(0,2.35,0));safety.quaternion.copy(Q);}else{straight.visible=true;straight.position.copy(computed.load);straight.quaternion.copy(Q);}
-        for(const w of wedges)w.visible=heel;
-        modelCom=computed.combined;bodyCom=computed.body;loadPoint=computed.load;comDot.visible=balanceLine.visible=true;comDot.position.copy(modelCom);balanceLine.position.set(modelCom.x,(modelCom.y+.10)/2,modelCom.z);balanceLine.scale.y=modelCom.y-.10;
+      const heel=m==='cheels', safetyBar=m==='csafety';
+      const pitch=(heel?.38:safetyBar?.40:.30)*p;
+      const height=3.25-2.35*p+(heel?.10:0);
+      const rotation=new T.Quaternion().setFromAxisAngle(V(1,0,0),pitch);
+      const offset=(x,y,z)=>V(x,y,z).applyQuaternion(rotation);
+      const apparatus=heel?straight:safetyBar?safety:goblet;
+      const apparatusOffset=heel?offset(0,2.35,-.30):safetyBar?offset(0,2.35,0):offset(0,1.95,.65);
+      const loadOffset=apparatusOffset.clone();
+      if(safetyBar)loadOffset.add(safetyPlateCenter.clone().applyQuaternion(rotation));
+
+      const loadMass=20, trunkMass=40, headMass=6;
+      const upperArmMass=2, forearmMass=1.5, handMass=.5;
+      const thighMass=8, shinMass=4, footMass=1;
+      const upperMass=trunkMass+headMass+exArms.length*(upperArmMass+forearmMass+handMass);
+      const bodyMass=upperMass+legs.length*(thighMass+shinMass+footMass);
+
+      // With a fixed torso angle the fitted upper body and its load translate together.
+      // Fit the grip once in pelvis-relative coordinates before solving for balance.
+      torso.quaternion.copy(rotation);
+      arms.forEach(arm=>arm.node.visible=false);
+      exerciseArms.visible=true;
+      for(const arm of exArms){
+        const s=arm.side, shoulder=offset(s*1.04,2.25,.02);
+        const grip=heel?offset(s*1.25,2.35,-.30):safetyBar?offset(s*.56,2.00,.715):offset(s*.205,2.20,.65);
+        const wrist=grip.clone().add(V(0,-.13,0));
+        const elbow=twoJoint(shoulder,wrist,1.08,.98,V(s*.25,-1,-.25));
+        poseSegment(arm.clavicle,offset(0,2.4,.3),shoulder);
+        poseSegment(arm.upper,shoulder,elbow);
+        poseSegment(arm.fore,elbow,wrist);
+        poseHand(arm,wrist,grip.clone().sub(wrist).normalize(),grip);
       }
-      model.updateMatrixWorld(true);previewDebug={movement:m,amount:a,joints,com:modelCom?.toArray(),bodyCom:bodyCom?.toArray(),load:loadPoint?.toArray()};
+      fitShoulderGirdle?.fitHands(m);
+      const upperMoment=offset(0,1.05,-.03).multiplyScalar(trunkMass).addScaledVector(offset(0,2.95,-.08),headMass);
+      const addSegment=(sum,start,end,mass)=>sum.addScaledVector(start,mass/2).addScaledVector(end,mass/2);
+      for(const arm of exArms){
+        addSegment(upperMoment,arm.upper.position,arm.fore.position,upperArmMass);
+        addSegment(upperMoment,arm.fore.position,arm.hand.position,forearmMass);
+        addSegment(upperMoment,arm.hand.position,arm.contact,handMass);
+      }
+
+      const frames=legs.map(l=>{
+        const frame=footCalibration(l,heel);
+        const A=V(l.side*.78,frame.ankleY,.04);
+        const footCenter=V(0,-.02,.22).applyQuaternion(frame.q).add(A);
+        return {l,frame,A,footCenter};
+      });
+      function balanceAt(z){
+        const origin=V(0,height,z),load=loadOffset.clone().add(origin);
+        const moment=upperMoment.clone().addScaledVector(origin,upperMass);
+        const solvedLegs=frames.map(({l,frame,A,footCenter})=>{
+          const H=V(l.side*.51,-.17,.005).add(origin),K=deepKnee(H,A,l.side);
+          addSegment(moment,H,K,thighMass);
+          addSegment(moment,K,A,shinMass);
+          moment.addScaledVector(footCenter,footMass);
+          return {l,frame,H,K,A};
+        });
+        const body=moment.clone().divideScalar(bodyMass);
+        const combined=moment.addScaledVector(load,loadMass).divideScalar(bodyMass+loadMass);
+        return {origin,body,combined,load,solvedLegs};
+      }
+      const supportZ=.18;
+      let solved=balanceAt(-.15);
+      for(let i=0;i<24;i++){
+        const error=supportZ-solved.combined.z;
+        if(Math.abs(error)<1e-9)break;
+        solved=balanceAt(solved.origin.z+1.10*error);
+      }
+      const {origin,body,combined,load,solvedLegs}=solved;
+      pelvis.position.copy(origin);
+      torso.position.copy(offset(0,1.42,0)).add(origin);
+      head.position.copy(offset(0,2.95,-.08)).add(origin);
+      head.quaternion.copy(rotation);
+      for(const v of spineGroups){
+        v.node.position.copy(offset(0,v.y-3.3,v.z)).add(origin);
+        v.node.quaternion.copy(rotation);
+      }
+      for(const arm of exArms){
+        for(const node of [arm.clavicle,arm.upper,arm.fore,arm.hand])node.position.add(origin);
+        arm.contact.add(origin);
+      }
+      for(const item of solvedLegs)placeLeg(item);
+      apparatus.visible=true;
+      apparatus.position.copy(apparatusOffset).add(origin);
+      apparatus.quaternion.copy(rotation);
+      for(const w of wedges)w.visible=heel;
+
+      const support=frames[0].frame;
+      const surfaceY=support.intercept-support.slope*combined.z;
+      comDot.visible=balanceLine.visible=true;
+      comDot.position.copy(combined);
+      balanceLine.position.set(combined.x,(combined.y+surfaceY)/2,combined.z);
+      balanceLine.scale.y=combined.y-surfaceY;
+      model.updateMatrixWorld(true);
+      previewDebug={movement:m,amount:a,joints,com:combined.toArray(),bodyCom:body.toArray(),load:load.toArray()};
     }
 
     // Conventional pull: the knees withdraw as the bar rises, then hips finish the lift.
@@ -1112,6 +1213,7 @@
     function applyPose(amount=state.amount){
       setJointPose(amount);
       fitCostalCartilage?.();
+      if(exerciseArms.visible&&!previewDebug)fitShoulderGirdle?.fitHands(state.movement);
       fitShoulderGirdle?.(state.movement);
       const armChecks=(tensionDebug||exerciseDebug)?.arms;
       if(armChecks&&fitShoulderGirdle&&exerciseArms.visible){

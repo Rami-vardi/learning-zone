@@ -340,7 +340,6 @@ window.azAttachUpperSkeleton = function(parts) {
       scapula.updateMatrix();
       joint.copy(headCentre).applyMatrix4(scapula.matrix);
       if (exerciseArms.visible) {
-        fitHand(exercise,movement);
         orientElbow(exercise.upper, exercise.fore, exercise.hand);
         // The exercise solver fixes the hands on their apparatus. Seat the
         // glenoid at the corresponding shoulder while retaining blade rotation.
@@ -360,6 +359,9 @@ window.azAttachUpperSkeleton = function(parts) {
       arm.clavicle.quaternion.setFromUnitVectors(down, end.normalize());
       exerciseHand.geometry = geometry(openHands.has(movement) ? 'handOpen' : 'handGrip', arm.side);
     }
+  };
+  fit.fitHands = movement => {
+    for (const {exercise} of joints) fitHand(exercise,movement);
   };
   fit.dispose = () => {
     // The scene owns all mounted geometry. Only a currently inactive grip

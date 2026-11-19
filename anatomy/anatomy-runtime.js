@@ -211,12 +211,12 @@ window.LZAnatomyRuntime={mount(host,opts={}){
   listen(q('#azc-body-movement'),'change',e=>selectMovement(e.target.value));listen(q('#azc-exercise'),'change',e=>selectMovement(e.target.value));
   all('[data-azc-mode]').forEach(b=>listen(b,'click',()=>{if(wholeChainOnly())return;if(applied()){const next=b.dataset.azcMode==='local'?'a':'b';if(next!==state.scenario)state.frontHipHike=false;state.scenario=next;state.mode='chain';}else state.mode=b.dataset.azcMode;render();if(state.movement==='foot'){const view=defaultView();q('#azc-camera').value=view;setCamera(view);}}));
   listen(q('#azc-front-hike'),'click',()=>{if(state.movement!=='lunge'||state.scenario!=='a')return;state.frontHipHike=!state.frontHipHike;render();});
-  listen(q('#azc-side'),'change',e=>{state.side=e.target.value;render();});
+  listen(q('#azc-side'),'change',e=>{state.side=e.target.value;render();if(['foot','hip'].includes(state.movement)&&q('#azc-camera').value==='oblique')setCamera('oblique');});
   listen(q('#azc-range'),'input',e=>setAmount(Number(e.target.value)/100));
   listen(q('#azc-play'),'click',()=>pause(!playing));listen(q('#azc-reset'),'click',()=>setAmount(0));
   listen(q('#azc-camera'),'change',e=>setCamera(e.target.value));
   listen(q('#azc-zoom-in'),'click',()=>stepZoom(-1));listen(q('#azc-zoom-out'),'click',()=>stepZoom(1));
-  listen(q('#azc-camera-reset'),'click',()=>{resetCamera();q('#azc-camera').value='front';});
+  listen(q('#azc-camera-reset'),'click',()=>{const view=defaultView();resetCamera();q('#azc-camera').value=view;setCamera(view);});
   listen(q('#azc-labels'),'change',e=>{state.labels=e.target.checked;render();});listen(q('#azc-ghost'),'change',e=>{state.ghost=e.target.checked;render();});
   listen(root,'click',e=>{if(!q('#azc-options').contains(e.target))q('#azc-options').open=false;});listen(document,'visibilitychange',()=>{if(document.hidden)pause();});
   q('#azc-body-movement').value=applied()?'':state.movement;q('#azc-exercise').value=applied()?state.movement:'';render();const view=defaultView();q('#azc-camera').value=view;setCamera(view);

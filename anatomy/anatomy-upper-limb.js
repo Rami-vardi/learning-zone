@@ -235,7 +235,10 @@ window.azAttachUpperSkeleton = function(parts) {
     const positions = fibula.geometry.attributes.position;
     for (let i = 0; i < positions.count; i++) {
       const y = positions.getY(i);
-      positions.setY(i, y + .153 * T.MathUtils.smoothstep(-y, .61, 1.33));
+      const distal=T.MathUtils.smoothstep(-y,.61,1.33);
+      positions.setY(i,y+.122*distal);
+      positions.setZ(i,positions.getZ(i)+.030*distal);
+      positions.setX(i,positions.getX(i)+leg.side*.018*distal);
     }
     fibula.geometry.computeVertexNormals();
     fibula.position.set(0, 0, 0);

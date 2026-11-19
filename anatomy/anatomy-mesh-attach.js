@@ -58,7 +58,9 @@ window.azAttachAnatomyMeshes=function(parts){
     const tibia = makeBone('tibia', shinMaterial, position => {
       const point = transform(position);
       const depth=-point[1];
-      point[1] += .126 * T.MathUtils.smoothstep(depth, .59, 1.30);
+      const distal=T.MathUtils.smoothstep(depth,.59,1.30);
+      point[1] += .144 * distal;
+      point[2] += .030 * distal;
       // Leave room for the joint surfaces as the rig bends and rotates.
       point[1] -= .022 * (1-T.MathUtils.smoothstep(depth, .225, .72));
       return point;
@@ -331,8 +333,15 @@ function attachAtlasFeet(T, legs, remove) {
       return bone;
     }
 
-    const calcaneus = addBone('Calcaneus', foot);
-    const talus = addBone('Talus', foot);
+    // Place the ankle rotation axis inside the talar dome. The midfoot and
+    // heel share this registration, including when toes extend against a support.
+    const hindfoot = new T.Group();
+    hindfoot.position.set(0,-.049,.030);
+    leg.footRegistration=hindfoot.position;
+    foot.add(hindfoot);
+    hindfoot.add(mid);
+    const calcaneus = addBone('Calcaneus', hindfoot);
+    const talus = addBone('Talus', hindfoot);
     const navicular = addBone('Navicular', mid);
     const cuboid = addBone('Cuboid', mid);
     const cuneiforms = ['Medial', 'Intermediate', 'Lateral'].map(name => addBone(name + ' cuneiform', mid));

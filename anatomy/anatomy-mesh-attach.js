@@ -33,28 +33,22 @@ window.azAttachAnatomyMeshes=function(parts){
   }
   remove(parts.head,parts.cervicalMeshes);
   const skull=assets.skull,centre=skull.min.map((v,i)=>(v+skull.max[i])/2);
-  const skullMesh=new T.Mesh(geometry(skull,p=>[(p[0]-centre[0])*.00405,(p[2]-centre[2])*.00405+.12,-(p[1]-centre[1])*.00405]),reliefMaterial(parts.materials.bone));
-  skullMesh.name='BodyParts3D skull, simplified';parts.head.add(skullMesh);
-  // Sunglasses remain part of the skull's local coordinate frame.
-  const shades=new T.Group();shades.name='Johnny sunglasses';parts.head.add(shades);
-  const frameMaterial=new T.MeshStandardMaterial({color:0x111c2b,roughness:.42,metalness:.12});
-  const lensMaterial=new T.MeshStandardMaterial({color:0x182d43,roughness:.28,metalness:.18});
-  function roundedRectangle(width,height,r){
-    const x=-width/2,y=-height/2,shape=new T.Shape();
-    shape.moveTo(x+r,y);shape.lineTo(x+width-r,y);shape.quadraticCurveTo(x+width,y,x+width,y+r);
-    shape.lineTo(x+width,y+height-r);shape.quadraticCurveTo(x+width,y+height,x+width-r,y+height);
-    shape.lineTo(x+r,y+height);shape.quadraticCurveTo(x,y+height,x,y+height-r);
-    shape.lineTo(x,y+r);shape.quadraticCurveTo(x,y,x+r,y);return shape;
+  const skullGeometry=geometry(skull,p=>[(p[0]-centre[0])*.00405,(p[2]-centre[2])*.00405+.12,-(p[1]-centre[1])*.00405]);
+  paintJohnnyFace(T,skullGeometry);
+  const skullMaterial=new T.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.56,metalness:.12});
+  const skullMesh=new T.Mesh(skullGeometry,skullMaterial);
+  skullMesh.name='BodyParts3D skull, simplified';
+  parts.head.add(skullMesh);
+  const shadowMaterial=new T.MeshBasicMaterial({color:0x171821});
+  function recess(name,position,scale){
+    const mesh=new T.Mesh(new T.CircleGeometry(1,28),shadowMaterial);
+    mesh.name=name;
+    mesh.position.set(...position);
+    mesh.scale.set(...scale);
+    parts.head.add(mesh);
   }
-  function glassMesh(shape,depth,material){return new T.Mesh(new T.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelSize:.003,bevelThickness:.003,bevelSegments:2,curveSegments:8}),material);}
-  for(const side of [-1,1]){
-    const rim=glassMesh(roundedRectangle(.238,.151,.036),.018,frameMaterial);rim.position.set(side*.137,.113,.327);rim.rotation.y=side*.12;shades.add(rim);
-    const lens=glassMesh(roundedRectangle(.207,.121,.027),.008,lensMaterial);lens.position.set(side*.137,.113,.350);lens.rotation.y=side*.12;shades.add(lens);
-    const templePath=new T.CatmullRomCurve3([new T.Vector3(side*.254,.142,.328),new T.Vector3(side*.280,.142,.20),new T.Vector3(side*.287,.126,-.03),new T.Vector3(side*.273,.089,-.10)]);
-    const temple=new T.Mesh(new T.TubeGeometry(templePath,20,.010,6,false),frameMaterial);shades.add(temple);
-  }
-  const bridgePath=new T.CatmullRomCurve3([new T.Vector3(-.030,.138,.350),new T.Vector3(0,.150,.374),new T.Vector3(.030,.138,.350)]);
-  shades.add(new T.Mesh(new T.TubeGeometry(bridgePath,12,.009,6,false),frameMaterial));
+  for(const side of [-1,1])recess('Johnny orbital shadow',[side*.132,.102,.185],[.091,.100,1]);
+  recess('Johnny nasal shadow',[0,-.080,.179],[.068,.094,1]);
   remove(parts.pelvis);
   const pelvisMaterial = reliefMaterial(parts.materials.pelvis);
   for(const name of ['rightHip','leftHip','sacrum']){
@@ -104,6 +98,35 @@ window.azAttachAnatomyMeshes=function(parts){
   }
   attachAtlasFeet(T, parts.legs, remove);
 };
+
+// Paint the red shell and gold faceplate on the skull's own surface. The
+// orbit, jaw and teeth retain the atlas geometry as Johnny turns.
+function paintJohnnyFace(T, geometry) {
+  const {position,color}=geometry.attributes;
+  const shell=new T.Color(0xbe2935), plate=new T.Color(0xf5c64c);
+  const cavity=new T.Color(0x221f26), shade=new T.Color();
+  const smooth=T.MathUtils.smoothstep;
+  for (let i=0;i<position.count;i++) {
+    const x=Math.abs(position.getX(i)), y=position.getY(i), z=position.getZ(i);
+    const edge=.180+.033*smooth(y,-.19,.01)+.035*smooth(y,.02,.22);
+    const browStripe=x-(.087+.048*smooth(y,.24,.53));
+    const face=Math.min(edge-x,z-(.045+.15*smooth(x,.13,.28)),y+.227,Math.max(.274-y,browStripe));
+    const onPlate=smooth(face,-.018,.014);
+    shade.copy(shell).lerp(plate,onPlate);
+    const seam=1-.24*(1-smooth(Math.abs(face),.006,.028));
+    const offset=i*3;
+    const relief=.72+.28*color.array[offset]/255;
+    shade.multiplyScalar(seam*relief);
+    const eye=(x-.137)**2/.096**2+(y-.113)**2/.083**2;
+    const nose=x*x/.053**2+(y+.065)**2/.094**2;
+    const recess=Math.max((1-smooth(eye,.54,1.05))*(1-smooth(z,.218,.295)),
+      (1-smooth(nose,.55,1.05))*(1-smooth(z,.230,.302)))*smooth(z,.02,.115);
+    shade.lerp(cavity,recess*.94);
+    color.array[offset]=Math.round(shade.r*255);
+    color.array[offset+1]=Math.round(shade.g*255);
+    color.array[offset+2]=Math.round(shade.b*255);
+  }
+}
 
 function footGeometry(T, asset, side) {
   const bytes = Uint8Array.from(atob(asset.data), character => character.charCodeAt(0));

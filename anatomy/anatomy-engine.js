@@ -497,7 +497,7 @@
       if(m==='pullup'){
         // Fixed hands and a prescribed humeral descent determine body travel.
         // This prevents an overhead upper arm merely folding at the elbow.
-        const vectors=explicitPullVectors(1),G=pullGrip(1),desired=G.clone().addScaledVector(vectors.upper,-1.08).addScaledVector(vectors.fore,-1.15),current=shoulderAt(1);
+        const vectors=explicitPullVectors(1),G=pullGrip(1),desired=G.clone().addScaledVector(vectors.upper,-1.08).addScaledVector(vectors.fore,-1.11),current=shoulderAt(1);
         hipY+=desired.y-current.y;hipZ+=desired.z-current.z;bodyLift=hipY-3.27;pelvis.position.set(0,hipY,hipZ);pelvis.updateMatrixWorld(true);
       }
       const torsoAngle=angleAt(1.85);
@@ -528,7 +528,7 @@
         for(const arm of exArms)sockets.set(arm.side,fitShoulderGirdle.socketOnCage(arm.side,shoulderAt(arm.side)));
         if(m==='pullup'){
           const vectors=explicitPullVectors(1),offset=pullGrip(1)
-            .addScaledVector(vectors.upper,-1.08).addScaledVector(vectors.fore,-1.15).sub(shoulderAt(1));
+            .addScaledVector(vectors.upper,-1.08).addScaledVector(vectors.fore,-1.11).sub(shoulderAt(1));
           offset.x=0;hipY+=offset.y;hipZ+=offset.z;bodyLift+=offset.y;
           for(const node of [pelvis,torso,head,...spineGroups.map(v=>v.node)])node.position.add(offset);
           model.updateMatrixWorld(true);
@@ -576,7 +576,7 @@
           const upper=frame.up.clone().multiplyScalar(-Math.cos(elevation)).addScaledVector(frame.forward,Math.sin(elevation)*Math.sin(plane));upper.x=side*Math.sin(elevation)*Math.cos(plane);upper.normalize();
           const perpendicular=frame.up.clone().addScaledVector(upper,-frame.up.dot(upper)).normalize(),elbow=(90+85*phase)*Math.PI/180;
           const fore=upper.clone().multiplyScalar(-Math.cos(elbow)).addScaledVector(perpendicular,Math.sin(elbow)).normalize();
-          E=S.clone().addScaledVector(upper,1.08);W=E.clone().addScaledVector(fore,.98);G=W.clone().addScaledVector(fore,.17);handDirection=fore;
+          E=S.clone().addScaledVector(upper,1.08);W=E.clone().addScaledVector(fore,.98);G=W.clone().addScaledVector(fore,.13);handDirection=fore;
           const db=dumbbells.find(x=>x.side===side);db.node.position.copy(G);db.node.visible=true;
         }else if(m==='row'){
           const elevation=(85-100*phase)*Math.PI/180,upper=frame.up.clone().multiplyScalar(-Math.cos(elevation)).addScaledVector(frame.forward,Math.sin(elevation)).normalize(),fore=frame.forward.clone();

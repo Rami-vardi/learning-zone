@@ -442,9 +442,8 @@ body{margin:0;background:#f3f6fa;font-family:Arial,sans-serif;color-scheme:light
 .progression-autosave-status{display:inline-block;margin-top:7px;font-size:13px;color:#63748a}.progression-autosave-status[data-state=saved]{color:#25715d}.progression-autosave-status[data-state=error]{color:#a43d3d}.progression-dialog [data-progression-error]:empty{display:none}
 
 </style><style>
-#student-learning-board [data-teacher-password-field][hidden]{display:none!important}
-#student-learning-board [data-teacher-password-field]{margin:0}
-#student-learning-board [data-teacher-password-field] .summary-text{margin:6px 0 0}
+#student-learning-board [data-account-password-field]{margin:0}
+#student-learning-board [data-account-password-field] .summary-text{margin:6px 0 0}
 #cloud-import-local{margin-top:7px}
 #student-learning-board .student-status-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 #student-learning-board .student-status-tabs button{display:inline-flex;gap:8px;align-items:center}
@@ -478,7 +477,7 @@ body{margin:0;background:#f3f6fa;font-family:Arial,sans-serif;color-scheme:light
 .lzl-folder-symbol{display:inline-flex;flex-shrink:0;color:var(--lz-blue,#245bba)}
 .lzl-upload-category{display:grid;gap:6px;margin:0 0 16px;font-size:13px;color:var(--lz-sub,#63748a)}
 .lzl-upload-category select,.lzl-dialog select{display:block;width:100%;padding:10px;border:1px solid var(--lz-line,#dce5f0);border-radius:8px;background:var(--lz-paper,#fff);color:var(--lz-ink,#182b45);font:inherit}
-</style><link rel="stylesheet" href="whiteboard-v2.css?v=20261119-cell-color"><link rel="stylesheet" href="appearance-settings.css?v=20261117-visual-polish"><link rel="stylesheet" href="exercise-pathways.css?v=20261117-visual-polish"><meta name="learning-zone-build" content="20261119-workspace-design"><link rel="stylesheet" href="learning-zone-design.css?v=20261119-workspace-design"></head><body><div class="desktop-note">Learning Zone is designed for a desktop or laptop computer.</div><div class="app-shell"><aside class="app-sidebar"><div class="app-brand"><span class="app-brand-mark"><i data-lucide="book-open" aria-hidden="true"></i></span><div><b>Learning Zone</b><small>RAMI VARDI</small></div></div><div><div class="nav-caption">YOUR WORKSPACE</div><nav class="app-nav" aria-label="Main navigation"><button data-nav="programs" aria-current="page"><i data-lucide="notebook-pen" aria-hidden="true"></i>Program Builder</button><button data-nav="exercises"><i data-lucide="dumbbell" aria-hidden="true"></i>Exercise Zone</button><button data-nav="anatomy"><i data-lucide="bone" aria-hidden="true"></i>Anatomy Zone</button><button data-nav="cases"><i data-lucide="users" aria-hidden="true"></i>Case Studies</button><button data-nav="library"><i data-lucide="library" aria-hidden="true"></i>Library Zone</button><button data-nav="whiteboard"><i data-lucide="notebook-pen" aria-hidden="true"></i>Whiteboard Zone</button><button data-nav="students"><i data-lucide="user-round-cog" aria-hidden="true"></i>Student Dashboard</button></nav></div><div class="app-sidebar-footer"><strong id="account-name">Not signed in</strong><span id="account-role">Username access</span><br><button id="help-button">Help & Online Storage</button><br><button id="shell-signout" hidden>Sign Out</button><br><button id="complete-backup" hidden>Export Accounts & Programs</button></div></aside><div class="app-main"><header class="app-topbar"><span class="app-breadcrumb" id="breadcrumb">Workspace / Program Builder</span><span class="app-badge">ONLINE DESKTOP APP</span></header><main class="app-zone"><div id="zone-heading" class="app-heading"><div class="eyebrow">YOUR PROGRAMMING WORKSPACE</div><h1>Program Builder</h1><p>Create practice athletes, define their goals, and build training programs.</p></div><div id="student-learning-board">
+</style><link rel="stylesheet" href="whiteboard-v2.css?v=20261119-cell-color"><link rel="stylesheet" href="appearance-settings.css?v=20261117-visual-polish"><link rel="stylesheet" href="exercise-pathways.css?v=20261117-visual-polish"><meta name="learning-zone-build" content="20261119-progression-visibility"><link rel="stylesheet" href="learning-zone-design.css?v=20261119-progression-visibility"></head><body><div class="desktop-note">Learning Zone is designed for a desktop or laptop computer.</div><div class="app-shell"><aside class="app-sidebar"><div class="app-brand"><span class="app-brand-mark"><i data-lucide="book-open" aria-hidden="true"></i></span><div><b>Learning Zone</b><small>RAMI VARDI</small></div></div><div><div class="nav-caption">YOUR WORKSPACE</div><nav class="app-nav" aria-label="Main navigation"><button data-nav="programs" aria-current="page"><i data-lucide="notebook-pen" aria-hidden="true"></i>Program Builder</button><button data-nav="exercises"><i data-lucide="dumbbell" aria-hidden="true"></i>Exercise Zone</button><button data-nav="anatomy"><i data-lucide="bone" aria-hidden="true"></i>Anatomy Zone</button><button data-nav="cases"><i data-lucide="users" aria-hidden="true"></i>Case Studies</button><button data-nav="library"><i data-lucide="library" aria-hidden="true"></i>Library Zone</button><button data-nav="whiteboard"><i data-lucide="notebook-pen" aria-hidden="true"></i>Whiteboard Zone</button><button data-nav="students"><i data-lucide="user-round-cog" aria-hidden="true"></i>Student Dashboard</button></nav></div><div class="app-sidebar-footer"><strong id="account-name">Not signed in</strong><span id="account-role">Username access</span><br><button id="help-button">Help & Online Storage</button><br><button id="shell-signout" hidden>Sign Out</button><br><button id="complete-backup" hidden>Export Accounts & Programs</button></div></aside><div class="app-main"><header class="app-topbar"><span class="app-breadcrumb" id="breadcrumb">Workspace / Program Builder</span><span class="app-badge">ONLINE DESKTOP APP</span></header><main class="app-zone"><div id="zone-heading" class="app-heading"><div class="eyebrow">YOUR PROGRAMMING WORKSPACE</div><h1>Program Builder</h1><p>Create practice athletes, define their goals, and build training programs.</p></div><div id="student-learning-board">
 
 
 
@@ -1776,7 +1775,7 @@ async function run(snapshot,onProgress=()=>{}){
 }
 function reportText(result){return [result.studentsCreated+' student account(s) created',result.workspacesImported+' workspace(s) imported',result.athletesImported+' athlete profile(s) imported',result.exercisePreferencesImported+' exercise preference collection(s) imported',result.customCasesImported+' case study/studies imported',result.pdfsImported+' PDF(s) imported',result.pdfsSkipped+' existing PDF(s) skipped',result.workspacesKept+' existing cloud workspace(s) kept'].join(' · ');}
 async function open(){
- teacher();if(dialog?.open){dialog.focus();return;}dialog=document.createElement('dialog');dialog.className='app-modal lzm-dialog';dialog.style.cssText='max-width:720px;width:calc(100% - 40px);max-height:85vh;overflow:auto;border:1px solid #dfe7f1;border-radius:14px;padding:24px;font:14px/1.5 Arial,sans-serif;color:#182b45;background:#fff';dialog.innerHTML='<h2>Import This Computer’s Work</h2><p data-migration-status role="status">Checking saved work on this computer…</p><div data-migration-preview></div><div data-migration-results aria-live="polite"></div><div class="actions" style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px"><button type="button" data-migration-close>Close</button><button type="button" class="primary" data-migration-start disabled>Import to Supabase</button></div>';document.body.append(dialog);dialog.showModal();let active=false,snapshot=null;const status=dialog.querySelector('[data-migration-status]'),start=dialog.querySelector('[data-migration-start]'),close=dialog.querySelector('[data-migration-close]');
+ teacher();if(dialog?.open){dialog.focus();return;}dialog=document.createElement('dialog');dialog.className='app-modal lzm-dialog';dialog.style.cssText='max-width:720px;max-height:85vh;overflow:auto';dialog.innerHTML='<h2>Import This Computer’s Work</h2><p data-migration-status role="status">Checking saved work on this computer…</p><div data-migration-preview></div><div data-migration-results aria-live="polite"></div><div class="actions" style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px"><button type="button" data-migration-close>Close</button><button type="button" class="primary" data-migration-start disabled>Import to Supabase</button></div>';document.body.append(dialog);dialog.showModal();let active=false,snapshot=null;const status=dialog.querySelector('[data-migration-status]'),start=dialog.querySelector('[data-migration-start]'),close=dialog.querySelector('[data-migration-close]');
  const closeDialog=()=>{if(!active){dialog.close();dialog.remove();dialog=null;}};close.onclick=closeDialog;dialog.oncancel=event=>{event.preventDefault();closeDialog();};
  try{snapshot=await preview();if(!dialog?.open)return;const c=snapshot.counts;dialog.querySelector('[data-migration-preview]').innerHTML='<table style="width:100%;border-collapse:collapse"><tbody>'+[['Student Usernames',c.students],['Saved Workspaces',c.workspaces],['Athlete Profiles',c.athletes],['Exercise Preferences',c.exercisePreferences],['Custom Case Studies',c.customCases],['PDF Files',c.pdfs],['Newer Local Drafts Included',c.recoveryDrafts]].map(([label,count])=>'<tr><th style="text-align:left;padding:7px;border-bottom:1px solid #e0e7f1">'+esc(label)+'</th><td style="padding:7px;border-bottom:1px solid #e0e7f1">'+count+'</td></tr>').join('')+'</tbody></table><p>Original local work stays on this computer. Existing cloud programs are preserved. Student usernames become available online after their accounts are imported.</p>'+(snapshot.warnings.length?'<ul>'+snapshot.warnings.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'');status.textContent='Review the items above, then import them to your Supabase account.';start.disabled=!Object.values(c).some(Number);}
  catch(err){status.textContent=err.message||String(err);return;}
@@ -2076,13 +2075,100 @@ const catalog=[...new Set((window.__exerciseSourceCatalog?.records||[]).filter(x
 root.querySelector('#lz-exercises').innerHTML=(window.LZIdentity?.search('',3000)||catalog.map(name=>({name}))).map(r=>`<option value="${esc(r.name)}"></option>`).join('');
 async function api(op,data={}){return LZLocal.api(op,data);}
 function error(e){if(e.sessionChanged)return;say(e.name==='AbortError'?'The server took too long. Your draft is preserved; retry or return later.':e.message||String(e));saveStatus('error',conflict?'Needs review':'Save failed');message.setAttribute('role','alert');if(workspaceActive&&serialized()!==lastSaved){preserveDraft();if(!conflict)recoveryPanel(preserveDraft()?'Your draft is preserved on this computer. Reconnect or retry saving to sync it online.':'Browser draft storage is unavailable. Keep this workspace open and export your work before leaving.')}}
-function login(){window.dispatchEvent(new Event('lz-account-change'));accountBar.innerHTML='';accountBar.dataset.student='';root.querySelector('.chrome .account').textContent='Student workspace';screen.innerHTML=`<main><section class="new-profile"><h1>Learning Zone</h1><p>Enter your username to open your online workspace.</p><form data-username-entry><label>Username<input name="username" type="text" required autocomplete="username" autocapitalize="none" spellcheck="false"></label><div data-teacher-password-field hidden><label>Teacher Password<input name="password" type="password" autocomplete="current-password" disabled></label><p class="summary-text">Use your existing Training Lab password. Student usernames do not need a password.</p></div><button class="primary">Enter Learning Zone</button></form><p class="summary-text">Students: use the private username your teacher created for you.</p></section></main>`;say('Work saves online automatically after signing in.');if(window.lucide)lucide.createIcons({attrs:{width:16,height:16}})}
-function teacherPasswordMode(form,force=false){const box=form?.querySelector('[data-teacher-password-field]');if(!box)return;const input=form.querySelector('[name="username"]'),password=form.querySelector('[name="password"]'),show=force||input.value.trim().toLowerCase()==='10autoset';box.hidden=!show;password.disabled=!show;password.required=show;if(!show)password.value='';return password;}
-root.addEventListener('input',event=>{if(event.target.matches('[data-username-entry] [name="username"]'))teacherPasswordMode(event.target.closest('form'));});
-root.addEventListener('change',event=>{if(event.target.matches('[data-username-entry] [name="username"]'))teacherPasswordMode(event.target.closest('form'));});
+function login(){
+ window.dispatchEvent(new Event('lz-account-change'));
+ accountBar.innerHTML='';accountBar.dataset.student='';root.querySelector('.chrome .account').textContent='Student workspace';
+ screen.innerHTML=`<main><section class="new-profile">
+  <h1>Learning Zone</h1><p>Enter your username to open your online workspace.</p>
+  <form data-username-entry>
+   <label>Username<input name="username" type="text" required autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+   <div data-account-password-field>
+    <label>Password<input name="password" type="password" autocomplete="current-password" aria-describedby="lz-login-password-help"></label>
+    <p class="summary-text" id="lz-login-password-help">Use the password your teacher gave you, if your account has one.</p>
+   </div>
+   <button class="primary">Enter Learning Zone</button>
+  </form>
+ </section></main>`;
+ say('Work saves online automatically after signing in.');
+ if(window.lucide)lucide.createIcons({attrs:{width:16,height:16}});
+}
+function accountPasswordMode(form,requiredCode){
+ const username=form.elements.username.value.trim().toLowerCase();
+ const password=form.elements.password;
+ if(requiredCode)form.dataset.passwordRequiredFor=username;
+ const teacher=username==='10autoset'||(requiredCode==='TEACHER_PASSWORD_REQUIRED'&&!!username);
+ password.required=teacher||form.dataset.passwordRequiredFor===username;
+ form.querySelector('#lz-login-password-help').textContent=teacher?'Use your existing Training Lab password.':'Use the password your teacher gave you, if your account has one.';
+ return password;
+}
+function refreshPasswordHelp(event){
+ if(event.target.matches('[data-username-entry] [name="username"]'))accountPasswordMode(event.target.form);
+}
+root.addEventListener('input',refreshPasswordHelp);
+root.addEventListener('change',refreshPasswordHelp);
 
-function addStudent(){screen.innerHTML=`<main><section class="new-profile"><h1>Add Student</h1><p>Choose a username to give them access to their own Learning Zone.</p><form data-add-username><label>Student username<input name="username" type="text" required minlength="1" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label><div class="actions"><button class="primary">Add Student</button><button type="button" data-teacher-home>Cancel</button></div></form></section></main>`}
-root.addEventListener('submit',async event=>{if(!event.target.matches('[data-username-entry],[data-add-username]'))return;event.preventDefault();const form=event.target,button=form.querySelector('button'),passwordInput=form.querySelector('[name="password"]');button.disabled=true;try{const data=new FormData(form),username=String(data.get('username')).trim();if(form.matches('[data-add-username]')){await api('create-student',{username});studentTab='active';await teacherHome();say('Student username created. Their workspace is available online.')}else{const password=String(data.get('password')||'');if(username.toLowerCase()==='10autoset'&&!password){teacherPasswordMode(form,true)?.focus();throw Error('Enter your existing Training Lab password.');}session=await api('enter',{username,...(password?{password}:{})});if(passwordInput)passwordInput.value='';await bootstrap();}}catch(e){if(e.code==='TEACHER_PASSWORD_REQUIRED')teacherPasswordMode(form,true)?.focus();error(e);}finally{if(passwordInput)passwordInput.value='';if(button.isConnected)button.disabled=false;}});
+function addStudent(){
+ if(member?.role!=='teacher')return;
+ screen.innerHTML=`<main><section class="new-profile">
+  <h1>Add Student</h1><p>Set the student’s Learning Zone login.</p>
+  <form data-add-username>
+   <label>Student username<input name="username" type="text" required maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+   <label>Student password<input name="password" type="password" required minlength="12" maxlength="72" autocomplete="new-password" aria-describedby="lz-create-password-help"></label>
+   <p class="summary-text" id="lz-create-password-help">Use at least 12 characters.</p>
+   <div class="actions"><button class="primary">Add Student</button><button type="button" data-teacher-home>Cancel</button></div>
+  </form>
+ </section></main>`;
+}
+function changeStudentPassword(id){
+ if(member?.role!=='teacher'||studentRosterActor!==member.id)return;
+ const student=studentRoster.find(s=>s.id===id&&studentState(s)==='active');
+ if(!student)return;
+ screen.innerHTML=`<main><section class="new-profile">
+  <h1>Change Password</h1><p>Set a new Learning Zone password for <strong>${esc(student.username)}</strong>.</p>
+  <form data-change-student-password data-student="${esc(student.id)}">
+   <label>New password<input name="password" type="password" required minlength="12" maxlength="72" autocomplete="new-password" aria-describedby="lz-change-password-help"></label>
+   <p class="summary-text" id="lz-change-password-help">Use at least 12 characters. Saving signs the student out of their current sessions.</p>
+   <div class="actions"><button class="primary">Save Password</button><button type="button" data-teacher-home>Cancel</button></div>
+  </form>
+ </section></main>`;
+ screen.querySelector('[name="password"]').focus();
+}
+root.addEventListener('submit',async event=>{
+ const form=event.target;
+ if(!form.matches('[data-username-entry],[data-add-username],[data-change-student-password]'))return;
+ event.preventDefault();
+ const isLogin=form.matches('[data-username-entry]');
+ if(!isLogin&&member?.role!=='teacher')return;
+ const button=form.querySelector('button.primary');
+ if(button.disabled)return;
+ const passwordInput=form.elements.password;
+ const data=new FormData(form);
+ const username=String(data.get('username')||'').trim();
+ const password=String(data.get('password')||'');
+ const buttons=Array.from(form.querySelectorAll('button'));
+ buttons.forEach(item=>item.disabled=true);
+ try{
+  if(isLogin){
+   session=await api('enter',{username,...(password?{password}:{})});
+   await bootstrap();
+  }else if(form.matches('[data-add-username]')){
+   await api('create-student',{username,password});
+   studentTab='active';
+   await teacherHome();
+   say('Student account created. Their workspace is available online.');
+  }else{
+   await api('set-student-password',{student:form.dataset.student,password});
+   await teacherHome();
+   say('Student password updated.');
+  }
+ }catch(e){
+  if(isLogin&&['TEACHER_PASSWORD_REQUIRED','STUDENT_PASSWORD_REQUIRED'].includes(e.code))accountPasswordMode(form,e.code).focus();
+  error(e);
+ }finally{
+  passwordInput.value='';
+  buttons.forEach(item=>{if(item.isConnected)item.disabled=false;});
+ }
+});
 root.addEventListener('click',async event=>{if(!event.target.closest('[data-add-student]'))return;try{await leaveWorkspace();addStudent()}catch(e){error(e)}});
 async function bootstrap(){try{if(location.hash)history.replaceState(null,'',location.pathname);session=LZLocal.openWorkspace();if(!session)return login();const access=await api('session');member=access.member;if(member.role==='teacher')await teacherHome();else{await loadOwner(member.id,member.username||member.email);roster()}account();}catch(e){if(workspaceActive)preserveDraft();if(e.status===401||e.status===403){LZCloud.clearSession?.();session=null;}member=null;owner=null;current=null;workspaceActive=false;athletes.length=0;if(session){screen.innerHTML='<main><section class="new-profile"><h1>Connection Interrupted</h1><p>Your saved work remains online. Reconnect to open your workspace.</p><button type="button" class="primary" data-retry-connection>Try Again</button><button type="button" data-change-login>Use Another Username</button></section></main>';say(e.message||'Could not connect to Learning Zone.');}else{login();say(e.message||'Please sign in again.');}window.dispatchEvent(new Event('lz-account-change'));}}
 root.addEventListener('click',event=>{if(event.target.closest('[data-retry-connection]'))bootstrap();else if(event.target.closest('[data-change-login]')){LZCloud.clearSession?.();session=null;login();}});
@@ -2138,7 +2224,7 @@ function renderStudentDashboard(){
  if(member?.role!=='teacher'||studentRosterActor!==member.id)return;
  const disabled=studentActionBusy?'disabled':'',labels={active:'Active',archived:'Archived',deleted:'Deleted'},visible=studentRoster.filter(s=>studentState(s)===studentTab);
  const action=(s,status,label,symbol)=>`<button type="button" class="${status==='deleted'?'student-delete':''}" data-student-status="${status}" data-student-id="${esc(s.id)}" ${disabled}>${icon(symbol)}<span>${label}</span></button>`;
- screen.innerHTML=`<main data-student-dashboard><div class="intro"><div><h1>Student Dashboard</h1><p>Open any student’s workspace to view or edit their practice athletes, goals and programs.</p></div><button class="primary" data-add-student ${disabled}>+ Add Student</button></div><div class="student-status-tabs" role="tablist" aria-label="Student status">${studentStates.map(status=>`<button type="button" role="tab" id="student-tab-${status}" data-student-tab="${status}" aria-selected="${studentTab===status}" aria-controls="student-roster-panel" ${disabled}>${labels[status]}<span class="student-count">(${studentRoster.filter(s=>studentState(s)===status).length})</span></button>`).join('')}</div><p class="student-lifecycle-note">${studentTab==='active'?'Active students can sign in and build their programs.':studentTab==='archived'?'Archived students cannot sign in. Their saved programs are kept, and you can restore access.':'Deleted students cannot sign in. Their saved programs and usernames are kept so you can restore them.'}</p><div id="student-roster-panel" role="tabpanel" aria-labelledby="student-tab-${studentTab}" class="roster">${visible.map(s=>{const state=studentState(s),name=s.username||s.email||'Student';return `<article class="athlete-card"><h2>${esc(name)}</h2><p>${state==='active'?'Access enabled':state==='archived'?'Archived · sign-in disabled':'Deleted · sign-in disabled'}</p>${state==='active'?`<button class="primary" data-open-student="${esc(s.id)}" data-student-name="${esc(name)}" ${disabled}>Open Workspace</button><button data-rename-student="${esc(s.id)}" data-student-name="${esc(name)}" ${disabled}>Edit Username</button>`:''}<div class="student-card-actions">${state==='active'?action(s,'archived','Archive','archive')+action(s,'deleted','Delete','trash-2'):action(s,'active','Restore to Active','rotate-ccw')+(state==='archived'?action(s,'deleted','Delete','trash-2'):'')}</div></article>`;}).join('')||`<p>${studentTab==='active'?'No active students. Add a student by username to get started.':studentTab==='archived'?'No archived students.':'No deleted students.'}</p>`}</div></main>`;
+ screen.innerHTML=`<main data-student-dashboard><div class="intro"><div><h1>Student Dashboard</h1><p>Open any student’s workspace to view or edit their practice athletes, goals and programs.</p></div><button class="primary" data-add-student ${disabled}>+ Add Student</button></div><div class="student-status-tabs" role="tablist" aria-label="Student status">${studentStates.map(status=>`<button type="button" role="tab" id="student-tab-${status}" data-student-tab="${status}" aria-selected="${studentTab===status}" aria-controls="student-roster-panel" ${disabled}>${labels[status]}<span class="student-count">(${studentRoster.filter(s=>studentState(s)===status).length})</span></button>`).join('')}</div><p class="student-lifecycle-note">${studentTab==='active'?'Active students can sign in and build their programs.':studentTab==='archived'?'Archived students cannot sign in. Their saved programs are kept, and you can restore access.':'Deleted students cannot sign in. Their saved programs and usernames are kept so you can restore them.'}</p><div id="student-roster-panel" role="tabpanel" aria-labelledby="student-tab-${studentTab}" class="roster">${visible.map(s=>{const state=studentState(s),name=s.username||s.email||'Student';return `<article class="athlete-card"><h2>${esc(name)}</h2><p>${state==='active'?'Access enabled':state==='archived'?'Archived · sign-in disabled':'Deleted · sign-in disabled'}</p>${state==='active'?`<button class="primary" data-open-student="${esc(s.id)}" data-student-name="${esc(name)}" ${disabled}>Open Workspace</button><button data-rename-student="${esc(s.id)}" data-student-name="${esc(name)}" ${disabled}>Edit Username</button><button data-change-password="${esc(s.id)}" ${disabled}>Change Password</button>`:''}<div class="student-card-actions">${state==='active'?action(s,'archived','Archive','archive')+action(s,'deleted','Delete','trash-2'):action(s,'active','Restore to Active','rotate-ccw')+(state==='archived'?action(s,'deleted','Delete','trash-2'):'')}</div></article>`;}).join('')||`<p>${studentTab==='active'?'No active students. Add a student to get started.':studentTab==='archived'?'No archived students.':'No deleted students.'}</p>`}</div></main>`;
  window.dispatchEvent(new Event('lz-dashboard-ready'));if(window.lucide)lucide.createIcons({attrs:{width:19,height:19}});
 }
 function confirmStudentChange(student,status){
@@ -2173,6 +2259,7 @@ root.addEventListener('click',async event=>{const b=event.target.closest('button
  else if(b.hasAttribute('data-load-latest')){const id=owner,name=workspaceName;if(!preserveDraft())throw Error('Export your work before loading another version.');if(await loadOwner(id,name,true)){roster();account();say('Latest saved version loaded. Your preserved draft remains available.')}}
  else if(b.hasAttribute('data-restore-draft')){if(!pendingRecovery)return;const draft=pendingRecovery;askDelete('Restore preserved draft?','This restores your preserved work and saves it automatically. It replaces the currently loaded workspace. Other sessions remain protected by revision checks.',()=>{restoredDraft=draft;athletes.splice(0,athletes.length,...sanitize(draft.payload));pendingRecovery=null;conflict=false;current=null;resetComparison();roster();setBusy(false);recoveryPanel();schedule()},'Restore draft')}
  else if(b.hasAttribute('data-dismiss-draft')){localStorage.removeItem(pendingRecovery?.key||draftKey());pendingRecovery=findRecovery();setBusy(false);account();recoveryPanel(pendingRecovery?'Another preserved draft is available. Restore it or keep the saved version.':'');say('Saved version kept.')}
+ else if(b.dataset.changePassword){changeStudentPassword(b.dataset.changePassword);}
  else if(b.dataset.renameStudent){const id=b.dataset.renameStudent;editName('Edit student username',b.dataset.studentName,'Student username',async name=>{await api('rename-student',{student:id,username:name});await teacherHome();say('Username updated. The account and saved work are unchanged.')})}
  else if(b.dataset.renameAthlete){const a=athletes.find(a=>a.id===Number(b.dataset.renameAthlete));editName('Rename practice athlete',a.name,'Athlete Name',async name=>{a.name=name;roster();schedule()})}
  else if(b.dataset.archiveAthlete){const a=athletes.find(a=>a.id===Number(b.dataset.archiveAthlete));askDelete('Archive '+a.name+'?','The profile, goals and program will be kept in Archived athletes. You can restore them at any time.',()=>{a.archived=true;current=null;roster()},'Archive')}
@@ -2270,7 +2357,7 @@ function progressComparisonPanel() {
   const panel = progressionDialog.querySelector('[data-progression-comparison]');
   if (!panel) return;
   panel.hidden = !progressionDraft.alternatives.length;
-  panel.innerHTML = panel.hidden ? '' : `<h3>Goal Exercise Progression</h3>${progressionComparison(progressionDraft, progressionTrackId)}`;
+  panel.innerHTML = panel.hidden ? '' : `<h3>Compare Progressions</h3>${progressionComparison(progressionDraft, progressionTrackId)}`;
 }
 function updateProgressionTable() {
   progressionDialog.querySelector('[data-progress-table]').innerHTML = progressionTable();
@@ -2297,7 +2384,7 @@ function openProgression(id) {
   progressionDialog.setAttribute('aria-labelledby','progression-title');
   progressionDialog.innerHTML=`<form><header>
     <div><span class="eyebrow">Exercise Progression</span>${exerciseNumberLabel(e)}<h2 id="progression-title">${esc(e.name||'Exercise')}</h2><p>${esc(current.name)}</p></div>
-    <div class="progression-header-actions">${e.role==='Goal'?'<button class="progression-alt-add" type="button" data-progression-add>Add Alternative Progression</button>':''}<button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></div>
+    <div class="progression-header-actions"><button class="progression-alt-add" type="button" data-progression-add>Add Alternative Progression</button><button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></div>
   </header>
   <div class="progression-content">
     ${progressionGoal(e)}
@@ -2384,7 +2471,7 @@ progressionDialog.addEventListener('click', async event=>{
 progressionDialog.addEventListener('cancel',event=>{event.preventDefault();requestProgressionClose();});
 progressionDialog.addEventListener('submit',event=>{event.preventDefault();queueProgressionAutosave(true);});
 function goalProgressionView() {
-  const entries=allEntries().filter(({e})=>e.role==='Primary'||e.role==='Goal').sort((a,b)=>Number(b.e.role==='Goal')-Number(a.e.role==='Goal'));
+  const entries=allEntries().filter(({e})=>e.role==='Primary'||e.role==='Goal'||e.progression?.alternatives?.length).sort((a,b)=>Number(b.e.role==='Goal')-Number(a.e.role==='Goal'));
   if(!entries.length)return '<div class="goal-progression-empty"><h3>No Goal Exercises Yet</h3><p>Set an exercise role to Goal or Primary to see its progression here.</p></div>';
   return `<div class="goal-progressions">${entries.map(({d,e})=>{
     const p=e.progression?LZProgression.ensure(LZProgression.create(e.progression,e.mode)):null;

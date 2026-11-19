@@ -1,0 +1,237 @@
+/* Shared interface geometry, based on the Exercise Progression design. */
+:root {
+  --lz-font: system-ui, sans-serif;
+  --lz-ui-size: .875rem;
+  --lz-small-size: .75rem;
+  --lz-ui-leading: 1.45;
+  --lz-control-y: 7px;
+  --lz-control-x: 9px;
+  --lz-control-height: 36px;
+  --lz-control-radius: 8px;
+  --lz-panel-radius: 15px;
+  --lz-panel-pad: clamp(12px, 2.2vw, 20px);
+  --lz-ui-gap: 10px;
+  --lz-entered: light-dark(#e3efff, #223d66);
+  --lz-goal-bg: light-dark(#fdf7e7, #362e20);
+  --lz-goal-border: light-dark(#e8d69e, #6b5730);
+  --lz-goal-text: light-dark(#61491c, #f4dc9f);
+}
+
+html[data-lz-text=large] {
+  --lz-ui-size: 1rem;
+  --lz-small-size: .875rem;
+  --lz-control-height: 40px;
+}
+
+body,
+.app-modal,
+.lz-appearance-dialog,
+#student-learning-board,
+.app-zone :is(.lze-root, .lzcases, .lzlib, .lz-wb, #lz-anatomy-zone, #lz-anatomy-tension) {
+  font-family: var(--lz-font);
+  font-size: var(--lz-ui-size);
+  line-height: var(--lz-ui-leading);
+}
+
+.app-shell .app-topbar {
+  min-height: 52px;
+  padding: 10px var(--lz-panel-pad);
+}
+
+.app-shell .app-zone { padding: var(--lz-panel-pad); }
+.app-shell .app-sidebar { padding: 20px 14px; gap: 20px; }
+.app-shell .app-nav { gap: 4px; }
+.app-shell .app-nav button { padding: 7px 9px; gap: 8px; border-radius: var(--lz-control-radius); }
+.app-shell .app-sidebar-footer { padding-top: 10px; }
+
+.app-shell :is(.app-heading, .lze-heading, .lzc-head, .lzl-head) { margin-bottom: 14px; }
+.app-shell :is(.app-heading, .lze-heading, .lzcases, .lzlib, #student-learning-board) h1 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  font-weight: 700;
+}
+
+.app-shell :is(.lze-root, .lzcases, .lzlib, .lz-wb, #student-learning-board) h2,
+.app-modal h2,
+.lz-appearance-dialog h2 { font-size: 1.25rem; line-height: 1.24; font-weight: 650; }
+
+.app-shell :is(.lze-root, .lzcases, .lzlib, .lz-wb, #student-learning-board) h3 { font-size: 1rem; line-height: 1.3; }
+
+.app-shell :is(.app-heading .eyebrow, .lze-eyebrow, .lzc-eyebrow, .lzl-eyebrow, .nav-caption) {
+  font-size: var(--lz-small-size);
+  letter-spacing: .11em;
+}
+
+.app-shell button,
+.app-modal button,
+.lz-appearance-dialog button { font-family: var(--lz-font); }
+
+.app-shell :is(.app-topbar, .app-nav, .lze-toolbar, .lze-local-toolbar, .lze-menu-nav, .lzc-actions, .lzl-item-actions, .wb-toolbar, .wb-top) button,
+.app-modal button,
+.lz-appearance-dialog button,
+#student-learning-board :is(.lz-account, .section-head, .set-editor, .student-card-actions, .tabs) button {
+  min-height: var(--lz-control-height);
+  padding: var(--lz-control-y) var(--lz-control-x);
+  border-radius: var(--lz-control-radius);
+}
+
+.app-shell :is(.lze-root, .lzcases, .lzlib, .lz-wb, #lz-anatomy-zone, #lz-anatomy-tension) :is(input:not([type=color], [type=checkbox], [type=range]), select, textarea),
+.app-modal :is(input:not([type=color], [type=checkbox], [type=range]), select, textarea),
+.lz-appearance-dialog select,
+#student-learning-board :is(input:not([type=color], [type=checkbox], [type=range]), select, textarea) {
+  font-family: var(--lz-font);
+  font-size: var(--lz-ui-size);
+  line-height: var(--lz-ui-leading);
+  border-radius: var(--lz-control-radius);
+}
+
+.app-shell :is(.lze-root, .lzcases, .lzlib) :is(input:not([type=color], [type=checkbox], [type=range]), select, textarea),
+.app-modal :is(input:not([type=color], [type=checkbox], [type=range]), select, textarea),
+.lz-appearance-dialog select,
+#student-learning-board :is(.athlete-goals-table, .progression-table, .set-editor, .new-profile) :is(input:not([type=checkbox], [type=range]), select, textarea) {
+  min-height: var(--lz-control-height);
+  padding: var(--lz-control-y) var(--lz-control-x);
+}
+
+/* Compact surfaces across Program Builder, Student Dashboard, and each zone. */
+.app-shell :is(.lze-tile, .lze-menu-tile, .lze-guide-top, .lze-guide-section, .lzc-card, .lzc-panel, .lzl-item, .lzl-folders),
+.app-modal,
+.lz-appearance-dialog,
+#student-learning-board :is(section, .athlete-card, .day, .exercise, .set-editor, .goal-progression-card) {
+  border-radius: var(--lz-panel-radius);
+}
+
+.app-shell :is(.lze-grid, .lze-menu-grid, .lze-path-list, .lzc-grid, .lzl-layout),
+#student-learning-board :is(main, .roster, .day-grid, .goal-progressions) { gap: var(--lz-ui-gap); }
+
+.app-shell :is(.lze-guide-top, .lze-guide-section, .lzc-panel, .lzl-reader-head),
+.app-modal,
+.lz-appearance-dialog,
+#student-learning-board :is(main > section, .athlete-card, .goal-progression-card) { padding: var(--lz-panel-pad); }
+
+.app-shell .lze-root :is(.lze-tile, .lze-menu-tile, .lze-path-list article),
+.app-shell .lzcases .lzc-card,
+.app-shell .lzl-item { padding: 12px; }
+.app-shell .lze-root .lze-menu-tile { min-height: 92px; gap: 7px; }
+.app-shell .lze-root .lze-menu-tile strong { font-size: 1rem; }
+.app-shell .lze-root .lze-menu-symbol { width: 44px; height: 44px; border-radius: 10px; }
+.app-shell .lze-root .lze-menu-symbol .lze-category-pictogram { width: 34px; height: 34px; }
+.app-shell .lzl-folders button { padding: 7px 8px; }
+.app-shell .lzl-drop { padding: var(--lz-panel-pad); margin-bottom: 12px; }
+.app-shell .lzc-profile { gap: 14px; margin: 10px 0 14px; }
+.app-shell .lzcases table { font-size: var(--lz-ui-size); }
+.app-shell .lzcases :is(th, td) { font-size: inherit; padding: 6px 9px; }
+.app-shell .lzcases th { background: var(--lz-neutral, #f3f6fb); }
+.app-shell :is(#lz-anatomy-zone, #lz-anatomy-tension) :is(button, select) { min-height: var(--lz-control-height); }
+.app-shell .lz-wb :is(.wb-top, .wb-toolbar, .wb-cell-line, .wb-tabs) { padding: 7px 10px; gap: 7px; }
+.app-shell .lz-wb :is(.wb-home, .wb-home-start, .wb-dialog) { padding: var(--lz-panel-pad); }
+.app-shell .lz-wb .wb-home-board { padding: 12px; gap: 9px; }
+.app-modal label, .lz-appearance-dialog label { gap: 5px; margin-block: 8px; }
+.app-modal .actions { gap: 7px; margin-top: 10px; }
+#student-learning-board .day-title { padding: 8px 10px; }
+#student-learning-board .athlete-goals-table :is(th, td),
+#student-learning-board .mirror-table :is(th, td) { padding: 6px; font-size: var(--lz-ui-size); }
+#student-learning-board .athlete-goals-table .goal-order-column { width: 34px; }
+#student-learning-board .athlete-goals-table .goal-priority-column { width: 102px; }
+#student-learning-board .athlete-goals-table .goal-remove-column { width: 58px; }
+
+/* Exercise Progression. The desktop content width and row density match the approved preview. */
+#student-learning-board .progression-dialog {
+  width: min(1024px, calc(100% - 24px));
+  max-width: none;
+  max-height: calc(100dvh - 24px);
+  border: 1px solid var(--lz-line);
+  border-radius: var(--lz-panel-radius);
+}
+
+#student-learning-board .progression-dialog header,
+#student-learning-board .progression-content,
+#student-learning-board .progression-dialog footer { padding: var(--lz-panel-pad); }
+
+#student-learning-board .progression-dialog header { border-bottom: 0; padding-bottom: 0; }
+#student-learning-board .progression-dialog header h2 { font-size: 1.5rem; line-height: 1.2; margin: 4px 0 0; }
+#student-learning-board .progression-dialog .eyebrow { font-size: var(--lz-small-size); letter-spacing: .11em; color: var(--lz-blue); }
+#student-learning-board .progression-dialog .progression-foundation { color: var(--lz-sub); }
+#student-learning-board .progression-dialog .progression-config { align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 9px; }
+#student-learning-board .progression-dialog .progression-config .weeks-label { display: flex; align-items: center; gap: 7px; margin: 0; min-width: 0; max-width: none; font-size: var(--lz-ui-size); }
+#student-learning-board .progression-dialog .weeks-label input { width: 64px; min-height: var(--lz-control-height); padding: var(--lz-control-y) var(--lz-control-x); }
+#student-learning-board .progression-dialog button { border-radius: var(--lz-control-radius); padding: 7px 11px; min-height: var(--lz-control-height); }
+#student-learning-board .progression-header-actions,
+#student-learning-board .progression-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#student-learning-board .progression-dialog .progression-alt-add { background: var(--lz-entered); color: var(--lz-blue); border-color: var(--lz-blue); }
+#student-learning-board .progression-dialog .progression-delete { color: var(--lz-danger); }
+#student-learning-board .progression-goal {
+  width: fit-content;
+  min-width: min(100%, 236px);
+  max-width: 100%;
+  margin: 13px auto;
+  padding: 9px 18px;
+  text-align: center;
+  color: var(--lz-goal-text);
+  background: var(--lz-goal-bg);
+  border: 1px solid var(--lz-goal-border);
+  border-radius: 9px;
+}
+
+#student-learning-board .progression-goal-values {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#student-learning-board .progression-goal-values > span + span { padding-inline-start: 8px; border-inline-start: 1px solid var(--lz-goal-border); }
+#student-learning-board .progression-dialog .progression-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; border-bottom: 1px solid var(--lz-line); }
+#student-learning-board .progression-dialog .progression-tabs button { border-radius: 7px 7px 0 0; border-bottom: 0; }
+#student-learning-board .progression-dialog .progression-tabs button:is([aria-pressed=true], [aria-selected=true]) { background: var(--lz-blue); color: var(--lz-on-accent, #fff); border-color: var(--lz-blue); }
+
+#student-learning-board table.progression-table { width: 100%; min-width: 0; table-layout: fixed; }
+#student-learning-board .progression-table .progression-week-column { width: 64px; }
+#student-learning-board .progression-table :is(th, td) { font-size: var(--lz-ui-size); padding: 6px; vertical-align: top; text-align: start; border-color: var(--lz-line); }
+#student-learning-board .progression-table :is(th, td):first-child { width: 64px; padding-inline-start: 9px; background: var(--lz-neutral, #f3f6fb); }
+#student-learning-board .progression-table .actual-results { padding-inline-start: 6px; border-inline-start: 0; }
+#student-learning-board .progression-dialog table.progression-table textarea { display: block; width: 100%; min-height: 38px; padding: 7px 9px; resize: vertical; font-size: var(--lz-ui-size); }
+html[data-lz-theme-ready] #student-learning-board .progression-table .actual-results textarea { background: var(--lz-paper); }
+html[data-lz-theme-ready] #student-learning-board :is(.progression-table .actual-results textarea, .progression-comparison-table td.actual-results).progression-results-entered { background: var(--lz-entered); }
+
+#student-learning-board .progression-dialog .progression-comparison-section { margin: 0; padding: var(--lz-panel-pad); border: 0; border-top: 1px solid var(--lz-line); border-radius: 0; box-shadow: none; background: var(--lz-neutral, #f3f6fb); }
+#student-learning-board .progression-comparison-section > h3 { margin: 0 0 9px; }
+#student-learning-board .progression-comparisons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 286px), 1fr)); align-items: start; gap: 10px; max-width: 920px; }
+#student-learning-board .progression-comparison { min-width: 0; overflow: hidden; border: 1px solid var(--lz-line); border-radius: 9px; background: var(--lz-paper); }
+#student-learning-board .progression-comparison :is(h3, h4) { font-size: var(--lz-ui-size); margin: 0; padding: 7px 8px; border-bottom: 1px solid var(--lz-line); }
+#student-learning-board table.progression-comparison-table { width: 100%; min-width: 0; table-layout: fixed; }
+#student-learning-board .progression-comparison-table .progression-week-column { width: 64px; }
+#student-learning-board .goal-progression-card table th:first-child { width: 64px; }
+#student-learning-board .progression-comparison-table tbody th[scope=row] { white-space: nowrap; font-weight: 500; }
+#student-learning-board .goal-progression-card table th:last-child { width: auto; }
+#student-learning-board table.progression-comparison-table :is(th, td) { font-size: calc(var(--lz-ui-size) - .0625rem); padding: 5px 6px; text-align: start; vertical-align: top; overflow-wrap: anywhere; }
+#student-learning-board :is(.goal-progression-card, .progression-comparison) :is(td, th).actual-results { padding-inline-start: 6px; border-inline-start: 0; }
+#student-learning-board .goal-progression-card .progression-plan-text { font-weight: 500; }
+#student-learning-board .progression-comparison .table-wrap { min-width: 0; }
+.progression-discard-dialog { border-color: var(--lz-line); border-radius: var(--lz-panel-radius); background: var(--lz-paper); color: var(--lz-ink); padding: var(--lz-panel-pad); }
+.progression-discard-dialog button[data-choice=delete] { color: var(--lz-danger); border-color: var(--lz-danger); }
+#student-learning-board .exercise.role-goal { border-left-color: var(--lz-goal-border); }
+#student-learning-board .role-goal .role-badge { background: var(--lz-goal-bg); color: var(--lz-goal-text); }
+
+@media (max-width: 700px) {
+  .app-shell .app-sidebar { padding: 12px; gap: 10px; }
+  .app-shell .app-nav button { gap: 6px; }
+  .app-shell .app-topbar { min-height: 42px; }
+}
+
+@media (max-width: 450px) {
+  #student-learning-board .progression-dialog header { flex-wrap: wrap; gap: 7px; }
+  #student-learning-board .progression-table .progression-week-column { width: 51px; }
+  #student-learning-board .progression-table :is(th, td) { overflow-wrap: anywhere; padding: 5px; }
+  #student-learning-board .progression-table :is(th, td):first-child { width: 51px; padding-inline-start: 5px; }
+}
+
+@media (pointer: coarse) {
+  :root { --lz-control-height: 44px; }
+  .app-shell :is(.app-nav, .wb-toolbar) button { min-height: var(--lz-control-height); }
+}

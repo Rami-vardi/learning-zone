@@ -172,6 +172,18 @@ body{margin:0;background:#f3f6fa;font-family:Arial,sans-serif;color-scheme:light
 
 .lzcases{color:var(--lz-ink,#182b45);font:14px/1.6 Inter,Arial,sans-serif}.lzcases *{box-sizing:border-box}.lzcases h1{font-size:30px;line-height:1.2;margin:6px 0 12px}.lzcases h2{font-size:20px;margin:0 0 12px}.lzcases h3{font-size:17px;margin:0 0 9px}.lzcases p{margin:8px 0 16px}.lzcases button{font:inherit;border:1px solid var(--lz-line,#dce5f0);border-radius:9px;padding:10px 14px;background:var(--lz-paper,#fff);color:var(--lz-ink,#182b45);cursor:pointer}.lzcases button:hover{box-shadow:0 5px 15px #13243c13;transform:translateY(-1px)}.lzcases button:disabled{opacity:.45;cursor:default;transform:none}.lzcases .lzc-primary{background:var(--lz-blue,#245bba);color:#fff;border-color:transparent}.lzcases .lzc-add{background:#e4f4e9;color:#245d3c;border-color:#a5cdb1}.lzc-head,.lzc-toolbar{display:flex;gap:15px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:23px}.lzc-head p,.lzc-meta{color:var(--lz-sub,#63748a)}.lzc-eyebrow{font-size:11px;letter-spacing:1.7px;color:var(--lz-blue,#245bba)}.lzc-count{padding:8px 12px;border-radius:8px;background:var(--lz-soft,#eaf1ff);color:var(--lz-blue,#245bba);font-size:12px}.lzc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:17px}.lzcases .lzc-card{display:flex;text-align:left;gap:16px;padding:20px;box-shadow:0 6px 23px #13243c0a;border-radius:15px}.lzc-card .case-portrait{width:74px;height:74px;flex-shrink:0;border-radius:13px}.lzc-card strong{font-size:18px;display:block}.lzc-card small{display:block;color:var(--lz-sub,#63748a);font-size:12px;margin-top:4px}.lzc-card p{font-size:13px;margin:10px 0}.lzc-card em{font-size:12px;font-style:normal;color:var(--lz-blue,#245bba)}.lzc-profile{display:flex;align-items:start;gap:23px;margin:15px 0 25px}.lzc-profile .case-portrait{width:145px;height:145px;flex-shrink:0;border-radius:17px}.lzc-initials{display:grid;place-items:center;background:var(--lz-soft,#eaf1ff);color:var(--lz-blue,#245bba);font-size:32px;font-weight:600}.lzc-profile img.case-portrait,.lzc-card img.case-portrait{object-fit:cover}.lzc-panel{padding:25px;background:var(--lz-paper,#fff);border:1px solid var(--lz-line,#dce5f0);border-radius:15px;margin-bottom:22px;box-shadow:0 6px 23px #13243c0a}.lzc-table-wrap{overflow:auto;margin:20px 0}.lzcases table{width:100%;border-collapse:collapse;font-size:13px}.lzcases th,.lzcases td{text-align:left;padding:13px 12px;vertical-align:top;border-bottom:1px solid var(--lz-line,#dce5f0)}.lzcases th{font-size:12px;color:var(--lz-sub,#63748a);background:var(--lz-bg,#f3f6fb)}.lzcases label{display:block;margin:14px 0 7px;font-size:12px;color:var(--lz-sub,#63748a)}.lzcases textarea,.lzcases input{width:100%;padding:11px;border:1px solid var(--lz-line,#dce5f0);border-radius:9px;background:var(--lz-bg,#f3f6fb);color:var(--lz-ink,#182b45);font:inherit}.lzcases textarea{resize:vertical}.lzc-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:17px}.lzc-toolbar{font-size:12px;color:var(--lz-sub,#63748a)}.lzc-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.lzc-movement-row{display:grid;grid-template-columns:1fr 1.25fr 1.25fr auto;gap:12px;align-items:end;padding-bottom:14px;border-bottom:1px solid var(--lz-line,#dce5f0)}.lzc-movement-row label{margin-bottom:0;min-width:0}.lzc-movement-row button{min-height:44px}.lzc-editor-footer{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}.lzc-editor-footer .lzc-actions{margin-top:0}.lzc-portrait-preview{display:flex;align-items:center;gap:15px}.lzc-portrait-preview img{width:110px;height:110px;object-fit:cover;border-radius:12px}.lzc-instructions{white-space:pre-wrap}@media(max-width:700px){.lzc-profile{flex-direction:column}.lzc-grid{grid-template-columns:1fr}.lzc-panel{padding:17px}.lzc-editor-grid,.lzc-movement-row{grid-template-columns:1fr}.lzc-movement-row{gap:0}}
 
+.lzc-case-editor fieldset{padding:0;margin:0;border:0;min-inline-size:0}
+.lzc-case-editor [data-case-status]:empty{display:none}
+.lzc-case-editor .lzc-table-wrap{margin:8px 0}
+.lzc-case-editor table{table-layout:fixed}
+.lzc-case-editor th,.lzc-case-editor td{padding:6px;vertical-align:middle}
+.lzc-case-editor td input{padding:7px 8px}
+.lzc-case-editor .lzc-remove-column{width:44px}
+.lzc-case-editor .lzc-remove-row{padding:5px 8px;font-size:17px;line-height:1;color:var(--lz-danger,#9e3b38)}
+.lzc-case-editor .lzc-portrait-preview{margin:8px 0 12px}
+.lzc-case-editor .lzc-portrait-preview img{width:68px;height:68px;border-radius:9px}
+.lzc-case-editor h3{margin-top:12px}
+
 .lzlib{font:14px/1.5 Inter,Arial,sans-serif;color:var(--lz-ink,#182b45)}.lzlib *{box-sizing:border-box}.lzlib h1{font-size:30px;line-height:1.2;margin:6px 0 12px}.lzlib h2{font-size:20px;margin:0 0 9px}.lzlib h3{font-size:16px;margin:0}.lzlib button{font:inherit;padding:9px 13px;border:1px solid var(--lz-line,#dce5f0);border-radius:9px;background:var(--lz-paper,#fff);color:var(--lz-ink,#182b45);cursor:pointer}.lzlib button:hover{box-shadow:0 5px 15px #13243c13;transform:translateY(-1px)}.lzlib .lzl-primary{background:var(--lz-blue,#245bba);color:#fff;border-color:transparent}.lzl-head{display:flex;align-items:start;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:25px}.lzl-head p,.lzl-drop p{color:var(--lz-sub,#63748a)}.lzl-eyebrow{font-size:11px;letter-spacing:1.7px;color:var(--lz-blue,#245bba)}.lzl-layout{display:grid;grid-template-columns:170px minmax(0,1fr);gap:22px}.lzl-folders{padding:12px;height:fit-content;border:1px solid var(--lz-line,#dce5f0);border-radius:14px;background:var(--lz-paper,#fff);box-shadow:0 6px 23px #13243c0a}.lzlib .lzl-folders button{border:0;width:100%;text-align:left;word-break:break-word}.lzlib button[aria-pressed=true]{background:var(--lz-soft,#eaf1ff);color:var(--lz-blue,#245bba)}.lzl-content{min-width:0}.lzl-search{display:block;margin-bottom:18px;font-size:12px;color:var(--lz-sub,#63748a)}.lzl-search input{margin-top:6px;width:100%;padding:12px;border:1px solid var(--lz-line,#dce5f0);border-radius:9px;font:inherit;font-size:14px;background:var(--lz-paper,#fff);color:var(--lz-ink,#182b45)}.lzl-drop{border:1px dashed var(--lz-blue,#245bba);border-radius:14px;padding:25px;text-align:center;background:var(--lz-soft,#eaf1ff);margin-bottom:20px}.lzl-drop-active{box-shadow:inset 0 0 0 2px var(--lz-blue,#245bba)}.lzl-drop p{margin:7px 0 13px;font-size:12px}.lzl-item{background:var(--lz-paper,#fff);border:1px solid var(--lz-line,#dce5f0);border-radius:13px;padding:18px;display:flex;gap:15px;margin-bottom:12px;box-shadow:0 6px 23px #13243c0a}.lzl-pdf-mark{height:65px;min-width:50px;flex:0 0 50px;background:var(--lz-soft,#eaf1ff);border-radius:9px;color:var(--lz-blue,#245bba);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:bold;line-height:1}.lzl-pdf-mark .lzl-folder-symbol{width:23px;height:23px}.lzl-pdf-mark .lzl-folder-symbol svg{width:23px;height:23px}.lzl-item-content{min-width:0;flex:1}.lzlib .lzl-title{padding:0;border:0;text-align:left;font-size:16px;word-break:break-word;background:transparent}.lzl-item p{font-size:12px;color:var(--lz-sub,#63748a);margin:5px 0}.lzl-item small{color:var(--lz-sub,#63748a);font-size:11px;word-break:break-word}.lzl-item-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.lzl-item-actions button{font-size:12px;padding:6px 9px}.lzlib .lzl-delete{color:#ad3d43}.lzl-status{font-size:12px;color:var(--lz-blue,#245bba);min-height:20px}.lzl-error{color:#ad3d43!important}.lzl-empty{border:1px solid var(--lz-line,#dce5f0);background:var(--lz-paper,#fff);border-radius:14px;padding:25px}.lzl-empty p{color:var(--lz-sub,#63748a)}.lzl-dialog{width:min(500px,calc(100vw - 30px));border:1px solid var(--lz-line,#dce5f0);border-radius:16px;padding:25px;background:var(--lz-paper,#fff);color:var(--lz-ink,#182b45);box-shadow:0 20px 70px #13243c44}.lzl-dialog::backdrop{background:#13243c88}.lzl-dialog label{display:block;font-size:12px;color:var(--lz-sub,#63748a);margin:15px 0}.lzl-dialog input{display:block;margin-top:6px;padding:10px;width:100%;font:inherit;font-size:14px;border:1px solid var(--lz-line,#dce5f0);border-radius:8px;background:var(--lz-bg,#f3f6fb);color:var(--lz-ink,#182b45)}.lzl-actions{display:flex;justify-content:end;gap:8px}.lzl-reader-head{display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:15px}.lzl-reader-head h2{flex:1;word-break:break-word}.lzl-reader{display:block;width:100%;height:75vh;min-height:450px;border:1px solid var(--lz-line,#dce5f0);border-radius:13px;background:#fff}.lzl-reader-note{font-size:12px;color:var(--lz-sub,#63748a)}@media(max-width:750px){.lzl-layout{grid-template-columns:1fr}.lzl-folders{display:flex;flex-wrap:wrap}.lzlib .lzl-folders button{width:auto}.lzl-item{padding:14px}}
 
 :root{color-scheme:light;--lz-bg:#f3f6fb;--lz-paper:#fff;--lz-ink:#182b45;--lz-sub:#63748a;--lz-line:#e0e7f1;--lz-blue:#245bba;--lz-soft:#eaf1ff;--lz-nav:#13243c;--lz-shadow:#172e4c0d;--lz-text:#182b45;--lz-muted:#63748a;--lz-border:#e0e7f1;--lz-surface:#fff;--lz-accent:#245bba;--lz-accent-soft:#eaf1ff;--lz-danger:#a33939;--lz-radius:14px}
@@ -466,7 +478,7 @@ body{margin:0;background:#f3f6fa;font-family:Arial,sans-serif;color-scheme:light
 .lzl-folder-symbol{display:inline-flex;flex-shrink:0;color:var(--lz-blue,#245bba)}
 .lzl-upload-category{display:grid;gap:6px;margin:0 0 16px;font-size:13px;color:var(--lz-sub,#63748a)}
 .lzl-upload-category select,.lzl-dialog select{display:block;width:100%;padding:10px;border:1px solid var(--lz-line,#dce5f0);border-radius:8px;background:var(--lz-paper,#fff);color:var(--lz-ink,#182b45);font:inherit}
-</style><link rel="stylesheet" href="whiteboard-v2.css?v=20261117-empty-trash"><link rel="stylesheet" href="appearance-settings.css?v=20261117-visual-polish"><link rel="stylesheet" href="exercise-pathways.css?v=20261117-visual-polish"><meta name="learning-zone-build" content="20261118-exercise-audit-batch13"></head><body><div class="desktop-note">Learning Zone is designed for a desktop or laptop computer.</div><div class="app-shell"><aside class="app-sidebar"><div class="app-brand"><span class="app-brand-mark"><i data-lucide="book-open" aria-hidden="true"></i></span><div><b>Learning Zone</b><small>RAMI VARDI</small></div></div><div><div class="nav-caption">YOUR WORKSPACE</div><nav class="app-nav" aria-label="Main navigation"><button data-nav="programs" aria-current="page"><i data-lucide="notebook-pen" aria-hidden="true"></i>Program Builder</button><button data-nav="exercises"><i data-lucide="dumbbell" aria-hidden="true"></i>Exercise Zone</button><button data-nav="anatomy"><i data-lucide="bone" aria-hidden="true"></i>Anatomy Zone</button><button data-nav="cases"><i data-lucide="users" aria-hidden="true"></i>Case Studies</button><button data-nav="library"><i data-lucide="library" aria-hidden="true"></i>Library Zone</button><button data-nav="whiteboard"><i data-lucide="notebook-pen" aria-hidden="true"></i>Whiteboard Zone</button><button data-nav="students"><i data-lucide="user-round-cog" aria-hidden="true"></i>Student Dashboard</button></nav></div><div class="app-sidebar-footer"><strong id="account-name">Not signed in</strong><span id="account-role">Username access</span><br><button id="help-button">Help & Online Storage</button><br><button id="shell-signout" hidden>Sign Out</button><br><button id="complete-backup" hidden>Export Accounts & Programs</button></div></aside><div class="app-main"><header class="app-topbar"><span class="app-breadcrumb" id="breadcrumb">Workspace / Program Builder</span><span class="app-badge">ONLINE DESKTOP APP</span></header><main class="app-zone"><div id="zone-heading" class="app-heading"><div class="eyebrow">YOUR PROGRAMMING WORKSPACE</div><h1>Program Builder</h1><p>Create practice athletes, define their goals, and build training programs.</p></div><div id="student-learning-board">
+</style><link rel="stylesheet" href="whiteboard-v2.css?v=20261119-cell-color"><link rel="stylesheet" href="appearance-settings.css?v=20261117-visual-polish"><link rel="stylesheet" href="exercise-pathways.css?v=20261117-visual-polish"><meta name="learning-zone-build" content="20261119-workspace-design"><link rel="stylesheet" href="learning-zone-design.css?v=20261119-workspace-design"></head><body><div class="desktop-note">Learning Zone is designed for a desktop or laptop computer.</div><div class="app-shell"><aside class="app-sidebar"><div class="app-brand"><span class="app-brand-mark"><i data-lucide="book-open" aria-hidden="true"></i></span><div><b>Learning Zone</b><small>RAMI VARDI</small></div></div><div><div class="nav-caption">YOUR WORKSPACE</div><nav class="app-nav" aria-label="Main navigation"><button data-nav="programs" aria-current="page"><i data-lucide="notebook-pen" aria-hidden="true"></i>Program Builder</button><button data-nav="exercises"><i data-lucide="dumbbell" aria-hidden="true"></i>Exercise Zone</button><button data-nav="anatomy"><i data-lucide="bone" aria-hidden="true"></i>Anatomy Zone</button><button data-nav="cases"><i data-lucide="users" aria-hidden="true"></i>Case Studies</button><button data-nav="library"><i data-lucide="library" aria-hidden="true"></i>Library Zone</button><button data-nav="whiteboard"><i data-lucide="notebook-pen" aria-hidden="true"></i>Whiteboard Zone</button><button data-nav="students"><i data-lucide="user-round-cog" aria-hidden="true"></i>Student Dashboard</button></nav></div><div class="app-sidebar-footer"><strong id="account-name">Not signed in</strong><span id="account-role">Username access</span><br><button id="help-button">Help & Online Storage</button><br><button id="shell-signout" hidden>Sign Out</button><br><button id="complete-backup" hidden>Export Accounts & Programs</button></div></aside><div class="app-main"><header class="app-topbar"><span class="app-breadcrumb" id="breadcrumb">Workspace / Program Builder</span><span class="app-badge">ONLINE DESKTOP APP</span></header><main class="app-zone"><div id="zone-heading" class="app-heading"><div class="eyebrow">YOUR PROGRAMMING WORKSPACE</div><h1>Program Builder</h1><p>Create practice athletes, define their goals, and build training programs.</p></div><div id="student-learning-board">
 
 
 
@@ -1481,48 +1493,142 @@ window.LZExercises={mount,categories,baseRecords:()=>base,refreshBase(){base=mak
 </script>
 <script>
 (function(){'use strict';
-const storePrefix='learning-zone-local:cases:',customKey='learning-zone-local:custom-cases:v1';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>JSON.parse(JSON.stringify(v));
 function customRecords(value){const parsed=value??[];if(!Array.isArray(parsed)||parsed.some(a=>!a||typeof a.id!=='string'||!a.id.startsWith('custom-')||typeof a.name!=='string'||!Array.isArray(a.mov)))throw Error('Saved custom case studies need review. Restore a backup before editing them.');return parsed;}
+// The original collection is read-only. Teacher edits use the same shared, revisioned store as added cases.
+const builtinKey=(a,index)=>String(a.id||index);
+const overrideId=key=>'custom-builtin-case-'+encodeURIComponent(key);
+const isOverride=a=>typeof a.builtinCaseKey==='string'&&a.id===overrideId(a.builtinCaseKey);
+function applyCaseEdits(builtin,shared){
+ const edits=new Map(shared.filter(isOverride).map(a=>[a.builtinCaseKey,a]));
+ return [...builtin.map((a,index)=>{
+  const override=edits.get(builtinKey(a,index));
+  if(!override)return a;
+  const {id,builtinCaseKey,...fields}=override;
+  return {...a,...fields};
+ }),...shared.filter(a=>!isOverride(a))];
+}
+function workoutCount(a){
+ const count=Number(a.workouts||String(a.freq||'').match(/^\d+/)?.[0]||0);
+ return Number.isInteger(count)&&count>=1&&count<=7?count:0;
+}
 function safePortrait(value){return typeof value==='string'&&/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(value)?value:'';}
 window.LZCases={async mount(host,opts={}){
  const original=window.__caseStudyModule;if(!original?.data||typeof original.portrait!=='function'){host.textContent='Case study content is unavailable.';return;}
- const actor=window.LZCloud?.currentMember()?.id,owner=opts.username||actor;let saved={answers:{},completed:{},review:{},notes:{}},builtin=[],custom=[],selected=null,editor=null,readIssue='',settingsStore,customStore,unsubscribe=()=>{};
+ const actor=window.LZCloud?.currentMember()?.id,owner=opts.username||actor;
+ const canEdit=()=>{const member=window.LZCloud?.currentMember();return !!(opts.admin&&actor&&member?.id===actor&&member.role==='teacher');};
+ let saved={answers:{},completed:{},review:{},notes:{}},builtin=[],custom=[],selected=null,editor=null,editingCase=null,caseSave=null,settingsStore,customStore,unsubscribe=()=>{};
  try{host.innerHTML='<p role="status">Loading online case studies…</p>';let builtinResponse;[settingsStore,customStore,builtinResponse]=await Promise.all([window.LZCloudContent.open(owner,'case-settings',saved),window.LZCloudContent.open(owner,'custom-cases',[]),window.LZCloud.api('content-get',{owner,kind:'builtin-cases'})]);if(!actor||window.LZCloud.currentMember()?.id!==actor)throw Error('Your account changed. Sign in again to load case studies.');if(!Array.isArray(builtinResponse.value)||!builtinResponse.value.length||builtinResponse.value.some(a=>!a||typeof a.name!=='string'||!Array.isArray(a.mov)))throw Error('Original case studies are not available online. Retry loading or contact your teacher.');builtin=clone(builtinResponse.value);if(!settingsStore.value||typeof settingsStore.value!=='object'||Array.isArray(settingsStore.value))throw Error('Online case study settings need review.');saved={...saved,...settingsStore.value};custom=customRecords(customStore.value);}catch(error){let child=null;host.innerHTML='<p role="alert">'+esc(error.message)+'</p><button type="button" data-retry-cases>Retry Loading</button>';host.onclick=async event=>{if(event.target.closest('[data-retry-cases]'))child=await window.LZCases.mount(host,opts);};return {flush:async()=>{await child?.flush?.();},async destroy(){await child?.destroy?.();host.onclick=null;host.innerHTML='';}};}
  host.innerHTML='<div class="lzcases"></div>';const root=host.firstElementChild;
- const data=()=>[...builtin,...custom];
- const recordKey=a=>a.id||String(builtin.indexOf(a));
+ const data=()=>applyCaseEdits(builtin,custom);
+ const recordKey=index=>index<builtin.length?builtinKey(builtin[index],index):data()[index]?.id;
  function status(message,error=false){let target=root.querySelector('[data-case-status]');if(!target)return;target.textContent=message;target.setAttribute('role',error?'alert':'status');}
  function write(){settingsStore.set(saved);status('Saving Online…');return true;}
  function paintSaveStatus(){const stores=[settingsStore,customStore],failed=stores.find(s=>s.state.state==='error'),pending=stores.some(s=>['pending','saving'].includes(s.state.state));status(failed?failed.state.message+' '+(failed.state.error?.message||''):pending?'Saving…':'Saved Online',!!failed);if(failed){const target=root.querySelector('[data-case-status]');if(target){const button=document.createElement('button');button.type='button';button.dataset.retryCaseSave='';button.textContent='Retry Saving';target.append(' ',button);const download=document.createElement('button');download.type='button';download.dataset.exportCaseDraft='';download.textContent='Export Pending Changes';target.append(' ',download);}}}
- function portrait(a,large=false){if(builtin.includes(a))return original.portrait(a,large,builtin.indexOf(a));const picture=safePortrait(a.portrait);return picture?'<img class="case-portrait" src="'+esc(picture)+'" alt="'+esc(a.name)+'">':'<span class="case-portrait lzc-initials" aria-hidden="true">'+esc(a.name.trim().slice(0,1).toUpperCase())+'</span>';}
- function draw(){if(editor)return drawEditor();const cases=data();if(selected===null){root.innerHTML='<header class="lzc-head"><div><div class="lzc-eyebrow">COACHING PRACTICE</div><h1>Case Studies</h1><p>Choose a fictional athlete, then build their goals, workouts, and exercise progressions.</p></div><div class="lzc-actions">'+(opts.admin?'<button class="lzc-add" data-add-case>Add Case Study</button>':'')+'<span class="lzc-count">'+cases.length+' Case Studies</span></div></header><p data-case-status role="status" aria-live="polite">'+esc(readIssue)+'</p><div class="lzc-grid">'+cases.map((a,i)=>'<button class="lzc-card" data-open-case="'+i+'">'+portrait(a)+'<span><strong>'+esc(a.name)+'</strong><small>'+esc([a.job,a.freq].filter(Boolean).join(' · '))+'</small><p>'+esc(a.goals)+'</p><em>'+(saved.completed[recordKey(a)]?'Completed':saved.review[recordKey(a)]?'Review Later':'Open Case')+'</em></span></button>').join('')+'</div>';return;}
- const i=selected,a=cases[i];if(!a){selected=null;return draw();}const id=recordKey(a);
- root.innerHTML='<nav class="lzc-toolbar"><button data-all-cases>All Case Studies</button><span>Case '+(i+1)+' of '+cases.length+'</span>'+(opts.admin&&a.id?'<button data-edit-case>Edit Case Study</button>':'')+'<span data-case-status role="status" aria-live="polite"></span></nav><section class="lzc-profile">'+portrait(a,true)+'<div><div class="lzc-eyebrow">ATHLETE PROFILE</div><h1>'+esc(a.name)+'</h1><p class="lzc-meta">'+esc([a.age?a.age+' years old':'',a.job,a.freq].filter(Boolean).join(' · '))+'</p><p>'+esc(a.intro)+'</p></div></section><section class="lzc-panel"><h2>Current Performance and Goals</h2><p>'+esc(a.goals)+'</p><div class="lzc-table-wrap"><table><thead><tr><th>Movement</th><th>Current Performance</th><th>Goal</th></tr></thead><tbody>'+a.mov.map(r=>'<tr>'+r.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'+(a.instructions?'<p class="lzc-instructions">'+esc(a.instructions)+'</p>':'')+'<button class="lzc-primary" data-build-case>Build This Athlete’s Program</button></section><div class="lzc-actions"><button data-complete-case>'+(saved.completed[id]?'Completed, Undo':'Mark Case Complete')+'</button><button data-review-case>'+(saved.review[id]?'Marked for Review':'Review Later')+'</button></div><footer class="lzc-toolbar"><button data-prev-case '+(i===0?'disabled':'')+'>Previous Athlete</button><button data-next-case '+(i===cases.length-1?'disabled':'')+'>Next Athlete</button></footer>';
+ function portrait(a,index,large=false){
+  const picture=safePortrait(a.portrait);
+  if(picture)return '<img class="case-portrait" src="'+esc(picture)+'" alt="'+esc(a.name)+'">';
+  return index<builtin.length?original.portrait(a,large,index):'<span class="case-portrait lzc-initials" aria-hidden="true">'+esc(a.name.trim().slice(0,1).toUpperCase())+'</span>';
  }
- function startEditor(a){if(!opts.admin)return;editor=a?clone(a):{id:'custom-'+(window.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)),name:'',job:'',age:'',workouts:'',freq:'',intro:'',goals:'',instructions:'',portrait:'',mov:[['','','']]};draw();}
- function drawEditor(){const a=editor;root.innerHTML='<header class="lzc-head"><div><div class="lzc-eyebrow">CASE STUDY EDITOR</div><h1>'+(custom.some(x=>x.id===a.id)?'Edit Case Study':'Add Case Study')+'</h1></div><button data-cancel-case>Cancel</button></header><form data-case-editor><section class="lzc-panel"><div class="lzc-editor-grid"><label>Athlete Name<input required maxlength="160" name="name" data-case-field="name" value="'+esc(a.name)+'"></label><label>Training Frequency<input required type="number" min="1" max="7" step="1" name="workouts" data-case-field="workouts" value="'+esc(a.workouts)+'" placeholder="Workouts per week"></label><label>Occupation / Description, Optional<input maxlength="160" data-case-field="job" value="'+esc(a.job)+'"></label><label>Age, Optional<input type="number" min="1" max="120" step="1" data-case-field="age" value="'+esc(a.age)+'"></label></div><label>Background<textarea data-case-field="intro" rows="4" maxlength="12000">'+esc(a.intro)+'</textarea></label><label>Goal Summary<textarea data-case-field="goals" rows="2" maxlength="4000">'+esc(a.goals)+'</textarea></label><label>Portrait, Optional<input type="file" data-case-portrait accept="image/png,image/jpeg,image/webp"></label><div class="lzc-portrait-preview">'+(a.portrait?'<img src="'+esc(safePortrait(a.portrait))+'" alt="Portrait Preview"><button type="button" data-remove-portrait>Remove Portrait</button>':'')+'</div><label>Case Instructions, Optional<textarea data-case-field="instructions" rows="2" maxlength="5000">'+esc(a.instructions)+'</textarea></label></section><section class="lzc-panel"><div class="lzc-head"><h2>Current Performance and Goals</h2><button type="button" class="lzc-add" data-add-case-movement>Add Movement</button></div><div class="lzc-movement-list">'+a.mov.map((r,i)=>'<div class="lzc-movement-row">'+['Movement','Current Performance','Goal'].map((label,j)=>'<label>'+label+'<input data-case-movement="'+i+'" data-column="'+j+'" '+(j===0?'required':'')+' maxlength="2000" value="'+esc(r[j])+'"></label>').join('')+'<button type="button" data-remove-case-movement="'+i+'" '+(a.mov.length===1?'disabled':'')+'>Remove</button></div>').join('')+'</div></section><div class="lzc-editor-footer"><p data-case-status role="status" aria-live="polite">'+esc(readIssue)+'</p><div class="lzc-actions"><button type="button" data-cancel-case>Cancel</button><button class="lzc-primary" type="submit">Save Case Study</button></div></div></form>';
+ function draw(){if(editor)return drawEditor();const cases=data();if(selected===null){root.innerHTML='<header class="lzc-head"><div><div class="lzc-eyebrow">COACHING PRACTICE</div><h1>Case Studies</h1><p>Choose a fictional athlete, then build their goals, workouts, and exercise progressions.</p></div><div class="lzc-actions">'+(canEdit()?'<button class="lzc-add" data-add-case>Add Case Study</button>':'')+'<span class="lzc-count">'+cases.length+' Case Studies</span></div></header><p data-case-status role="status" aria-live="polite"></p><div class="lzc-grid">'+cases.map((a,i)=>'<button class="lzc-card" data-open-case="'+i+'">'+portrait(a,i)+'<span><strong>'+esc(a.name)+'</strong><small>'+esc([a.job,a.freq].filter(Boolean).join(' · '))+'</small><p>'+esc(a.goals)+'</p><em>'+(saved.completed[recordKey(i)]?'Completed':saved.review[recordKey(i)]?'Review Later':'Open Case')+'</em></span></button>').join('')+'</div>';return;}
+ const i=selected,a=cases[i];if(!a){selected=null;return draw();}const id=recordKey(i);
+ root.innerHTML='<nav class="lzc-toolbar"><button data-all-cases>All Case Studies</button><span>Case '+(i+1)+' of '+cases.length+'</span>'+(canEdit()?'<button class="lzc-primary" data-edit-case>Edit Case Study</button>':'')+'<span data-case-status role="status" aria-live="polite"></span></nav><section class="lzc-profile">'+portrait(a,i,true)+'<div><div class="lzc-eyebrow">ATHLETE PROFILE</div><h1>'+esc(a.name)+'</h1><p class="lzc-meta">'+esc([a.age?a.age+' years old':'',a.job,a.freq].filter(Boolean).join(' · '))+'</p><p>'+esc(a.intro)+'</p></div></section><section class="lzc-panel"><h2>Current Performance and Goals</h2><p>'+esc(a.goals)+'</p><div class="lzc-table-wrap"><table><thead><tr><th>Movement</th><th>Current Performance</th><th>Goal</th></tr></thead><tbody>'+a.mov.map(r=>'<tr>'+r.map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'+(a.instructions?'<p class="lzc-instructions">'+esc(a.instructions)+'</p>':'')+'<button class="lzc-primary" data-build-case>Build This Athlete’s Program</button></section><div class="lzc-actions"><button data-complete-case>'+(saved.completed[id]?'Completed, Undo':'Mark Case Complete')+'</button><button data-review-case>'+(saved.review[id]?'Marked for Review':'Review Later')+'</button></div><footer class="lzc-toolbar"><button data-prev-case '+(i===0?'disabled':'')+'>Previous Athlete</button><button data-next-case '+(i===cases.length-1?'disabled':'')+'>Next Athlete</button></footer>';
+ }
+ function startEditor(a){
+  if(!canEdit())return;
+  editingCase=a||null;
+  editor=a?{...clone(a),workouts:workoutCount(a)||''}:{id:'custom-'+(window.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)),name:'',job:'',age:'',workouts:'',freq:'',intro:'',goals:'',instructions:'',portrait:'',mov:[['','','']]};
+  drawEditor();
+  root.querySelector('[data-case-field="name"]')?.focus();
+ }
+ function drawEditor(){
+  const a=editor,isBuiltin=editingCase&&selected<builtin.length,hasPortrait=!!safePortrait(a.portrait);
+  const fields=['Movement','Current Performance','Goal'];
+  const rows=a.mov.map((row,index)=>'<tr>'+fields.map((label,column)=>'<td><input aria-label="'+label+', row '+(index+1)+'" data-case-movement="'+index+'" data-column="'+column+'" '+(column===0?'required':'')+' maxlength="2000" value="'+esc(row[column])+'"></td>').join('')+
+   '<td><button class="lzc-remove-row" type="button" aria-label="Remove movement row '+(index+1)+'" data-remove-case-movement="'+index+'" '+(a.mov.length===1?'disabled':'')+'>×</button></td></tr>').join('');
+  root.innerHTML='<form class="lzc-panel lzc-case-editor" data-case-editor><h2>'+(editingCase?'Edit Case Study':'Add Case Study')+'</h2><fieldset><div class="lzc-editor-grid">'+
+   '<label>Athlete Name<input required maxlength="160" name="name" data-case-field="name" value="'+esc(a.name)+'"></label>'+
+   '<label>Training Frequency'+(isBuiltin?', Optional':'')+'<input '+(isBuiltin?'':'required ')+'type="number" min="1" max="7" step="1" name="workouts" data-case-field="workouts" value="'+esc(a.workouts)+'" placeholder="Workouts per week"></label>'+
+   '<label>Occupation / Description, Optional<input maxlength="160" data-case-field="job" value="'+esc(a.job)+'"></label>'+
+   '<label>Age, Optional<input type="number" min="1" max="120" step="1" data-case-field="age" value="'+esc(a.age)+'"></label></div>'+
+   '<label>Case Description<textarea data-case-field="intro" rows="2" maxlength="12000">'+esc(a.intro)+'</textarea></label>'+
+   '<label>Goal Summary<textarea data-case-field="goals" rows="2" maxlength="4000">'+esc(a.goals)+'</textarea></label>'+
+   '<label>Case Instructions, Optional<textarea data-case-field="instructions" rows="2" maxlength="5000">'+esc(a.instructions)+'</textarea></label>'+
+   '<label>Portrait, Optional<input type="file" data-case-portrait accept="image/png,image/jpeg,image/webp"></label>'+
+   (hasPortrait||isBuiltin?'<div class="lzc-portrait-preview">'+portrait(a,isBuiltin?selected:builtin.length)+(hasPortrait?'<button type="button" data-remove-portrait>Remove Uploaded Portrait</button>':'')+'</div>':'')+
+   '<h3>Current Performance and Goals</h3><div class="lzc-table-wrap"><table><colgroup><col><col><col><col class="lzc-remove-column"></colgroup><thead><tr>'+
+   fields.map(label=>'<th scope="col">'+label+'</th>').join('')+'<th scope="col" aria-label="Remove movement"></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+   '<div class="lzc-actions"><button type="button" data-add-case-movement>Add Row</button><button class="lzc-primary" type="submit">'+(editingCase?'Save Changes':'Save Case Study')+'</button><button type="button" data-cancel-case>Cancel</button></div></fieldset>'+
+   '<p data-case-status role="status" aria-live="polite"></p></form>';
+ }
+ async function saveCase(form,draft){
+  let staged=false;
+  const fields=form.querySelector('fieldset');
+  fields.disabled=true;
+  status('Saving Case Study…');
+  try{
+   const sourceCase=editingCase;
+   const isBuiltin=sourceCase&&selected<builtin.length;
+   const candidate=clone(draft);
+   candidate.name=candidate.name.trim();
+   const count=candidate.workouts===''?0:Number(candidate.workouts);
+   if(!candidate.name)throw Error('Enter an athlete name.');
+   if((count||!isBuiltin)&&(!Number.isInteger(count)||count<1||count>7))throw Error('Enter a training frequency from 1 to 7.');
+   candidate.workouts=count||null;
+   if(!sourceCase||count!==workoutCount(sourceCase))candidate.freq=count?count+' sessions per week':'';
+   candidate.mov=candidate.mov.map(row=>row.map(value=>String(value??'').trim()));
+   if(!candidate.mov.length||candidate.mov.some(row=>!row[0]))throw Error('Enter a movement name for each goal row.');
+   if(isBuiltin){
+    candidate.builtinCaseKey=builtinKey(builtin[selected],selected);
+    candidate.id=overrideId(candidate.builtinCaseKey);
+   }
+   await customStore.flush();
+   if(!canEdit())throw Error('Sign in to the teacher account to save the case study.');
+   const latest=clone(customRecords(customStore.value));
+   const index=latest.findIndex(a=>a.id===candidate.id);
+   if(index<0)latest.push(candidate);else latest[index]=candidate;
+   customStore.set(latest);
+   staged=true;
+   await customStore.flush();
+   custom=customRecords(customStore.value);
+   editor=null;
+   editingCase=null;
+   if(!isBuiltin)selected=data().findIndex(a=>a.id===candidate.id);
+   draw();
+   status('Case Study Saved');
+   root.querySelector('[data-edit-case]')?.focus();
+  }catch(error){
+   // Keep the failed attempt in the editor so cancelling cannot queue it for a later save.
+   if(staged)customStore.set(customStore.snapshot().base);
+   status(error.message+' Your draft is still here.',true);
+  }finally{fields.disabled=false;}
  }
  root.addEventListener('input',event=>{if(!editor)return;const t=event.target;if(t.dataset.caseField)editor[t.dataset.caseField]=t.value;else if(t.dataset.caseMovement!==undefined)editor.mov[Number(t.dataset.caseMovement)][Number(t.dataset.column)]=t.value;});
- root.addEventListener('change',async event=>{if(!event.target.matches('[data-case-portrait]')||!editor)return;const f=event.target.files?.[0];if(!f)return;const draft=editor;if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>2*1024*1024){status('Choose a PNG, JPEG, or WebP image smaller than 2 MB.',true);return;}try{const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('The portrait could not be read.'));reader.readAsDataURL(f);});if(editor!==draft||!root.isConnected)return;if(!safePortrait(image))throw Error('The selected image could not be used.');editor.portrait=image;drawEditor();}catch(e){status(e.message,true);}});
- root.addEventListener('submit',async event=>{if(!event.target.matches('[data-case-editor]'))return;event.preventDefault();if(!opts.admin||!editor)return;if(!event.target.reportValidity())return;try{if(readIssue)throw Error(readIssue);const candidate=clone(editor);candidate.name=candidate.name.trim();candidate.workouts=Number(candidate.workouts);if(!candidate.name||!Number.isInteger(candidate.workouts)||candidate.workouts<1||candidate.workouts>7)throw Error('Enter an athlete name and a training frequency from 1 to 7.');candidate.freq=candidate.workouts+' sessions per week';candidate.mov=candidate.mov.map(row=>row.map(x=>String(x).trim()));if(!candidate.mov.length||candidate.mov.some(row=>!row[0]))throw Error('Enter a movement name for each goal row.');const latest=clone(customRecords(customStore.value)),index=latest.findIndex(x=>x.id===candidate.id);if(index<0)latest.push(candidate);else latest[index]=candidate;customStore.set(latest);await customStore.flush();custom=customRecords(customStore.value);editor=null;selected=builtin.length+custom.findIndex(x=>x.id===candidate.id);draw();status('Case Study Saved');}catch(e){status(e.message+' Your draft is still here.',true);}});
+ root.addEventListener('change',async event=>{if(!event.target.matches('[data-case-portrait]')||!editor||caseSave)return;const f=event.target.files?.[0];if(!f)return;const draft=editor;if(!['image/png','image/jpeg','image/webp'].includes(f.type)||f.size>2*1024*1024){status('Choose a PNG, JPEG, or WebP image smaller than 2 MB.',true);return;}try{const image=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('The portrait could not be read.'));reader.readAsDataURL(f);});if(editor!==draft||caseSave||!root.isConnected)return;if(!safePortrait(image))throw Error('The selected image could not be used.');editor.portrait=image;drawEditor();}catch(e){status(e.message,true);}});
+ root.addEventListener('submit',async event=>{
+  if(!event.target.matches('[data-case-editor]'))return;
+  event.preventDefault();
+  if(!canEdit()||!editor||caseSave||!event.target.reportValidity())return;
+  caseSave=saveCase(event.target,editor);
+  try{await caseSave;}finally{caseSave=null;}
+ });
  root.addEventListener('click',async event=>{const b=event.target.closest('button');if(!b)return;
  if(b.hasAttribute('data-export-case-draft')){const failed=[settingsStore,customStore].find(s=>s.state.state==='error')||settingsStore;window.LZCloudContent.download(failed);return;}if(b.hasAttribute('data-retry-case-save')){await Promise.all([settingsStore.retry(),customStore.retry()]).catch(()=>{});return;}if(b.hasAttribute('data-add-case'))startEditor();
  else if(b.hasAttribute('data-edit-case'))startEditor(data()[selected]);
- else if(b.hasAttribute('data-cancel-case')){editor=null;draw();}
- else if(b.hasAttribute('data-add-case-movement')&&editor){editor.mov.push(['','','']);drawEditor();}
+ else if(b.hasAttribute('data-cancel-case')){if(caseSave)return;editor=null;editingCase=null;draw();root.querySelector('[data-edit-case],[data-add-case]')?.focus();}
+ else if(b.hasAttribute('data-add-case-movement')&&editor){const index=editor.mov.push(['','',''])-1;drawEditor();root.querySelector('[data-case-movement="'+index+'"]')?.focus();}
  else if(b.dataset.removeCaseMovement!==undefined&&editor&&editor.mov.length>1){editor.mov.splice(Number(b.dataset.removeCaseMovement),1);drawEditor();}
  else if(b.hasAttribute('data-remove-portrait')&&editor){editor.portrait='';drawEditor();}
  else if(b.dataset.openCase!==undefined){selected=Number(b.dataset.openCase);draw();}
  else if(b.hasAttribute('data-all-cases')){selected=null;draw();}
  else if(b.hasAttribute('data-prev-case')){selected=Math.max(0,selected-1);draw();}
  else if(b.hasAttribute('data-next-case')){selected=Math.min(data().length-1,selected+1);draw();}
- else if(b.hasAttribute('data-complete-case')){const id=recordKey(data()[selected]);saved.completed[id]=!saved.completed[id];write();draw();}
- else if(b.hasAttribute('data-review-case')){const id=recordKey(data()[selected]);saved.review[id]=!saved.review[id];write();draw();}
- else if(b.hasAttribute('data-build-case')){const a=data()[selected];if(!opts.onCreateAthlete){status('Open Program Builder to create this athlete.',true);return;}let n=Number(a.workouts||a.freq.match(/^\d+/)?.[0]||0);if(!n){const answer=prompt('Choose workouts per week for your proposed plan, 1 to 7. The source does not provide a frequency.');if(answer===null)return;n=Number(answer);if(!Number.isInteger(n)||n<1||n>7){status('Enter a whole number from 1 to 7.',true);return;}}b.disabled=true;try{await opts.onCreateAthlete({name:a.name,workouts:n,sourceCase:a.id||a.name,goals:a.mov.map(([name,ceiling,goal])=>({name,ceiling,floor:'',goal,priority:'Choose'}))});}catch(e){status(e.message||'The practice athlete could not be created.',true);}finally{if(b.isConnected)b.disabled=false;}}
+ else if(b.hasAttribute('data-complete-case')){const id=recordKey(selected);saved.completed[id]=!saved.completed[id];write();draw();}
+ else if(b.hasAttribute('data-review-case')){const id=recordKey(selected);saved.review[id]=!saved.review[id];write();draw();}
+ else if(b.hasAttribute('data-build-case')){const a=data()[selected];if(!opts.onCreateAthlete){status('Open Program Builder to create this athlete.',true);return;}let n=workoutCount(a);if(!n){const answer=prompt('Choose workouts per week for your proposed plan, 1 to 7. The source does not provide a frequency.');if(answer===null)return;n=Number(answer);if(!Number.isInteger(n)||n<1||n>7){status('Enter a whole number from 1 to 7.',true);return;}}b.disabled=true;try{await opts.onCreateAthlete({name:a.name,workouts:n,sourceCase:builtin[selected]?.id||builtin[selected]?.name||a.id||a.name,goals:a.mov.map(([name,ceiling,goal])=>({name,ceiling,floor:'',goal,priority:'Choose'}))});}catch(e){status(e.message||'The practice athlete could not be created.',true);}finally{if(b.isConnected)b.disabled=false;}}
  });
- draw();const subscriptions=[settingsStore.subscribe(state=>{if(state.state==='saved')saved={answers:{},completed:{},review:{},notes:{},...settingsStore.value};paintSaveStatus();}),customStore.subscribe(state=>{if(state.state==='saved')custom=customRecords(customStore.value);paintSaveStatus();})];unsubscribe=()=>subscriptions.forEach(fn=>fn());return {flush:()=>Promise.all([settingsStore.flush(),opts.admin?customStore.flush():Promise.resolve()]),exportData(){return clone(saved);},importData(value){if(!value||typeof value!=='object')throw Error('Invalid case study backup');saved={answers:{},completed:{},review:{},notes:{},...value};write();draw();},async destroy(options={}){unsubscribe();await Promise.all([settingsStore.close(options),opts.admin?customStore.close(options):Promise.resolve()]);builtin=[];custom=[];host.replaceChildren();}};
+ draw();const subscriptions=[settingsStore.subscribe(state=>{if(state.state==='saved')saved={answers:{},completed:{},review:{},notes:{},...settingsStore.value};paintSaveStatus();}),customStore.subscribe(state=>{if(state.state==='saved')custom=customRecords(customStore.value);paintSaveStatus();})];unsubscribe=()=>subscriptions.forEach(fn=>fn());return {async flush(){await caseSave;await Promise.all([settingsStore.flush(),canEdit()?customStore.flush():Promise.resolve()]);},exportData(){return clone(saved);},importData(value){if(!value||typeof value!=='object')throw Error('Invalid case study backup');saved={answers:{},completed:{},review:{},notes:{},...value};write();draw();},async destroy(options={}){await caseSave;unsubscribe();await Promise.all([settingsStore.close(options),canEdit()?customStore.close(options):Promise.resolve()]);builtin=[];custom=[];host.replaceChildren();}};
 }};
 })();
 
@@ -1681,21 +1787,162 @@ window.LZMigration={preview,run,open};
 </script>
 <script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
 'use strict';
-const formats=['fixed','range','top'],text=v=>String(v??'');
-function row(value={},inherited='fixed'){return {format:formats.includes(value.format)?value.format:inherited,acrossFormat:value.acrossFormat==='range'||(value.format||inherited)==='range'?'range':'fixed',fixed:{sets:text(value.fixed?.sets??value.sets),reps:text(value.fixed?.reps??value.reps),weight:text(value.fixed?.weight??value.weight),detail:text(value.fixed?.detail)},range:{sets:text(value.range?.sets),low:text(value.range?.low),high:text(value.range?.high),weight:text(value.range?.weight),detail:text(value.range?.detail)},top:{planned:text(value.top?.planned),repFormat:value.top?.repFormat==='range'?'range':'fixed'},actual:text(value.actual),seedPlan:text(value.seedPlan)};}
-function create(value,inherited='fixed'){const source=value&&typeof value==='object'?value:{};const format=formats.includes(source.format)?source.format:formats.includes(inherited)?inherited:'fixed';return {version:3,format,weeks:Number.isInteger(Number(source.weeks))&&Number(source.weeks)>=1&&Number(source.weeks)<=52?Number(source.weeks):5,rows:Array.isArray(source.rows)?source.rows.map(r=>row(r,source.format?format:'fixed')):[],foundation:text(source.foundation),weeksInput:text(source.weeksInput??source.weeks??5)};}
-function ensure(p){while(p.rows.length<p.weeks)p.rows.push(row({},p.format));return p;}
-function setFormat(p,format,index){if(!formats.includes(format))throw Error('Choose a valid rep format.');ensure(p);if(index===undefined)p.format=format;else{if(!p.rows[index])throw Error('Choose an existing week.');p.rows[index].format=format;if(format!=='top')p.rows[index].acrossFormat=format;}return p;}
-function setWeeks(p,weeks){if(!Number.isInteger(weeks)||weeks<1||weeks>52)throw Error('Choose a whole number from 1 to 52 weeks.');p.weeks=weeks;p.weeksInput=text(weeks);return ensure(p);}
-function plannedState(r){return JSON.stringify({format:r.format,acrossFormat:r.acrossFormat,fixed:r.fixed,range:r.range,top:r.top});}
-function loadLabel(value){const v=text(value).trim();return !v?'Weight not entered':/^\d+(?:\.\d+)?$/.test(v)?v+' kg':v;}
-function exerciseState(e){const mode=formats.includes(e.mode)?e.mode:'fixed',n=Math.max(1,Math.min(20,Number(e.sets)||1));const rows=Array.from({length:n},(_,i)=>{const r=e.setRows?.[i]||{};return {kind:r.kind==='Top'?'Top':'Back Off',reps:text(e.sharedPrescription&&mode!=='top'?e.low:r.reps??e.low),high:text(e.sharedPrescription&&mode!=='top'?e.high:r.high??e.high),weight:text(e.sharedPrescription&&mode!=='top'?e.load:r.load??e.load)};});return {mode,sets:text(n),rows};}
-function foundationKey(e){return JSON.stringify(exerciseState(e));}
-function seedWeekOne(p,e){ensure(p);const state=exerciseState(e),old=p.rows[0],next=row(old,p.format),mode=state.mode;next.format=mode;if(mode!=='top')next.acrossFormat=mode;const rs=state.rows,first=rs[0],repLabel=r=>r.reps+(mode==='range'?' to '+r.high:'');if(mode==='top'){const grouped=[];for(const r of rs){const last=grouped.at(-1);if(last&&last.kind===r.kind&&last.reps===r.reps&&last.weight===r.weight)last.sets++;else grouped.push({...r,sets:1});}next.top={...next.top,repFormat:'fixed',planned:grouped.map(r=>r.kind+': '+r.sets+' × '+(r.reps||'?')+' × '+loadLabel(r.weight)).join('\n')};}else{const irregular=rs.some(r=>r.reps!==first.reps||r.high!==first.high||r.weight!==first.weight),detail=irregular?rs.map((r,i)=>'Set '+(i+1)+': 1 × '+repLabel(r)+' × '+loadLabel(r.weight)).join('\n'):'';next[mode]=mode==='range'?{sets:state.sets,low:first.reps,high:first.high,weight:first.weight,detail}:{sets:state.sets,reps:first.reps,weight:first.weight,detail};}next.seedPlan=plannedState(next);p.rows[0]=next;p.foundation=foundationKey(e);return p;}
-function weekOneEdited(p){const r=p.rows[0];if(!r)return false;if(r.seedPlan)return plannedState(r)!==r.seedPlan;return !!(r.top.planned||r.fixed.detail||r.range.detail||Object.values(r.fixed).some(Boolean)||Object.values(r.range).some(Boolean));}
-function validate(p){for(let i=0;i<p.weeks;i++){const r=p.rows[i]||row({},p.format),mode=r.format||p.format,v=r[mode];if(mode==='top'||v.detail)continue;const keys=mode==='range'?['sets','low','high']:['sets','reps'];for(const key of keys){if(v[key]!==''&&(!Number.isInteger(Number(v[key]))||Number(v[key])<1))return `Week ${i+1}: enter positive whole numbers for sets and reps.`;}if(v.weight!==''&&/^[-+]?\d*\.?\d+$/.test(v.weight)&&(!Number.isFinite(Number(v.weight))||Number(v.weight)<0))return `Week ${i+1}: weight must be zero or a positive number.`;if(mode==='range'&&v.low!==''&&v.high!==''&&Number(v.high)<Number(v.low))return `Week ${i+1}: maximum reps must be at least the minimum reps.`;}return '';}
-function describe(p,i){const r=p.rows[i]||row({},p.format),mode=r.format||p.format;if(mode==='top')return r.top.planned||'Not entered';const v=r[mode];if(v.detail)return v.detail;const reps=mode==='range'?((v.low||'?')+' to '+(v.high||'?')):(v.reps||'?');return [v.sets||'?',reps,loadLabel(v.weight)].join(' × ');}
-return {formats,row,create,ensure,setFormat,setWeeks,validate,describe,seedWeekOne,weekOneEdited,foundationKey,plannedState};
+const formats = ['fixed', 'range', 'top'];
+const text = value => String(value ?? '');
+const owns = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
+
+function row(value = {}, inherited = 'fixed') {
+  value = value && typeof value === 'object' ? value : {};
+  const format = formats.includes(value.format) ? value.format : inherited;
+  const next = {
+    format,
+    acrossFormat: format === 'range' || value.acrossFormat === 'range' ? 'range' : 'fixed',
+    fixed: {sets:text(value.fixed?.sets ?? value.sets), reps:text(value.fixed?.reps ?? value.reps), weight:text(value.fixed?.weight ?? value.weight), detail:text(value.fixed?.detail)},
+    range: {sets:text(value.range?.sets), low:text(value.range?.low), high:text(value.range?.high), weight:text(value.range?.weight), detail:text(value.range?.detail)},
+    top: {planned:text(value.top?.planned), repFormat:value.top?.repFormat === 'range' ? 'range' : 'fixed'},
+    actual: text(value.actual),
+    seedPlan: text(value.seedPlan)
+  };
+  next.planned = owns(value, 'planned') ? text(value.planned) : describeBank(next, format);
+  return next;
+}
+
+function createTrack(value, inherited = 'fixed') {
+  const source = value && typeof value === 'object' ? value : {};
+  const format = formats.includes(source.format) ? source.format : formats.includes(inherited) ? inherited : 'fixed';
+  const acrossFormat = format === 'top' ? (source.acrossFormat === 'range' ? 'range' : 'fixed') : format;
+  const count = Number(source.weeks);
+  const weeks = Number.isInteger(count) && count >= 1 && count <= 52 ? count : 5;
+  const fallback = value && !source.format ? 'fixed' : format;
+  return {
+    version: 4, format, acrossFormat, weeks,
+    rows: Array.isArray(source.rows) ? source.rows.slice(0, 52).map(item => row(item, fallback)) : [],
+    foundation: text(source.foundation),
+    weeksInput: text(source.weeksInput ?? source.weeks ?? weeks)
+  };
+}
+
+function create(value, inherited = 'fixed') {
+  const main = createTrack(value, inherited);
+  const used = new Set();
+  let next = Number(value?.nextAlternative);
+  if (!Number.isSafeInteger(next) || next < 1 || next >= Number.MAX_SAFE_INTEGER) next = 1;
+  const alternatives = [];
+  for (const item of Array.isArray(value?.alternatives) ? value.alternatives : []) {
+    if (!item || typeof item !== 'object') continue;
+    let id = Number(item.id);
+    if (!Number.isSafeInteger(id) || id < 1 || id >= Number.MAX_SAFE_INTEGER || used.has(id)) {
+      while (used.has(next)) next++;
+      id = next;
+    }
+    used.add(id);
+    next = Math.max(next, id + 1);
+    alternatives.push({id, ...createTrack(item, main.format)});
+  }
+  return {...main, nextAlternative:next, alternatives};
+}
+
+function ensure(p) {
+  while (p.rows.length < p.weeks) p.rows.push(row({}, p.format));
+  return p;
+}
+
+function setWeeks(p, weeks) {
+  if (!Number.isInteger(weeks) || weeks < 1 || weeks > 52) throw Error('Choose a whole number from 1 to 52 weeks.');
+  p.weeks = weeks;
+  p.weeksInput = text(weeks);
+  return ensure(p);
+}
+
+function addAlternative(p) {
+  const id = p.nextAlternative++;
+  const track = ensure(createTrack({weeks:p.weeks, format:p.acrossFormat}));
+  const alternative = {id, ...track};
+  p.alternatives.push(alternative);
+  return alternative;
+}
+
+function loadLabel(value) {
+  const v = text(value).trim();
+  return /^\d+(?:\.\d+)?$/.test(v) ? v + ' kg' : v;
+}
+function describeBank(r, mode) {
+  const values = r[mode];
+  if (mode === 'top') return values.planned;
+  if (values.detail) return values.detail;
+  if (!Object.values(values).some(Boolean)) return '';
+  const reps = mode === 'range' ? (values.low || '?') + ' to ' + (values.high || '?') : values.reps || '?';
+  return [values.sets || '?', reps, loadLabel(values.weight)].filter(Boolean).join(' × ');
+}
+
+function exerciseState(e) {
+  const mode = formats.includes(e.mode) ? e.mode : 'fixed';
+  const n = Math.max(1, Math.min(20, Number(e.sets) || 1));
+  const rows = Array.from({length:n}, (_, i) => {
+    const r = e.setRows?.[i] || {};
+    return {
+      kind: r.kind === 'Top' ? 'Top' : 'Back Off',
+      reps: text(e.sharedPrescription && mode !== 'top' ? e.low : r.reps ?? e.low),
+      high: text(e.sharedPrescription && mode !== 'top' ? e.high : r.high ?? e.high),
+      weight: text(e.sharedPrescription && mode !== 'top' ? e.load : r.load ?? e.load)
+    };
+  });
+  return {mode, sets:text(n), rows};
+}
+
+function foundationKey(e) { return JSON.stringify(exerciseState(e)); }
+
+function seedWeekOne(p, e) {
+  ensure(p);
+  const state = exerciseState(e);
+  const {mode, rows:sets} = state;
+  const next = row(p.rows[0], p.format);
+  next.format = mode;
+  if (mode === 'top') {
+    const grouped = [];
+    for (const set of sets) {
+      const last = grouped.at(-1);
+      if (last && last.kind === set.kind && last.reps === set.reps && last.weight === set.weight) last.sets++;
+      else grouped.push({...set, sets:1});
+    }
+    next.top.planned = grouped.map(set => set.kind + ': ' + [set.sets, set.reps || '?', loadLabel(set.weight)].filter(Boolean).join(' × ')).join('\n');
+  } else {
+    next.acrossFormat = mode;
+    const first = sets[0];
+    const irregular = sets.some(set => set.reps !== first.reps || set.high !== first.high || set.weight !== first.weight);
+    const detail = irregular ? sets.map((set, i) => {
+      const reps = mode === 'range' ? (set.reps || '?') + ' to ' + (set.high || '?') : set.reps || '?';
+      return 'Set ' + (i + 1) + ': ' + ['1', reps, loadLabel(set.weight)].filter(Boolean).join(' × ');
+    }).join('\n') : '';
+    next[mode] = mode === 'range'
+      ? {sets:state.sets, low:first.reps, high:first.high, weight:first.weight, detail}
+      : {sets:state.sets, reps:first.reps, weight:first.weight, detail};
+  }
+  next.planned = describeBank(next, mode);
+  next.seedPlan = next.planned;
+  p.rows[0] = next;
+  p.foundation = foundationKey(e);
+  return p;
+}
+
+function validate(p) {
+  for (let i = 0; i < p.weeks; i++) {
+    const r = p.rows[i];
+    const mode = r?.format;
+    if (!r || mode === 'top' || r[mode].detail || r.planned !== describeBank(r, mode)) continue;
+    const v = r[mode];
+    const keys = mode === 'range' ? ['sets','low','high'] : ['sets','reps'];
+    for (const key of keys) {
+      if (v[key] !== '' && (!Number.isInteger(Number(v[key])) || Number(v[key]) < 1)) return `Week ${i + 1}: enter positive whole numbers for sets and reps.`;
+    }
+    if (v.weight !== '' && /^[-+]?\d*\.?\d+$/.test(v.weight) && (!Number.isFinite(Number(v.weight)) || Number(v.weight) < 0)) return `Week ${i + 1}: weight must be zero or a positive number.`;
+    if (mode === 'range' && v.low !== '' && v.high !== '' && Number(v.high) < Number(v.low)) return `Week ${i + 1}: maximum reps must be at least the minimum reps.`;
+  }
+  return '';
+}
+function describe(p, i) { return p.rows[i]?.planned.trim() || 'Not entered'; }
+
+return {formats, row, create, ensure, setWeeks, addAlternative, validate, describe, seedWeekOne};
 });
 </script>
 <script>
@@ -1739,7 +1986,7 @@ function backup(before){
 function clearUndo(){undo=null;undoButton.hidden=true}
 function undoDeletion(){if(!undo||undo.owner!==owner||undo.id!==current?.id)return;const additions=new Map();for(const r of undo.removed.filter(r=>r.type==='set')){const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(e&&!e.setRows.some(x=>x.id===r.item.id))additions.set(e,(additions.get(e)||0)+1)}if([...additions].some(([e,n])=>e.setRows.length+n>20)){say('Undo would exceed 20 sets. Your current targets are unchanged; this deletion cannot be undone at the current set count.');return}for(const r of undo.removed){let list;if(r.type==='goal')list=current.goals;else if(r.type==='day')list=current.days;else if(r.type==='exercise')list=current.days.find(d=>d.id===r.parent)?.exercises;else{const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(!e)continue;list=e.setRows;if(!list.some(x=>x.id===r.item.id)){list.splice(Math.min(r.index,list.length),0,r.item);e.sets=String(list.length)}continue}if(list&&!list.some(x=>x.id===r.item.id))list.splice(Math.min(r.index,list.length),0,r.item)}clearUndo();automaticRoles();render();schedule();say('Deletion undone. Subsequent edits were kept.')}
 const clone=value=>JSON.parse(JSON.stringify(value));
-function resetComparison(){mirrorDayFilter=mirrorExerciseFilter='all';compareGoal='all';compareRoles=new Set(['Primary','Secondary','Tertiary','Choose']);excludedEntries=new Set();pickerOpen=false;selectedDay='all';exerciseChoice='';clearUndo()}
+function resetComparison(){mirrorDayFilter=mirrorExerciseFilter='all';compareGoal='all';compareRoles=new Set(['Goal','Primary','Secondary','Tertiary','Choose']);excludedEntries=new Set();pickerOpen=false;selectedDay='all';exerciseChoice='';clearUndo()}
 /* Helpers run inside the existing student workspace closure. */
 let mirrorDayFilter='all',mirrorExerciseFilter='all',goalDragged=null;
 function bindExerciseName(target,value){const record=window.LZIdentity?.resolve(value);target.name=record?.name||(value&&typeof value==='object'?String(value.name||value.exerciseName||target.name||''):String(value||''));if(record)target.exerciseId=record.id;else if(value&&typeof value==='object'&&(value.exerciseId||value.id))target.exerciseId=value.exerciseId||value.id;else delete target.exerciseId;}
@@ -1791,10 +2038,10 @@ function update(event){
  else if(v.key){target[v.key]=el.value;if(['low','high','load'].includes(v.key)&&target.sharedPrescription)rows(target);if(['low','high','load'].includes(v.key))refreshEntry(target);else if(event.type==='change'&&(v.key==='type'||v.key==='name'&&!v.ex))render()}
  }
 }
-let compareGoal='all',compareRoles=new Set(['Primary','Secondary','Tertiary','Choose']),excludedEntries=new Set(),pickerOpen=false;
+let compareGoal='all',compareRoles=new Set(['Goal','Primary','Secondary','Tertiary','Choose']),excludedEntries=new Set(),pickerOpen=false;
 function allEntries(){return current.days.flatMap(d=>d.exercises.map(e=>({d,e})))}
 function rank(role){return {Primary:1,Secondary:2,Tertiary:3}[role]||0}
-function roleIcon(role){return role==='Primary'?'target':role==='Secondary'?'git-branch':role==='Tertiary'?'layers':'circle'}
+function roleIcon(role){return (role==='Goal'||role==='Primary')?'target':role==='Secondary'?'git-branch':role==='Tertiary'?'layers':'circle'}
 function goalLabel(e){const g=current.goals.find(g=>g.id===Number(e.goalId));return g?(g.name||'Unnamed goal'):'Goal unassigned'}
 function rows(e){
  if(!Array.isArray(e.setRows))e.setRows=[];
@@ -1856,7 +2103,7 @@ function setBusy(value){switching=value;screen.inert=value||!!pendingRecovery;sc
 async function leaveWorkspace(){await window.LZShell?.closeContent?.();if(!workspaceActive)return;if(typeof flushProgressionAutosave==='function')await flushProgressionAutosave();const kept=preserveDraft();try{await flush()}catch(e){if(!kept)throw e;say('Draft preserved. You can restore it when you reopen this workspace.')}clearTimeout(saveTimer);clearUndo()}
 function validationIssue(){for(const a of athletes){if(!a.name.trim())return {a,text:'Enter an athlete name.'};for(const d of a.days)for(const e of d.exercises){if(!Number.isInteger(Number(e.sets))||Number(e.sets)<1||Number(e.sets)>20)return {a,d,e,key:'sets',text:'Sets must be a whole number from 1 to 20.'};const rs=rows(e);for(let i=0;i<rs.length;i++){const r=rs[i];if(r.reps!==''&&(!Number.isInteger(Number(r.reps))||Number(r.reps)<1))return {a,d,e,index:i,key:e.mode==='top'||needsShared(e)?'reps':'low',text:'Reps must be positive whole numbers.'};if(e.mode==='range'&&r.high!==''&&(!Number.isInteger(Number(r.high))||Number(r.high)<1||(r.reps!==''&&Number(r.high)<Number(r.reps))))return {a,d,e,index:i,key:needsShared(e)?'high-set':'high',text:'Maximum Reps must be a whole number at least as large as minimum reps.'}}}}return null}
 function showIssue(issue){if(!issue)return;const {a,d,e,index,key}=issue;say((a?.name||'Athlete')+(d?' / '+d.name:'')+(e?' / '+(e.name||'Exercise'):'')+': '+issue.text);if(current?.id===a.id&&e){e.collapsed=false;view='board';selectedDay='all';render();let selector=key==='role'?`[data-ex="${e.id}"][data-link-key="role"]`:key==='reps'||key==='high-set'?`[data-ex="${e.id}"][data-set="${index}"][data-set-key="${key==='high-set'?'high':key}"]`:`[data-ex="${e.id}"][data-key="${key}"]`;const input=screen.querySelector(selector);if(input){input.setAttribute('aria-invalid','true');input.focus()}}}
-function sanitize(payload){if(!payload||!Array.isArray(payload.athletes))throw Error('The saved workspace needs review.');const used=new Set();const safeId=v=>{let n=Number(v);if(!Number.isSafeInteger(n)||n<1||used.has(n))n=uid();used.add(n);serial=Math.max(serial,n);return n};return payload.athletes.map(a=>({id:safeId(a.id),name:String(a.name||''),archived:!!a.archived,goals:(Array.isArray(a.goals)?a.goals:[]).map(g=>({...g,id:safeId(g.id),name:String(g.name||''),ceiling:String(g.ceiling??''),floor:String(g.floor??''),goal:String(g.goal??''),priority:['Floor','Ceiling'].includes(g.priority)?g.priority:'Choose'})),days:(Array.isArray(a.days)?a.days:[]).map(d=>({id:safeId(d.id),name:String(d.name||''),type:['Full body','Upper','Lower','Other'].includes(d.type)?d.type:'Other',exercises:(Array.isArray(d.exercises)?d.exercises:[]).map(e=>({...e,id:safeId(e.id),name:String(e.name||''),role:['Primary','Secondary','Tertiary'].includes(e.role)?e.role:'Choose',mode:['fixed','range','top'].includes(e.mode)?e.mode:'fixed',sets:String(Math.max(1,Math.min(20,parseInt(e.sets)||1))),collapsed:true,setRows:(Array.isArray(e.setRows)?e.setRows:[]).slice(0,20).map(s=>({id:safeId(s.id),kind:s.kind==='Top'?'Top':'Back off',reps:String(s.reps??''),high:String(s.high??''),load:String(s.load??'')}))}))}))}))}
+function sanitize(payload){if(!payload||!Array.isArray(payload.athletes))throw Error('The saved workspace needs review.');const used=new Set();const safeId=v=>{let n=Number(v);if(!Number.isSafeInteger(n)||n<1||used.has(n))n=uid();used.add(n);serial=Math.max(serial,n);return n};return payload.athletes.map(a=>({id:safeId(a.id),name:String(a.name||''),archived:!!a.archived,goals:(Array.isArray(a.goals)?a.goals:[]).map(g=>({...g,id:safeId(g.id),name:String(g.name||''),ceiling:String(g.ceiling??''),floor:String(g.floor??''),goal:String(g.goal??''),priority:['Floor','Ceiling'].includes(g.priority)?g.priority:'Choose'})),days:(Array.isArray(a.days)?a.days:[]).map(d=>({id:safeId(d.id),name:String(d.name||''),type:['Full body','Upper','Lower','Other'].includes(d.type)?d.type:'Other',exercises:(Array.isArray(d.exercises)?d.exercises:[]).map(e=>({...e,id:safeId(e.id),name:String(e.name||''),role:['Goal','Primary','Secondary','Tertiary'].includes(e.role)?e.role:'Choose',mode:['fixed','range','top'].includes(e.mode)?e.mode:'fixed',sets:String(Math.max(1,Math.min(20,parseInt(e.sets)||1))),collapsed:true,setRows:(Array.isArray(e.setRows)?e.setRows:[]).slice(0,20).map(s=>({id:safeId(s.id),kind:s.kind==='Top'?'Top':'Back off',reps:String(s.reps??''),high:String(s.high??''),load:String(s.load??'')}))}))}))}))}
 async function loadOwner(id,name='',recover=false){
  const request=++loadSequence;setBusy(true);try{if(!recover)await leaveWorkspace();if(request!==loadSequence)return false;const r=await api('read',{owner:id});if(request!==loadSequence)return false;const incoming=sanitize(r.payload);athletes.splice(0,athletes.length,...incoming);owner=id;revision=r.revision;workspaceName=name||member?.username||member?.email||'Student';workspaceActive=true;current=null;resetComparison();conflict=false;
  for(const a of athletes){current=a;normalize()}current=null;lastSaved=serialized();pendingRecovery=null;try{pendingRecovery=findRecovery()}catch(e){}
@@ -1944,7 +2191,7 @@ function exerciseEditor(d,e){
  const attrs=`data-day="${d.id}" data-ex="${e.id}"`;rows(e);
  const perSet=e.mode==='top'||needsShared(e);
  const content=perSet?`<div class="set-editor set-grid">${needsShared(e)?`<p class="structural-warning">This saved entry has different targets. Choose a shared prescription to use ${e.mode==='range'?'Rep Range':'Fixed'}.</p><button ${attrs} data-convert-shared>Choose shared prescription</button>`:''}${e.mode==='top'&&!e.setRows.some(r=>r.kind==='Top')?'<p class="structural-warning" role="status">No Top set yet. Mark a set as Top when ready.</p>':''}${rows(e).map((r,i)=>`<div class="one-set"><div class="set-topline"><span>Set ${i+1} <span class="set-kind ${r.kind==='Top'?'top':'back-off'}">${e.mode==='top'?esc(r.kind):'Saved Target'}</span></span><div class="actions"><button ${attrs} data-insert-set="${i}" aria-label="Add Set after set ${i+1}" ${Number(e.sets)>=20?'disabled':''}>${icon('plus')}</button><button class="remove" ${attrs} data-delete-set="${i}" aria-label="Delete Set ${i+1}">${icon('trash-2')}</button></div></div><div class="set-values">${e.mode==='top'?`<label>Type<select ${attrs} data-set="${i}" data-set-key="kind">${options(['Top','Back off'],r.kind)}</select></label>`:''}<label>${e.mode==='range'?'Minimum Reps':'Reps'}${field(r.reps,`type="number" min="1" step="1" ${attrs} data-set="${i}" data-set-key="reps" aria-label="Set ${i+1} reps"`)}</label>${e.mode==='range'?`<label>Maximum Reps${field(r.high,`type="number" min="1" step="1" ${attrs} data-set="${i}" data-set-key="high" aria-label="Set ${i+1} maximum reps"`)}</label>`:''}<label>Load${field(r.load,`${attrs} data-set="${i}" data-set-key="load" aria-label="Set ${i+1} load" placeholder="kg / other"`)}</label></div></div>`).join('')}</div>`:`<div class="shared-targets"><label>${e.mode==='range'?'Minimum Reps':'Reps'}${field(e.low,`type="number" min="1" step="1" ${attrs} data-key="low" aria-label="${e.mode==='range'?'Minimum Reps':'Reps'}"`)}</label>${e.mode==='range'?`<label>Maximum Reps${field(e.high,`type="number" min="1" step="1" ${attrs} data-key="high" aria-label="Maximum Reps"`)}</label>`:''}<label>Load${field(e.load,`${attrs} data-key="load" aria-label="Load" placeholder="kg / other"`)}</label></div>`;
- return `<div class="exercise role-${e.role.toLowerCase()}"><div class="exercise-summary"><div>${exerciseNumberLabel(e,d)}<strong class="exercise-title-toggle" role="button" tabindex="0" data-header-toggle="${e.id}" aria-expanded="${!e.collapsed}">${esc(e.name||'New Exercise')}</strong> ${roleBadge(e)}<div class="summary-text prescription-summary"><strong class="scheme">${esc(summary(e))}</strong> · ${esc(goalLabel(e))}</div></div><button type="button" class="summary-toggle" data-toggle-ex="${e.id}" aria-expanded="${!e.collapsed}" aria-label="${e.collapsed?'Expand':'Minimize'} ${esc(e.name||'exercise')}">${icon(e.collapsed?'chevron-down':'chevron-up')}</button></div>${e.collapsed&&perSet?prescriptionRows(e):''}${e.collapsed?'':`<div class="exercise-expanded"><div class="exercise-head">${field(e.name,`${attrs} data-key="name" aria-label="Exercise Name" placeholder="Exercise Name"`)}<button class="remove" data-remove-ex="${e.id}" data-day="${d.id}" aria-label="Delete Exercise">${icon('trash-2')}</button></div><div class="role-fields"><label>Exercise Role<select ${attrs} data-link-key="role" aria-label="Exercise Role">${'<option value="Choose" '+(e.role==='Choose'?'selected':'')+'>Choose Role (Optional)</option>'+options(['Primary','Secondary','Tertiary'],e.role)}</select></label></div><div class="prescription"><label>Sets${field(e.sets,`type="number" min="1" max="20" step="1" ${attrs} data-key="sets" aria-label="Number of Sets"`)}</label><label>Rep Format<select ${attrs} data-key="mode" aria-label="Rep Format"><option value="fixed" ${e.mode==='fixed'?'selected':''}>Fixed</option><option value="range" ${e.mode==='range'?'selected':''}>Rep Range</option><option value="top" ${e.mode==='top'?'selected':''}>Top + Back Off</option></select></label></div>${content}</div>`}</div>`
+ return `<div class="exercise role-${e.role.toLowerCase()}"><div class="exercise-summary"><div>${exerciseNumberLabel(e,d)}<strong class="exercise-title-toggle" role="button" tabindex="0" data-header-toggle="${e.id}" aria-expanded="${!e.collapsed}">${esc(e.name||'New Exercise')}</strong> ${roleBadge(e)}<div class="summary-text prescription-summary"><strong class="scheme">${esc(summary(e))}</strong> · ${esc(goalLabel(e))}</div></div><button type="button" class="summary-toggle" data-toggle-ex="${e.id}" aria-expanded="${!e.collapsed}" aria-label="${e.collapsed?'Expand':'Minimize'} ${esc(e.name||'exercise')}">${icon(e.collapsed?'chevron-down':'chevron-up')}</button></div>${e.collapsed&&perSet?prescriptionRows(e):''}${e.collapsed?'':`<div class="exercise-expanded"><div class="exercise-head">${field(e.name,`${attrs} data-key="name" aria-label="Exercise Name" placeholder="Exercise Name"`)}<button class="remove" data-remove-ex="${e.id}" data-day="${d.id}" aria-label="Delete Exercise">${icon('trash-2')}</button></div><div class="role-fields"><label>Exercise Role<select ${attrs} data-link-key="role" aria-label="Exercise Role">${'<option value="Choose" '+(e.role==='Choose'?'selected':'')+'>Choose Role (Optional)</option>'+options(['Goal','Primary','Secondary','Tertiary'],e.role)}</select></label></div><div class="prescription"><label>Sets${field(e.sets,`type="number" min="1" max="20" step="1" ${attrs} data-key="sets" aria-label="Number of Sets"`)}</label><label>Rep Format<select ${attrs} data-key="mode" aria-label="Rep Format"><option value="fixed" ${e.mode==='fixed'?'selected':''}>Fixed</option><option value="range" ${e.mode==='range'?'selected':''}>Rep Range</option><option value="top" ${e.mode==='top'?'selected':''}>Top + Back Off</option></select></label></div>${content}</div>`}</div>`
 }
 function refreshEntry(e,targets=false){
  const card=screen.querySelector(`[data-drag-id="${e.id}"]`);if(!card)return;const line=card.querySelector('.prescription-summary');if(line)line.innerHTML='<strong class="scheme">'+esc(summary(e))+'</strong> · '+esc(goalLabel(e));
@@ -1967,7 +2214,7 @@ root.addEventListener('change',event=>{if(event.target.dataset.moveEx&&event.tar
 root.addEventListener('click',event=>{const b=event.target.closest('[data-move-up],[data-move-down]');if(!b)return;const id=Number(b.dataset.moveUp||b.dataset.moveDown);const d=current.days.find(d=>d.exercises.some(e=>e.id===id));const i=d.exercises.findIndex(e=>e.id===id),j=i+(b.dataset.moveUp?-1:1);if(j<0||j>=d.exercises.length)return;[d.exercises[i],d.exercises[j]]=[d.exercises[j],d.exercises[i]];render();schedule()});
 function exerciseMirror(){
  const entries=allEntries().filter(x=>matchesDay(x.d)&&matchesBody(x.e)),patterns=[...new Set([...current.goals.flatMap(g=>StudentPatterns.classify(g.name).patterns),...entries.flatMap(x=>x.e.patterns)])];
- if(compareGoal!=='all'&&!patterns.includes(compareGoal))compareGoal='all';const roles=['Primary','Secondary','Tertiary','Choose'];
+ if(compareGoal!=='all'&&!patterns.includes(compareGoal))compareGoal='all';const roles=['Goal','Primary','Secondary','Tertiary','Choose'];
  const eligible=entries.filter(x=>(compareGoal==='all'||x.e.patterns.includes(compareGoal))&&compareRoles.has(x.e.role)),selected=eligible.filter(x=>!excludedEntries.has(x.e.id));
  return bodyFilterControls()+`<div class="comparison-controls"><label>Movement pattern<select data-pattern-filter><option value="all">All patterns</option>${patterns.map(p=>`<option ${compareGoal===p?'selected':''}>${esc(p)}</option>`).join('')}</select></label>${roles.map(r=>`<label class="check-label"><input type="checkbox" data-compare-role="${r}" ${compareRoles.has(r)?'checked':''}>${r==='Choose'?'Unassigned role':r}</label>`).join('')}</div><details data-entry-picker ${pickerOpen?'open':''}><summary>Choose exact exercise entries (${selected.length} selected)</summary><div class="entry-picker">${eligible.map(x=>`<label class="check-label"><input type="checkbox" data-compare-entry="${x.e.id}" ${excludedEntries.has(x.e.id)?'':'checked'}>${esc(x.d.name)} · <strong>${esc(x.e.name||'Unnamed')}</strong> · ${esc(x.e.role==='Choose'?'Unassigned role':x.e.role)} · ${esc(summary(x.e))}</label>`).join('')||'<p>No entries match these filters.</p>'}</div></details>${patterns.filter(p=>compareGoal==='all'||p===compareGoal).map(p=>{const goals=current.goals.filter(g=>StudentPatterns.classify(g.name).patterns.includes(p)),match=selected.filter(x=>x.e.patterns.includes(p)),ds=current.days.filter(d=>match.some(x=>x.d.id===d.id));return `<div class="mirror-block"><h3>${esc(p)}</h3><p class="summary-text">${p==='Needs classification'?'Choose a recognized library name or ask your teacher to classify these entries.':'Goals: '+(goals.map(g=>esc(g.name)).join(', ')||'No goals yet')}</p>${ds.length?`<div class="table-wrap"><table class="mirror-table goal-comparison" style="--mirror-days:${ds.length}"><thead><tr><th>Role</th>${ds.map(d=>`<th>${esc(d.name)}</th>`).join('')}</tr></thead><tbody>${roles.filter(r=>compareRoles.has(r)&&match.some(x=>x.e.role===r)).map(r=>`<tr><td>${r==='Choose'?'Unassigned role':r}</td>${ds.map(d=>`<td>${match.filter(x=>x.d.id===d.id&&x.e.role===r).map(x=>miniExercise(x.e)).join('')||'No entries'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<p>No selected entries.</p>'}</div>`}).join('')}`
 }
@@ -1980,21 +2227,102 @@ const progressionDialog=document.createElement('dialog');progressionDialog.class
 function chooseWorkout(){return new Promise(resolve=>{const dialog=document.createElement('dialog');dialog.className='app-modal';dialog.innerHTML=`<form><h2>Choose a Workout</h2><label>Workout<select required>${current.days.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label><div class="actions" style="margin-top:20px"><button type="button">Cancel</button><button class="primary" type="submit">Add Exercise</button></div></form>`;document.body.append(dialog);dialog.querySelector('form').onsubmit=event=>{event.preventDefault();const id=Number(dialog.querySelector('select').value);dialog.close();dialog.remove();resolve(id);};const cancel=()=>{dialog.close();dialog.remove();resolve(null);};dialog.querySelector('[type=button]').onclick=cancel;dialog.oncancel=event=>{event.preventDefault();cancel();};dialog.showModal();});}
 function applyGoalRowColors(){screen.querySelectorAll('[data-key="priority"]').forEach(select=>{const tr=select.closest('tr');if(tr){tr.classList.toggle('goal-floor',select.value==='Floor');tr.classList.toggle('goal-ceiling',select.value==='Ceiling');}});}
 function decorateProgressions(){screen.querySelectorAll('.lz-move').forEach(n=>n.remove());applyGoalRowColors();screen.querySelectorAll('.day-grid').forEach(grid=>{grid.style.setProperty('--workout-count',Math.max(1,grid.children.length));if(!grid.parentElement.classList.contains('workout-scroll')){const wrap=document.createElement('div');wrap.className='workout-scroll';grid.before(wrap);wrap.append(grid);}});screen.querySelectorAll('[data-drag-id]').forEach(card=>{const id=Number(card.dataset.dragId),e=allEntries().find(x=>x.e.id===id)?.e;if(!e)return;const toolbar=document.createElement('div');toolbar.className='progression-entry';const b=document.createElement('button');b.type='button';b.className='primary';b.dataset.createProgression=id;b.textContent=e.progression?'Edit Progression':'Create Progression';toolbar.append(b);if(e.progression){const s=document.createElement('span');s.textContent=e.progression.weeks+' weeks';toolbar.append(s);}card.append(toolbar);});}
-let progressionClosing=false,progressionTimer=null,progressionSaving=null,progressionToken=0,progressionRevision=0,progressionSavedRevision=0;
-function numberField(i,key,value,label,bank){const weight=key==='weight';return `<input type="text" ${weight?'':`inputmode="numeric"`} data-pweek="${i}" data-pfield="${key}" data-pbank="${bank}" aria-label="Week ${i+1} ${label}" value="${esc(value)}" placeholder="${esc(label)}">`;}
-function actualPlaceholder(r){return r.format==='top'?'Top: sets × reps × weight\nBack Off: sets × reps × weight':r.format==='range'?'Sets × reps completed per set × weight':'Sets × reps × weight';}
-function progressionRows(){LZProgression.ensure(progressionDraft);return progressionDraft.rows.slice(0,progressionDraft.weeks).map((r,i)=>{const mode=r.format,v=r[mode],top=mode==='top',repFormat=top?r.top.repFormat:mode;const controls=`<label>Scheme<select data-week-scheme="${i}" aria-label="Week ${i+1} Scheme"><option value="across" ${!top?'selected':''}>Across Sets</option><option value="top" ${top?'selected':''}>Top and Back Off</option></select></label><label>Rep Format<select data-week-format="${i}" aria-label="Week ${i+1} Rep Format"><option value="fixed" ${repFormat==='fixed'?'selected':''}>Fixed Reps</option><option value="range" ${repFormat==='range'?'selected':''}>Rep Range</option></select></label>`;let plan;if(top)plan=`<textarea class="progression-plan-textarea" data-pweek="${i}" data-pfield="planned" data-pbank="top" rows="3" aria-label="Week ${i+1} Planned Prescription" placeholder="Top: sets × ${repFormat==='range'?'rep range':'reps'} × weight\nBack Off: sets × ${repFormat==='range'?'rep range':'reps'} × weight">${esc(v.planned)}</textarea>`;else if(v.detail)plan=`<label>Planned Sets<textarea class="progression-plan-textarea" data-pweek="${i}" data-pfield="detail" data-pbank="${mode}" rows="3" aria-label="Week ${i+1} Planned Sets" placeholder="Set: sets × reps × weight">${esc(v.detail)}</textarea></label>`;else plan=`<div class="progression-planned-fields"><label>Sets${numberField(i,'sets',v.sets,'Sets',mode)}</label><label>${mode==='range'?'Rep Range':'Reps'}${mode==='range'?`<div class="progression-range">${numberField(i,'low',v.low,'Min',mode)}<span>to</span>${numberField(i,'high',v.high,'Max',mode)}</div>`:numberField(i,'reps',v.reps,'Reps',mode)}</label><label>Weight (kg)${numberField(i,'weight',v.weight,'Weight',mode)}</label></div>`;return `<tr><th scope="row" class="progression-week">Week ${i+1}</th><td><div class="progression-week-controls">${controls}</div></td><td>${plan}</td><td class="actual-results"><textarea data-pweek="${i}" data-pfield="actual" rows="3" aria-label="Week ${i+1} Actual Results" placeholder="${esc(actualPlaceholder(r))}">${esc(r.actual)}</textarea></td></tr>`;}).join('');}
-function progressionTable(){return `<table class="progression-table"><colgroup><col style="width:78px"><col style="width:160px"><col style="width:40%"><col></colgroup><thead><tr><th>Week</th><th>Scheme</th><th>Planned Prescription</th><th class="actual-results">Actual Results</th></tr></thead><tbody>${progressionRows()}</tbody></table>`;}
-function updateProgressionTable(){progressionDialog.querySelector('[data-progress-table]').innerHTML=progressionTable();}
-function openProgression(id){const e=allEntries().find(x=>x.e.id===id)?.e;if(!e)return;rows(e);clearTimeout(progressionTimer);progressionToken++;progressionRevision=progressionSavedRevision=0;progressionExercise={owner,athlete:current.id,id};progressionDraft=LZProgression.ensure(LZProgression.create(e.progression,e.mode));if(!e.progression)LZProgression.seedWeekOne(progressionDraft,e);progressionDialog.innerHTML=`<form><header><div><span class="eyebrow">EXERCISE PROGRESSION</span>${exerciseNumberLabel(e)}<h2>${esc(e.name||'Exercise')}</h2><p>${esc(current.name)}</p><p class="progression-foundation">Main Scheme: ${esc(summary(e))}</p><span class="progression-autosave-status" data-progression-save-status role="status" aria-live="polite">Saving…</span></div><button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></header><div class="progression-content"><div class="progression-config"><label class="weeks-label">How Many Weeks?<input type="text" inputmode="numeric" data-progression-weeks value="${esc(progressionDraft.weeksInput??progressionDraft.weeks)}"></label><button type="button" data-update-week-one>Update Week 1 From Main Scheme</button></div><div class="table-wrap" data-progress-table>${progressionTable()}</div><p data-progression-error role="alert"></p></div><footer><p>Week 1 starts from your main scheme. Each week can use its own scheme and rep format. Changes save automatically.</p><div class="actions"><button type="button" data-progression-retry hidden>Retry Saving</button><button type="button" data-close-progression>Close</button></div></footer></form>`;progressionDialog.showModal();queueProgressionAutosave(true);if(window.lucide)lucide.createIcons({attrs:{width:18,height:18}});}
+let progressionClosing=false,progressionTimer=null,progressionSaving=null,progressionToken=0,progressionRevision=0,progressionSavedRevision=0,progressionTrackId=0;
+
+function activeProgression() {
+  return progressionTrackId ? progressionDraft.alternatives.find(track => track.id===progressionTrackId) : progressionDraft;
+}
+function progressionName(track) {
+  return track.id ? 'Alternative ' + track.id : 'Main Progression';
+}
+function progressionGoal(e) {
+  if (e.role !== 'Goal' || !e.name.trim()) return '';
+  const identity = exerciseIdentity(e.exerciseId || e.name);
+  const goal = current.goals.find(entry => (entry.exerciseId || entry.name.trim()) && exerciseIdentity(entry.exerciseId || entry.name) === identity);
+  const values = goal ? [goal.ceiling, goal.floor, goal.goal].filter(value => String(value ?? '').trim()) : [];
+  if (!values.length) return '';
+  return `<div class="progression-goal"><strong>Goal</strong><div class="progression-goal-values">${values.map(value => `<span>${esc(value)}</span>`).join('')}</div></div>`;
+}
+function progressionRows(track) {
+  LZProgression.ensure(track);
+  return track.rows.slice(0,track.weeks).map((week,index) => {
+    const entered = !!week.actual.trim();
+    const plannedField = `<textarea class="progression-plan-textarea" data-pweek="${index}" data-pfield="planned" rows="1" aria-label="Week ${index+1} Planned Prescription" placeholder="Enter prescription">${esc(week.planned)}</textarea>`;
+    const actualField = `<textarea class="${entered?'progression-results-entered':''}" data-pweek="${index}" data-pfield="actual" rows="1" aria-label="Week ${index+1} Actual Results" placeholder="Enter results">${esc(week.actual)}</textarea>`;
+    return `<tr><th scope="row" class="progression-week">Week ${index+1}</th><td>${plannedField}</td><td class="actual-results">${actualField}</td></tr>`;
+  }).join('');
+}
+function progressionTable() {
+  return `<table class="progression-table"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${progressionRows(activeProgression())}</tbody></table>`;
+}
+function progressionComparison(p, selected=0) {
+  const tracks = [p, ...p.alternatives];
+  const active = tracks.findIndex(track=>track.id===selected);
+  if(active>1) tracks.splice(1, 0, tracks.splice(active,1)[0]);
+  return `<div class="progression-comparisons">${tracks.map(track=>{
+    LZProgression.ensure(track);
+    const name = progressionName(track);
+    const heading = tracks.length > 1 ? `<h4>${esc(name)}</h4>` : '';
+    return `<div class="progression-comparison">${heading}<div class="table-wrap"><table class="progression-comparison-table" aria-label="${esc(name)}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${track.rows.slice(0,track.weeks).map((week,index)=>`<tr><th scope="row">Week ${index+1}</th><td class="progression-plan-text">${esc(LZProgression.describe(track,index))}</td><td class="actual-results progression-plan-text ${week.actual.trim()?'progression-results-entered':''}">${esc(week.actual.trim()?week.actual:'Not entered')}</td></tr>`).join('')}</tbody></table></div></div>`;
+  }).join('')}</div>`;
+}
+function progressComparisonPanel() {
+  const panel = progressionDialog.querySelector('[data-progression-comparison]');
+  if (!panel) return;
+  panel.hidden = !progressionDraft.alternatives.length;
+  panel.innerHTML = panel.hidden ? '' : `<h3>Goal Exercise Progression</h3>${progressionComparison(progressionDraft, progressionTrackId)}`;
+}
+function updateProgressionTable() {
+  progressionDialog.querySelector('[data-progress-table]').innerHTML = progressionTable();
+}
+function updateProgressionEditor() {
+  const track = activeProgression();
+  const buttons = [progressionDraft, ...progressionDraft.alternatives].map(item=>`<button type="button" data-progression-track="${item.id || 0}" aria-pressed="${item===track}">${esc(progressionName(item))}</button>`);
+  const tabs = progressionDialog.querySelector('[data-progression-tabs]');
+  tabs.innerHTML = buttons.join('');
+  tabs.hidden = buttons.length === 1;
+  progressionDialog.querySelector('[data-progression-weeks]').value = track.weeksInput;
+  progressionDialog.querySelector('[data-progression-delete]').hidden = !track.id;
+  updateProgressionTable();
+  progressComparisonPanel();
+}
+function openProgression(id) {
+  const e=allEntries().find(x=>x.e.id===id)?.e;
+  if(!e)return;
+  rows(e);clearTimeout(progressionTimer);progressionToken++;progressionRevision=progressionSavedRevision=0;
+  progressionExercise={owner,athlete:current.id,id};
+  progressionTrackId=0;
+  progressionDraft=LZProgression.ensure(LZProgression.create(e.progression,e.mode));
+  if(!e.progression)LZProgression.seedWeekOne(progressionDraft,e);
+  progressionDialog.setAttribute('aria-labelledby','progression-title');
+  progressionDialog.innerHTML=`<form><header>
+    <div><span class="eyebrow">Exercise Progression</span>${exerciseNumberLabel(e)}<h2 id="progression-title">${esc(e.name||'Exercise')}</h2><p>${esc(current.name)}</p></div>
+    <div class="progression-header-actions">${e.role==='Goal'?'<button class="progression-alt-add" type="button" data-progression-add>Add Alternative Progression</button>':''}<button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></div>
+  </header>
+  <div class="progression-content">
+    ${progressionGoal(e)}
+    <div class="progression-tabs" role="group" aria-label="Progression to edit" data-progression-tabs hidden></div>
+    <div class="progression-config">
+      <div class="progression-controls"><label class="weeks-label">How many weeks? <input type="text" inputmode="numeric" data-progression-weeks></label></div>
+      <div class="progression-actions"><span class="progression-autosave-status" data-progression-save-status role="status" aria-live="polite">Saving…</span><button type="button" data-progression-retry hidden>Retry Saving</button><button class="progression-delete" type="button" data-progression-delete hidden>Delete Alternative</button></div>
+    </div>
+    <div class="table-wrap" data-progress-table></div>
+    <p data-progression-error role="alert"></p>
+  </div>
+  <section class="progression-comparison-section" data-progression-comparison hidden></section></form>`;
+  updateProgressionEditor();
+  progressionDialog.showModal();
+  queueProgressionAutosave(true);
+  if(window.lucide)lucide.createIcons({attrs:{width:18,height:18}});
+}
 function askProgressionChoice(title,description,choices){return new Promise(resolve=>{const d=document.createElement('dialog');d.className='progression-discard-dialog';d.innerHTML=`<h2>${esc(title)}</h2><p>${esc(description)}</p><div class="actions">${choices.map(([id,label])=>`<button type="button" data-choice="${id}">${esc(label)}</button>`).join('')}</div>`;document.body.append(d);let settled=false;const done=id=>{if(settled)return;settled=true;d.close();d.remove();resolve(id);};d.onclick=event=>{const b=event.target.closest('[data-choice]');if(b)done(b.dataset.choice);};d.oncancel=event=>{event.preventDefault();done('keep');};d.showModal();d.querySelector('button').focus();});}
 function progressionEntry(){if(!progressionExercise||progressionExercise.owner!==owner||progressionExercise.athlete!==current?.id)return null;return allEntries().find(x=>x.e.id===progressionExercise.id)?.e||null;}
 function progressionSaveStatus(state,text){const status=progressionDialog.querySelector('[data-progression-save-status]');if(status){status.dataset.state=state;status.textContent=text;}const retry=progressionDialog.querySelector('[data-progression-retry]');if(retry)retry.hidden=state!=='error';}
 function syncProgressionDraft(){const e=progressionEntry();if(!e||!progressionDraft)return false;e.progression=clone(progressionDraft);preserveDraft();return true;}
-function progressionGuidance(){const raw=progressionDraft.weeksInput??progressionDraft.weeks,n=Number(raw),message=String(raw).trim()===''||!Number.isInteger(n)||n<1||n>52?'Choose a whole number from 1 to 52 weeks.':LZProgression.validate(progressionDraft);const status=progressionDialog.querySelector('[data-progression-error]');if(status)status.textContent=message?'Saved as entered. '+message:'';}
+function progressionGuidance(){const track=activeProgression(),raw=track.weeksInput,n=Number(raw),message=String(raw).trim()===''||!Number.isInteger(n)||n<1||n>52?'Choose a whole number from 1 to 52 weeks.':LZProgression.validate(track);const status=progressionDialog.querySelector('[data-progression-error]');if(status)status.textContent=message?'Saved as entered. '+message:'';}
 function progressionAutosaveError(err,token=progressionToken){if(token!==progressionToken)return;syncProgressionDraft();progressionSaveStatus('error','Saving failed. Your work is preserved on this device where possible.');const status=progressionDialog.querySelector('[data-progression-error]');if(status)status.textContent=err.message||String(err);error(err);}
 function queueProgressionAutosave(immediate=false){if(!syncProgressionDraft())return Promise.resolve();progressionRevision++;progressionSaveStatus('saving','Saving…');clearTimeout(progressionTimer);if(immediate){const token=progressionToken;return flushProgressionAutosave().catch(err=>{progressionAutosaveError(err,token);});}progressionTimer=setTimeout(()=>{const token=progressionToken;flushProgressionAutosave().catch(err=>progressionAutosaveError(err,token));},350);return Promise.resolve();}
-async function flushProgressionAutosave(){clearTimeout(progressionTimer);const token=progressionToken;if(!progressionEntry()||!progressionDraft)return;if(progressionSaving){await progressionSaving;if(token===progressionToken&&progressionRevision>progressionSavedRevision)return flushProgressionAutosave();return;}const operation=(async()=>{while(token===progressionToken&&progressionRevision>progressionSavedRevision){const revisionToSave=progressionRevision;if(!syncProgressionDraft())return;progressionSaveStatus('saving','Saving…');await flush();if(token!==progressionToken||!progressionEntry())return;progressionSavedRevision=revisionToSave;}if(token===progressionToken){progressionSaveStatus('saved','Saved');progressionGuidance();}})();progressionSaving=operation;try{await operation;}finally{if(progressionSaving===operation)progressionSaving=null;}}
+async function flushProgressionAutosave(){clearTimeout(progressionTimer);const token=progressionToken;if(!progressionEntry()||!progressionDraft)return;if(progressionSaving){await progressionSaving;if(token===progressionToken&&progressionRevision>progressionSavedRevision)return flushProgressionAutosave();return;}const operation=(async()=>{while(token===progressionToken&&progressionRevision>progressionSavedRevision){const revisionToSave=progressionRevision;if(!syncProgressionDraft())return;progressionSaveStatus('saving','Saving…');await flush();if(token!==progressionToken||!progressionEntry())return;progressionSavedRevision=revisionToSave;}if(token===progressionToken){progressionSaveStatus('saved','Saved');progressionGuidance();progressComparisonPanel();}})();progressionSaving=operation;try{await operation;}finally{if(progressionSaving===operation)progressionSaving=null;}}
 async function requestProgressionClose(){if(progressionClosing)return;progressionClosing=true;const token=progressionToken;try{await flushProgressionAutosave();if(token===progressionToken){progressionDialog.close();render();}}catch(err){progressionAutosaveError(err,token);}finally{progressionClosing=false;}}
 window.addEventListener('beforeunload',()=>{if(progressionDialog.open){syncProgressionDraft();flushProgressionAutosave().catch(()=>{});}});
 window.addEventListener('blur',()=>{if(progressionDialog.open){const token=progressionToken;flushProgressionAutosave().catch(err=>progressionAutosaveError(err,token));}});
@@ -2005,12 +2333,67 @@ root.addEventListener('dragover',event=>{if(!dragged)return;const target=event.t
 root.addEventListener('dragleave',event=>{const day=event.target.closest('.day');if(day&&!day.contains(event.relatedTarget))day.classList.remove('drop-target');});
 root.addEventListener('dragend',()=>screen.querySelectorAll('.drop-target').forEach(n=>n.classList.remove('drop-target')));
 root.addEventListener('drop',()=>screen.querySelectorAll('.drop-target').forEach(n=>n.classList.remove('drop-target')));
-progressionDialog.addEventListener('input',event=>{const el=event.target,v=el.dataset;if(v.pweek!==undefined){const r=progressionDraft.rows[Number(v.pweek)];if(v.pfield==='actual')r.actual=el.value;else r[v.pbank][v.pfield]=el.value;queueProgressionAutosave();}else if(el.matches('[data-progression-weeks]')){progressionDraft.weeksInput=el.value;const weeks=Number(el.value);if(Number.isInteger(weeks)&&weeks>=1&&weeks<=52){LZProgression.setWeeks(progressionDraft,weeks);updateProgressionTable();}queueProgressionAutosave();}});
-progressionDialog.addEventListener('change',event=>{const el=event.target;try{if(el.matches('[data-progression-weeks]')){progressionDraft.weeksInput=el.value;const weeks=Number(el.value);if(Number.isInteger(weeks)&&weeks>=1&&weeks<=52)LZProgression.setWeeks(progressionDraft,weeks);else progressionDialog.querySelector('[data-progression-error]').textContent='Choose a whole number from 1 to 52 weeks. Your entry is kept.';}else if(el.matches('[data-week-scheme]')){const i=Number(el.dataset.weekScheme),r=progressionDraft.rows[i];LZProgression.setFormat(progressionDraft,el.value==='top'?'top':r.acrossFormat,i);}else if(el.matches('[data-week-format]')){const i=Number(el.dataset.weekFormat),r=progressionDraft.rows[i];if(r.format==='top')r.top.repFormat=el.value;else LZProgression.setFormat(progressionDraft,el.value,i);}else if(el.dataset.pweek!==undefined){queueProgressionAutosave(true);return;}else return;updateProgressionTable();queueProgressionAutosave(true);}catch(err){progressionDialog.querySelector('[data-progression-error]').textContent=err.message;queueProgressionAutosave(true);}});
-progressionDialog.addEventListener('click',async event=>{if(event.target.closest('[data-close-progression]'))requestProgressionClose();else if(event.target.closest('[data-progression-retry]'))queueProgressionAutosave(true);else if(event.target.closest('[data-update-week-one]')){const token=progressionToken,e=progressionEntry();if(!e)return;if(LZProgression.weekOneEdited(progressionDraft)){const choice=await askProgressionChoice('Replace Week 1 Plan?','Week 1 contains a manually edited plan. Replace its planned prescription with the main scheme? Actual results and other weeks stay unchanged.',[['replace','Replace Week 1 Plan'],['keep','Keep Editing']]);if(choice!=='replace'||token!==progressionToken||!progressionEntry())return;}rows(e);LZProgression.seedWeekOne(progressionDraft,e);updateProgressionTable();queueProgressionAutosave(true);}});
+progressionDialog.addEventListener('input', event=>{
+  const el=event.target, data=el.dataset, track=activeProgression();
+  if(data.pweek!==undefined){
+    track.rows[Number(data.pweek)][data.pfield]=el.value;
+    if(data.pfield==='actual')el.classList.toggle('progression-results-entered',!!el.value.trim());
+  }else if(el.matches('[data-progression-weeks]')){
+    track.weeksInput=el.value;
+    const weeks=Number(el.value);
+    if(Number.isInteger(weeks)&&weeks>=1&&weeks<=52){
+      LZProgression.setWeeks(track,weeks);
+      updateProgressionTable();
+    }
+  }else return;
+  queueProgressionAutosave();
+});
+progressionDialog.addEventListener('change', event=>{
+  const el=event.target;
+  if(el.dataset.pweek!==undefined || el.matches('[data-progression-weeks]'))queueProgressionAutosave(true);
+});
+progressionDialog.addEventListener('click', async event=>{
+  if(event.target.closest('[data-close-progression]')){
+    requestProgressionClose();
+  }else if(event.target.closest('[data-progression-retry]')){
+    queueProgressionAutosave(true);
+  }else if(event.target.closest('[data-progression-add]')){
+    progressionTrackId=LZProgression.addAlternative(progressionDraft).id;
+    updateProgressionEditor();
+    progressionDialog.querySelector('[data-pfield="planned"]').focus();
+    queueProgressionAutosave(true);
+  }else if(event.target.closest('[data-progression-track]')){
+    const button=event.target.closest('[data-progression-track]');
+    progressionTrackId=Number(button.dataset.progressionTrack);
+    updateProgressionEditor();
+    progressionDialog.querySelector(`[data-progression-track="${progressionTrackId}"]`).focus();
+    if(progressionRevision>progressionSavedRevision)queueProgressionAutosave(true);
+    else progressionGuidance();
+  }else if(event.target.closest('[data-progression-delete]')){
+    const token=progressionToken, track=activeProgression();
+    if(!track?.id)return;
+    const choice=await askProgressionChoice('Delete '+progressionName(track)+'?', 'This permanently deletes its planned prescriptions and actual results.', [['keep','Cancel'],['delete','Delete Alternative']]);
+    if(choice!=='delete'||token!==progressionToken||!progressionEntry())return;
+    progressionDraft.alternatives=progressionDraft.alternatives.filter(item=>item.id!==track.id);
+    progressionTrackId=0;
+    updateProgressionEditor();
+    (progressionDialog.querySelector('[data-progression-add]')||progressionDialog.querySelector('[data-close-progression]')).focus();
+    queueProgressionAutosave(true);
+  }
+});
 progressionDialog.addEventListener('cancel',event=>{event.preventDefault();requestProgressionClose();});
 progressionDialog.addEventListener('submit',event=>{event.preventDefault();queueProgressionAutosave(true);});
-function goalProgressionView(){const entries=allEntries().filter(({e})=>e.role==='Primary');if(!entries.length)return '<div class="goal-progression-empty"><h3>No Primary Exercises Yet</h3><p>Add goal exercises to your workouts or set their exercise role to Primary. Their progressions will appear here.</p></div>';return `<div class="goal-progressions">${entries.map(({d,e})=>{const p=e.progression?LZProgression.ensure(LZProgression.create(e.progression,e.mode)):null;return `<article class="goal-progression-card" data-progression-entry="${e.id}"><header><div>${exerciseNumberLabel(e,d)}<h3>${esc(e.name||'Unnamed Exercise')}</h3><p>${esc(d.name)} · Primary</p></div><button class="primary" data-create-progression="${e.id}">${p?'Edit Progression':'Create Progression'}</button></header>${p?`<div class="table-wrap"><table><thead><tr><th>Week</th><th>Planned Prescription</th><th class="actual-results">Actual Results</th></tr></thead><tbody>${p.rows.slice(0,p.weeks).map((r,i)=>`<tr><th scope="row">Week ${i+1}</th><td class="progression-plan-text"><strong>${esc(LZProgression.describe(p,i))}</strong></td><td class="actual-results progression-plan-text">${esc(r.actual||'Not entered')}</td></tr>`).join('')}</tbody></table></div>`:'<p>No progression entered yet.</p>'}</article>`;}).join('')}</div>`;}
+function goalProgressionView() {
+  const entries=allEntries().filter(({e})=>e.role==='Primary'||e.role==='Goal').sort((a,b)=>Number(b.e.role==='Goal')-Number(a.e.role==='Goal'));
+  if(!entries.length)return '<div class="goal-progression-empty"><h3>No Goal Exercises Yet</h3><p>Set an exercise role to Goal or Primary to see its progression here.</p></div>';
+  return `<div class="goal-progressions">${entries.map(({d,e})=>{
+    const p=e.progression?LZProgression.ensure(LZProgression.create(e.progression,e.mode)):null;
+    return `<article class="goal-progression-card" data-progression-entry="${e.id}"><header>
+      <div>${exerciseNumberLabel(e,d)}<h3>${esc(e.name||'Unnamed Exercise')}</h3><p>${esc(d.name)} · ${esc(e.role)}</p></div>
+      <button class="primary" data-create-progression="${e.id}">${p?'Edit Progression':'Create Progression'}</button>
+    </header>${progressionGoal(e)}${p?progressionComparison(p):'<p>No progression entered yet.</p>'}</article>`;
+  }).join('')}</div>`;
+}
 
 async function confirmSaveAndReturn(){if(!current)return true;try{if(typeof flushProgressionAutosave==='function')await flushProgressionAutosave();await flush();roster();account();return true;}catch(err){error(err);return false;}}
 const originalDecorateLearning=decorateLearning;decorateLearning=function(){originalDecorateLearning();decorateProgressions();};
@@ -2023,8 +2406,8 @@ bootstrap();
 </script>
 <script src="whiteboard-v2-store.js?v=20261117-empty-trash"></script>
 <script src="whiteboard-shared-store.js?v=20261116"></script>
-<script src="whiteboard-v2.js?v=20261117-empty-trash"></script>
-<script src="anatomy-zone.js?v=20261117-johnny-only-4"></script>
+<script src="whiteboard-v2.js?v=20261119-cell-color"></script>
+<script src="anatomy-zone.js?v=20261119-johnny-skin"></script>
 <script>
 (()=>{'use strict';
 let active='programs',libraryInstance=null,navigation=Promise.resolve(),contentEpoch=0,loadAbort=null;const board=document.querySelector('#student-learning-board'),extra=document.querySelector('#extra-zone'),heading=document.querySelector('#zone-heading');
@@ -2054,5 +2437,5 @@ document.querySelector('#restore-complete').addEventListener('click',openLocalIm
 window.addEventListener('lz-cloud-import-complete',async()=>{try{await closeContent();await LZStudent.leave();await LZStudent.students();showMessage('Local import finished. Review the import report for any skipped items.');}catch(e){showMessage(e.message,true);}});
 window.LZShell={navigate,refreshAccount,showMessage,flushContent,closeContent};refreshAccount();if(LZStudent.context().admin&&!LZStudent.context().owner)dashboardChrome();iconify();
 })();
-</script><script src="appearance-settings.js?v=20261117-exercise-settings"></script>
+</script><script src="appearance-settings.js?v=20261119-workspace-design"></script>
 </body></html>

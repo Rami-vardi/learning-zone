@@ -8,12 +8,24 @@ window.azAttachAnatomyMeshes=function(parts){
       const p=transform(xyz);positions.set(p,i*3);
     }
     for(let i=0;i<indices.length;i++)indices[i]=buf.getUint16(asset.n*6+i*2,true);
-    const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(positions,3));geo.setIndex(new T.BufferAttribute(indices,1));geo.computeVertexNormals();return geo;
+    const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(positions,3));geo.setIndex(new T.BufferAttribute(indices,1));geo.computeVertexNormals();
+    const light = atob(asset.cavityLight);
+    const colors = new Uint8Array(asset.n * 3);
+    for (let i = 0; i < asset.n; i++) colors.fill(light.charCodeAt(i), i * 3, i * 3 + 3);
+    geo.setAttribute('color', new T.BufferAttribute(colors, 3, true));
+    return geo;
   }
   function remove(parent,keep=[]){parent.children.slice().forEach(child=>{if(keep.includes(child))return;parent.remove(child);child.traverse(o=>{if(o.geometry)o.geometry.dispose();});});}
+  function reliefMaterial(source) {
+    const shaded = source.clone();
+    // The teaching modes update this same color when a region is highlighted.
+    shaded.color = source.color;
+    shaded.vertexColors = true;
+    return shaded;
+  }
   remove(parts.head,parts.cervicalMeshes);
   const skull=assets.skull,centre=skull.min.map((v,i)=>(v+skull.max[i])/2);
-  const skullMesh=new T.Mesh(geometry(skull,p=>[(p[0]-centre[0])*.00405,(p[2]-centre[2])*.00405+.12,-(p[1]-centre[1])*.00405]),parts.materials.bone);
+  const skullMesh=new T.Mesh(geometry(skull,p=>[(p[0]-centre[0])*.00405,(p[2]-centre[2])*.00405+.12,-(p[1]-centre[1])*.00405]),reliefMaterial(parts.materials.bone));
   skullMesh.name='BodyParts3D skull, simplified';parts.head.add(skullMesh);
   // Sunglasses remain part of the skull's local coordinate frame.
   const shades=new T.Group();shades.name='Johnny sunglasses';parts.head.add(shades);
@@ -36,8 +48,9 @@ window.azAttachAnatomyMeshes=function(parts){
   const bridgePath=new T.CatmullRomCurve3([new T.Vector3(-.030,.138,.350),new T.Vector3(0,.150,.374),new T.Vector3(.030,.138,.350)]);
   shades.add(new T.Mesh(new T.TubeGeometry(bridgePath,12,.009,6,false),frameMaterial));
   remove(parts.pelvis);
+  const pelvisMaterial = reliefMaterial(parts.materials.pelvis);
   for(const name of ['rightHip','leftHip','sacrum']){
-    const mesh=new T.Mesh(geometry(assets[name],p=>[p[0]*.00582,(p[2]-840.4)*.00582,-(p[1]+79.1)*.00582+.005]),parts.materials.pelvis);
+    const mesh=new T.Mesh(geometry(assets[name],p=>[p[0]*.00582,(p[2]-840.4)*.00582,-(p[1]+79.1)*.00582+.005]),pelvisMaterial);
     mesh.name='BodyParts3D '+name;parts.pelvis.add(mesh);
   }
 };

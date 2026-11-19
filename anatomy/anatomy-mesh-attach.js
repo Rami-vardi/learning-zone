@@ -1,6 +1,6 @@
 window.azAttachAnatomyMeshes=function(parts){
   const T=parts.THREE,assets=window.azRealMeshData.assets;
-  function geometry(asset,transform){
+  function geometry(asset,transform,mirror=false){
     const binary=atob(asset.data),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
     const buf=new DataView(bytes.buffer),positions=new Float32Array(asset.n*3),indices=new Uint16Array(asset.f*3);
     for(let i=0;i<asset.n;i++){
@@ -8,6 +8,11 @@ window.azAttachAnatomyMeshes=function(parts){
       const p=transform(xyz);positions.set(p,i*3);
     }
     for(let i=0;i<indices.length;i++)indices[i]=buf.getUint16(asset.n*6+i*2,true);
+    // Reflections reverse triangle winding. Keep the mirrored left leg's
+    // normals oriented outward like the right leg from the source model.
+    if (mirror) for (let i = 0; i < indices.length; i += 3) {
+      [indices[i+1], indices[i+2]] = [indices[i+2], indices[i+1]];
+    }
     const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(positions,3));geo.setIndex(new T.BufferAttribute(indices,1));geo.computeVertexNormals();
     const light = atob(asset.cavityLight);
     const colors = new Uint8Array(asset.n * 3);
@@ -52,5 +57,25 @@ window.azAttachAnatomyMeshes=function(parts){
   for(const name of ['rightHip','leftHip','sacrum']){
     const mesh=new T.Mesh(geometry(assets[name],p=>[p[0]*.00582,(p[2]-840.4)*.00582,-(p[1]+79.1)*.00582+.005]),pelvisMaterial);
     mesh.name='BodyParts3D '+name;parts.pelvis.add(mesh);
+  }
+  // The meshes were fitted to the existing hip, knee and ankle anchors.
+  // Change the visible surface only, preserving the articulated foot and fibula.
+  if (assets.femur && assets.tibia && assets.patella) for (const leg of parts.legs) {
+    const mirror = leg.side === 1;
+    const transform = ([x, y, z]) => [mirror ? -x : x, y, z];
+    const femurMaterial = reliefMaterial(leg.femurMat);
+    const shinMaterial = reliefMaterial(leg.shinMat);
+    const makeBone = (name, material) => {
+      const bone = new T.Mesh(geometry(assets[name], transform, mirror), material);
+      bone.name = 'BodyParts3D ' + name;
+      return bone;
+    };
+    const femur = makeBone('femur', femurMaterial);
+    const patella = makeBone('patella', femurMaterial);
+    const tibia = makeBone('tibia', shinMaterial);
+    remove(leg.femur);
+    remove(leg.shin, [leg.foot, leg.fibula]);
+    leg.femur.add(femur, patella);
+    leg.shin.add(tibia);
   }
 };

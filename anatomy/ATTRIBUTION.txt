@@ -2,6 +2,6 @@ Three.js r160, Copyright 2010–2023 Three.js Authors. MIT License. Full license
 
 BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International. https://creativecommons.org/licenses/by/4.0/
 Official project: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html
-The included skull and pelvis meshes have been simplified and rescaled. Other skeletal elements are schematic. Sunglasses and original teaching model geometry were created for this app.
+The included skull and pelvis meshes have been simplified and rescaled. The right femur (FJ3365), right tibia (FJ3387), and right patella (FJ3381) are BodyParts3D 4.0 geometry obtained from the MeshCrate knee reference (https://meshcrate.vip/3d-anatomy). The leg meshes were rotated, rescaled to Johnny's rig, adjusted for joint clearance, quantized, and mirrored for the left leg. Other skeletal elements are schematic. Sunglasses and original teaching model geometry were created for this app.
 
 Course material is cited in plain text in the interface. No course screenshots or private Drive material are included in these assets.

@@ -220,7 +220,7 @@
       const shin=new T.Group();shin.position.set(s*.10,-1.63,0);root.add(shin);
       sphere(shin,0,0,0,.12,.075,.09,ctxM);sculptedShaft(shin,[[0,-.04,.02],[0,-.28,.055],[s*.012,-.76,.03],[0,-1.22,.015]],[.085,.065,.044,.058],ctxM);
       tube(shin,[[0,-.15,.08],[0,-.43,.065],[0,-.95,.055]],.018,ctxM,24);
-      between(shin,[s*.12,-.08,-.015],[s*.105,-1.27,.00],.025,.03,ctxM);
+      const fibula=between(shin,[s*.12,-.08,-.015],[s*.105,-1.27,.00],.025,.03,ctxM);
       sphere(shin,0,-1.24,.02,.075,.085,.075,ctxM);
       const foot=new T.Group();foot.position.set(0,-1.31,.04);shin.add(foot);
       // Seven individual tarsals, five metatarsals and fourteen phalanges.
@@ -287,7 +287,7 @@
       poseFootArch(0);
       const femurMat=femM.clone(),shinMat=ctxM.clone(),footMat=footM.clone();
       femur.traverse(o=>{if(o.isMesh)o.material=femurMat;});shin.traverse(o=>{if(o.isMesh)o.material=shinMat;});foot.traverse(o=>{if(o.isMesh)o.material=footMat;});
-      legs.push({side:s,root,femur,shin,foot,mid,rays,footBones,poseFootArch,navicular,baseX:s*.51,femurMat,shinMat,footMat});
+      legs.push({side:s,root,femur,shin,fibula,foot,mid,rays,footBones,poseFootArch,navicular,baseX:s*.51,femurMat,shinMat,footMat});
     }
     function footWorldMinimum(l,updated=false){
       if(!updated)model.updateMatrixWorld(true);let min=Infinity;const v=new T.Vector3();

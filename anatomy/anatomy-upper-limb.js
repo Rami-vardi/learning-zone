@@ -193,6 +193,9 @@ window.azAttachUpperSkeleton = function(parts) {
   const joint = new T.Vector3(), target = new T.Vector3(), start = new T.Vector3(), end = new T.Vector3();
   const armAxis = new T.Vector3(), forearmAxis = new T.Vector3(), hinge = new T.Vector3(), forward = new T.Vector3();
   const basis = new T.Matrix4(), rotation = new T.Quaternion();
+  const clavicleLength = .914;
+  const shoulderOffset = new T.Vector3(), collarAxis = new T.Vector3();
+  const acromionOffset = new T.Vector3(), acromionArc = new T.Vector3(), collarRotation = new T.Quaternion();
   function orientElbow(upper, forearm, wrist) {
     // The ulna bends around the humeral trochlea. Preserve this hinge axis
     // when the exercise turns the arm into a different movement plane.
@@ -209,6 +212,38 @@ window.azAttachUpperSkeleton = function(parts) {
     forward.crossVectors(hinge, forearmAxis);
     forearm.quaternion.slerp(rotation.setFromRotationMatrix(basis.makeBasis(hinge,forearmAxis,forward)), blend);
   }
+
+  function alignClavicle(scapula, headCentre, acromion, allowGlide) {
+    scapula.updateMatrix();
+    joint.copy(headCentre).applyMatrix4(scapula.matrix);
+    end.copy(acromion).applyMatrix4(scapula.matrix);
+    // Find the point where the acromion's arc about the glenoid meets the
+    // fixed-length clavicle. Choose the closest point to the existing pose.
+    shoulderOffset.subVectors(joint,start);
+    const shoulderSpan = shoulderOffset.length();
+    collarAxis.copy(shoulderOffset).divideScalar(shoulderSpan);
+    acromionOffset.subVectors(end,joint);
+    const radius = acromionOffset.length();
+    const along = T.MathUtils.clamp((clavicleLength ** 2 - shoulderSpan ** 2 - radius ** 2) / (2 * shoulderSpan), -radius, radius);
+    acromionArc.copy(acromionOffset).addScaledVector(collarAxis,-acromionOffset.dot(collarAxis));
+    acromionArc.setLength(Math.sqrt(Math.max(0,radius ** 2 - along ** 2))).addScaledVector(collarAxis,along);
+    collarRotation.setFromUnitVectors(acromionOffset.normalize(),acromionArc.normalize());
+    const correction = 2 * Math.acos(Math.min(1,Math.abs(collarRotation.w)));
+    if (correction > .50) collarRotation.slerp(increment.identity(),1 - .50 / correction);
+    scapula.quaternion.premultiply(collarRotation);
+    scapula.updateMatrix();
+    scapula.position.add(joint.sub(target.copy(headCentre).applyMatrix4(scapula.matrix)));
+    scapula.updateMatrix();
+
+    end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
+    const reach = end.length();
+    if (allowGlide) {
+      // Free shoulder motion can glide along the thorax to finish the fit.
+      // Exercise shoulders are set by the contact solver and stay fixed.
+      scapula.position.addScaledVector(end,(clavicleLength - reach) / reach);
+      scapula.updateMatrix();
+    }
+  }
   const fit = function(movement) {
     for (const {arm, exercise, exerciseHand, scapula, headCentre, acromion, sternoclavicular, chest, bladePoints} of joints) {
       scapula.updateMatrix();
@@ -220,16 +255,16 @@ window.azAttachUpperSkeleton = function(parts) {
         torso.worldToLocal(exercise.upper.getWorldPosition(target));
         scapula.position.add(target.sub(joint));
         scapula.updateMatrix();
-      } else {
-        arm.node.position.copy(joint);
       }
       if (scapula.visible && torso.visible) seatBlade(scapula,headCentre,chest,bladePoints);
       arm.clavicle.visible = exerciseArms.visible || scapula.visible || arm.node.visible;
       sternum.updateMatrix();
       start.copy(sternoclavicular).applyMatrix4(sternum.matrix);
+      alignClavicle(scapula,headCentre,acromion,!exerciseArms.visible);
+      if (!exerciseArms.visible) arm.node.position.copy(joint.copy(headCentre).applyMatrix4(scapula.matrix));
       end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
       arm.clavicle.position.copy(start);
-      arm.clavicle.scale.y = end.length();
+      arm.clavicle.scale.y = clavicleLength;
       arm.clavicle.quaternion.setFromUnitVectors(down, end.normalize());
       exerciseHand.geometry = geometry(flatHands.has(movement) ? 'handOpen' : 'handGrip', arm.side);
     }

@@ -73,7 +73,10 @@ window.azAttachAnatomyMeshes=function(parts){
     // foot. The proximal joint fitting and the existing ankle pivot stay put.
     const tibia = makeBone('tibia', shinMaterial, position => {
       const point = transform(position);
-      point[1] += .126 * T.MathUtils.smoothstep(-point[1], .59, 1.30);
+      const depth=-point[1];
+      point[1] += .126 * T.MathUtils.smoothstep(depth, .59, 1.30);
+      // Leave room for the joint surfaces as the rig bends and rotates.
+      point[1] -= .022 * (1-T.MathUtils.smoothstep(depth, .225, .72));
       return point;
     });
     remove(leg.femur);

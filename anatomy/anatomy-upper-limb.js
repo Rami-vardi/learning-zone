@@ -147,6 +147,48 @@ window.azAttachUpperSkeleton = function(parts) {
       frame.updateMatrix();frame.position.add(armLever.copy(before).sub(probe.copy(pivot).applyMatrix4(frame.matrix)));frame.updateMatrix();
     }
   }
+  // Fit a scapula whose socket can move with the upper limb. Pitch and yaw
+  // occur about the acromion; the outer end of the clavicle can also travel
+  // on a sphere about the sternum. Upward rotation comes from the arm pose.
+  function seatMobileSocket(frame,acromion,chest,markers){
+    updateChest(chest);frame.updateMatrix();
+    const matrix=Array.from({length:4},()=>new Float64Array(5)),jac=new Float64Array(4),total=new Float64Array(4);
+    const penalty=[.52,.52,1.0,2.1],delta=new Float64Array(4);
+    const cx=new T.Vector3(),cz=new T.Vector3(),offset=new T.Vector3();
+    for(let iteration=0;iteration<8;iteration++){
+      before.copy(acromion).applyMatrix4(frame.matrix);offset.subVectors(before,start);
+      cx.crossVectors(axisY,offset);cz.crossVectors(axisZ,offset);
+      for(let j=0;j<4;j++){matrix[j].fill(0);matrix[j][j]=penalty[j]+.5;matrix[j][4]=-penalty[j]*total[j];}
+      for(const marker of markers){
+        probe.copy(marker).applyMatrix4(frame.matrix);
+        let sum=0,gap=0;surfaceNormal.set(0,0,0);
+        for(const sample of chest.samples){
+          const dx=probe.x-sample.point.x,dy=probe.y-sample.point.y,dz=probe.z-sample.point.z;
+          const inv=1/(.009+dx*dx+dy*dy+dz*dz),weight=inv*inv*inv,n=sample.normal;
+          gap+=weight*(dx*n.x+dy*n.y+dz*n.z);sum+=weight;surfaceNormal.addScaledVector(n,weight);
+        }
+        gap/=sum;surfaceNormal.divideScalar(sum);armLever.subVectors(probe,before);moment.crossVectors(armLever,surfaceNormal);
+        jac[0]=moment.x;jac[1]=moment.y;jac[2]=cx.dot(surfaceNormal);jac[3]=cz.dot(surfaceNormal);
+        const weight=1+30*(1-T.MathUtils.smoothstep(gap,-.005,.035)),error=.041-gap;
+        for(let j=0;j<4;j++){
+          for(let k=0;k<4;k++)matrix[j][k]+=weight*jac[j]*jac[k];
+          matrix[j][4]+=weight*jac[j]*error;
+        }
+      }
+      // Damped normal equations are positive definite at every arm angle.
+      for(let j=0;j<4;j++)for(let k=j+1;k<4;k++){
+        const ratio=matrix[k][j]/matrix[j][j];for(let i=j+1;i<5;i++)matrix[k][i]-=ratio*matrix[j][i];
+      }
+      for(let j=3;j>=0;j--){
+        let rhs=matrix[j][4];for(let k=j+1;k<4;k++)rhs-=matrix[j][k]*delta[k];delta[j]=rhs/matrix[j][j];
+      }
+      for(let j=0;j<4;j++){delta[j]=T.MathUtils.clamp(delta[j],-.10,.10);total[j]+=delta[j];}
+      frame.quaternion.premultiply(increment.setFromAxisAngle(axisX,delta[0]));
+      frame.quaternion.premultiply(increment.setFromAxisAngle(axisY,delta[1]));
+      offset.applyAxisAngle(axisY,delta[2]).applyAxisAngle(axisZ,delta[3]).add(start);
+      frame.updateMatrix();frame.position.add(offset.sub(probe.copy(acromion).applyMatrix4(frame.matrix)));frame.updateMatrix();
+    }
+  }
   const joints = [];
   sternum.updateMatrix();
   for (const arm of arms) {
@@ -333,24 +375,27 @@ window.azAttachUpperSkeleton = function(parts) {
     for (const {arm, exercise, exerciseHand, scapula, headCentre, acromion, sternoclavicular, chest, bladePoints} of joints) {
       scapula.updateMatrix();
       joint.copy(headCentre).applyMatrix4(scapula.matrix);
+      const mobile=movement==='press'||movement==='pullup'||movement==='bench';
       if (exerciseArms.visible) {
         orientElbow(exercise.upper, exercise.fore, exercise.hand);
         // The exercise solver fixes the hands on their apparatus. Seat the
         // glenoid at the corresponding shoulder while retaining blade rotation.
-        torso.worldToLocal(exercise.upper.getWorldPosition(target));
-        scapula.position.add(target.sub(joint));
-        scapula.updateMatrix();
+        if(!mobile){
+          torso.worldToLocal(exercise.upper.getWorldPosition(target));
+          scapula.position.add(target.sub(joint));
+          scapula.updateMatrix();
+        }
       }
       arm.clavicle.visible = exerciseArms.visible || scapula.visible || arm.node.visible;
       sternum.updateMatrix();
       start.copy(sternoclavicular).applyMatrix4(sternum.matrix);
-      if(exerciseArms.visible)alignClavicle(scapula,headCentre,acromion);
-      else{
+      if(exerciseArms.visible&&!mobile)alignClavicle(scapula,headCentre,acromion);
+      else if(!exerciseArms.visible){
         end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
         scapula.position.addScaledVector(end,clavicleLength/end.length()-1);
         scapula.updateMatrix();
       }
-      if(scapula.visible&&torso.visible)seatBlade(scapula,headCentre,acromion,chest,bladePoints,exerciseArms.visible?.044:.058,movement==='tension_cat'?2.4:0);
+      if(!mobile&&scapula.visible&&torso.visible)seatBlade(scapula,headCentre,acromion,chest,bladePoints,exerciseArms.visible?.044:.058,movement==='tension_cat'?2.4:0);
       if (!exerciseArms.visible) arm.node.position.copy(joint.copy(headCentre).applyMatrix4(scapula.matrix));
       end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
       arm.clavicle.position.copy(start);
@@ -358,6 +403,19 @@ window.azAttachUpperSkeleton = function(parts) {
       arm.clavicle.quaternion.setFromUnitVectors(down, end.normalize());
       exerciseHand.geometry = geometry(openHands.has(movement) ? 'handOpen' : 'handGrip', arm.side);
     }
+  };
+  // For presses and pull-ups the arm follows the rotating glenoid. Keep the
+  // acromion at the end of the clavicle and fit the inner blade about that
+  // point before the elbow, hand and apparatus solve their contacts.
+  fit.socketOnCage=(side,desired)=>{
+    const {scapula,headCentre,acromion,sternoclavicular,chest,bladePoints}=joints.find(j=>j.arm.side===side);
+    sternum.updateMatrix();start.copy(sternoclavicular).applyMatrix4(sternum.matrix);
+    scapula.updateMatrix();joint.copy(headCentre).applyMatrix4(scapula.matrix);
+    scapula.position.add(torso.worldToLocal(desired.clone()).sub(joint));scapula.updateMatrix();
+    end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
+    scapula.position.addScaledVector(end,clavicleLength/end.length()-1);scapula.updateMatrix();
+    seatMobileSocket(scapula,acromion,chest,bladePoints);
+    return headCentre.clone().applyMatrix4(scapula.matrix);
   };
   fit.fitHands = movement => {
     for (const {exercise} of joints) fitHand(exercise,movement);

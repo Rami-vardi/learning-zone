@@ -29,6 +29,16 @@ function geometry(three, surface, inverse){
 window.azAttachThorax = function(three, ribs, sternum){
   sternum.updateMatrix();
   const attachments = [];
+  const ribJoints = [];
+  const ribMaterial = ribs[0].children[0].material;
+  const tintedRib = ribMaterial.clone();
+  tintedRib.color = ribMaterial.color;
+  tintedRib.vertexColors = true;
+  function shadeCartilage(shape, first) {
+    const colors = new Float32Array(shape.attributes.position.count * 3).fill(1);
+    for (let i = first * 3; i < colors.length; i += 3) colors.set([.68,.83,.98], i);
+    shape.setAttribute('color', new three.BufferAttribute(colors,3));
+  }
   function fit(target, frame, key, name){
     frame.updateMatrix();
     const fitted = geometry(three, surfaces[key], frame.matrix.clone().invert());
@@ -38,6 +48,8 @@ window.azAttachThorax = function(three, ribs, sternum){
     if(costalWeights[key]){
       const [start, encoded] = costalWeights[key];
       const meshPositions = fitted.attributes.position;
+      shadeCartilage(fitted,start);
+      target.material = tintedRib;
       target.userData.azRestPositions = meshPositions.array.slice();
       target.userData.azRestNormals = fitted.attributes.normal.array.slice();
       attachments.push({
@@ -50,13 +62,80 @@ window.azAttachThorax = function(three, ribs, sternum){
   ribs.forEach((group, i) => {
     const side = i % 2 === 0 ? 'Right' : 'Left';
     const level = Math.floor(i / 2) + 1;
-    fit(group.children[0], group, side[0] + level, 'BodyParts3D ' + side.toLowerCase() + ' rib ' + level);
+    const key = side[0] + level;
+    const rib = group.children[0];
+    fit(rib, group, key, 'BodyParts3D ' + side.toLowerCase() + ' rib ' + level);
+    // The posterior end is the most medial bony surface behind the chest.
+    // Keep that costovertebral attachment fixed as the rib rotates.
+    const points = rib.geometry.attributes.position;
+    const end = costalWeights[key]?.[0] ?? points.count;
+    let narrowest = Infinity;
+    for (let j = 0; j < end; j++) {
+      if (points.getZ(j) + group.position.z < 0) narrowest = Math.min(narrowest, Math.abs(points.getX(j)));
+    }
+    const pivot = new three.Vector3(), point = new three.Vector3();
+    let samples = 0;
+    for (let j = 0; j < end; j++) {
+      point.fromBufferAttribute(points, j);
+      if (point.z + group.position.z >= 0 || Math.abs(point.x) > narrowest + .039) continue;
+      pivot.add(point);
+      samples++;
+    }
+    if (samples) pivot.multiplyScalar(1 / samples);
+    ribJoints.push({group, origin:group.position.clone(), pivot, level, side:i % 2 === 0 ? -1 : 1});
   });
   fit(sternum, sternum, 'sternum', 'BodyParts3D sternum');
+  // The atlas contains the seven direct sternal cartilages. Complete the
+  // costal margin schematically: each of ribs 8–10 joins the cartilage above.
+  // Ribs 11 and 12 retain open anterior ends.
+  const margin = [];
+  const seeds = [
+    [[-.08552,1.18315,.09449],[-.11699,1.16787,.06200],[-.12123,1.13958,.03520],[-.12083,1.11247,.01709]],
+    [[ .08747,1.18226,.09134],[ .11553,1.16708,.06225],[ .11994,1.13931,.03499],[ .11926,1.11298,.01705]]
+  ];
+  const fromAtlas = ([x,y,z]) => new three.Vector3(x*5.9, .93+(y-1.44)*4.3, z*5.12-.060);
+  function closest(frame, mesh, anchor){
+    const local = anchor.clone().applyMatrix4(frame.matrix.clone().invert());
+    const p = new three.Vector3(), vertices = mesh.geometry.attributes.position;
+    let best = Infinity, index = 0;
+    for(let i=0; i<vertices.count; i++){
+      const distance = p.fromBufferAttribute(vertices, i).distanceToSquared(local);
+      if(distance < best){ best=distance; index=i; }
+    }
+    return {frame, mesh, index};
+  }
+  function surfacePoint(binding, out){
+    return out.fromBufferAttribute(binding.mesh.geometry.attributes.position,binding.index).applyMatrix4(binding.frame.matrix);
+  }
+  for(let side=0; side<2; side++){
+    let previous = ribs[12+side], previousMesh = previous.children[0], target = fromAtlas(seeds[side][0]);
+    for(let level=8; level<=10; level++){
+      const frame = ribs[(level-1)*2+side];
+      const base = closest(frame,frame.children[0],fromAtlas(seeds[side][level-7]));
+      const tip = closest(previous,previousMesh,target);
+      const start = surfacePoint(base,new three.Vector3()), end = surfacePoint(tip,new three.Vector3());
+      const control = start.clone().lerp(end,.5);
+      control.y -= .045; control.z += .035;
+      const path = new three.QuadraticBezierCurve3(start,control,end);
+      const segments = 12, radial = 8;
+      const shape = new three.TubeGeometry(path,segments,.020-(level-8)*.002,radial,false);
+      const local = frame.matrix.clone().invert();
+      shape.applyMatrix4(local);
+      shadeCartilage(shape,0);
+      const mesh = new three.Mesh(shape,tintedRib);
+      mesh.name = 'Costal cartilage '+level+' ('+(side?'left':'right')+')';
+      mesh.userData.azRestPositions = shape.attributes.position.array.slice();
+      mesh.userData.azRestNormals = shape.attributes.normal.array.slice();
+      frame.add(mesh);
+      margin.push({frame, mesh, base, tip, start:start.clone().applyMatrix4(local), end:end.clone().applyMatrix4(local), segments, radial});
+      previous = frame; previousMesh = mesh; target = path.getPoint(.54);
+    }
+  }
   const transform = new three.Matrix4(), point = new three.Vector3(), goal = new three.Vector3();
+  const baseShift = new three.Vector3(), tipShift = new three.Vector3();
   // The bony ends follow their individual rib, while the medial cartilage
   // attachments follow the sternum. Weights reflect distance to both joints.
-  return function fitCostalCartilage(){
+  function fitCostalCartilage(){
     sternum.updateMatrix();
     for(const {frame, mesh, start, weight, restToSternum} of attachments){
       frame.updateMatrix();
@@ -72,6 +151,41 @@ window.azAttachThorax = function(three, ribs, sternum){
       position.needsUpdate = true;
       mesh.geometry.computeVertexNormals();
     }
+    for(const {frame,mesh,base,tip,start,end,segments,radial} of margin){
+      frame.updateMatrix(); tip.frame.updateMatrix();
+      transform.copy(frame.matrix).invert();
+      surfacePoint(base,baseShift).applyMatrix4(transform).sub(start);
+      surfacePoint(tip,tipShift).applyMatrix4(transform).sub(end);
+      const p=mesh.geometry.attributes.position, rest=mesh.userData.azRestPositions;
+      for(let ring=0; ring<=segments; ring++){
+        const t=ring/segments;
+        goal.copy(baseShift).lerp(tipShift,t*t*(3-2*t));
+        for(let k=0; k<=radial; k++){
+          const index=ring*(radial+1)+k;
+          point.fromArray(rest,3*index).add(goal);
+          p.setXYZ(index,point.x,point.y,point.z);
+        }
+      }
+      p.needsUpdate=true; mesh.geometry.computeVertexNormals();
+    }
+  }
+  const rotation = new three.Euler(), pivotAfter = new three.Vector3();
+  fitCostalCartilage.moveRibs = amount => {
+    for (const {group, origin, pivot, level, side} of ribJoints) {
+      const lower = (level - 1) / 9;
+      const floating = level > 10;
+      // The upper ribs emphasize pump-handle elevation. Progressively lower
+      // ribs emphasize bucket-handle elevation, with caliper-like splay at
+      // the unattached floating ribs. The atlas bones keep their exact size.
+      rotation.set(
+        -amount * (floating ? .018 : .097 - .047 * lower),
+        side * amount * (floating ? .087 : .008 + .022 * lower),
+        side * amount * (floating ? .033 : .026 + .081 * lower)
+      );
+      group.quaternion.setFromEuler(rotation);
+      group.position.copy(origin).add(pivot).sub(pivotAfter.copy(pivot).applyQuaternion(group.quaternion));
+    }
   };
+  return fitCostalCartilage;
 };
 })();

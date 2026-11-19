@@ -7,7 +7,7 @@ The included skull and pelvis meshes have been simplified and rescaled. The righ
 Course material is cited in plain text in the interface. No course screenshots or private Drive material are included in these assets.
 
 Ribs, costal cartilage, manubrium, body of the sternum and xiphoid process use BodyParts3D 4.0, © The Database Center for Life Science, licensed under CC Attribution 4.0 International (https://creativecommons.org/licenses/by/4.0/). Source dataset: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html
-Geometry from Human Atlas, https://github.com/larryonthis/atlas/tree/1c38bf35c254a891200d3cedecfd57abebe83d8d/public/models. These 41 source structures were simplified, rescaled into the teaching model and quantized. Each rib follows its vertebral movement group. Costal cartilage blends between the rib and sternum.
+Geometry from Human Atlas, https://github.com/larryonthis/atlas/tree/1c38bf35c254a891200d3cedecfd57abebe83d8d/public/models. These 41 source structures were simplified, rescaled into the teaching model and quantized. Each rib follows its vertebral movement group. Cartilages 1 to 7 blend between the rib and sternum. The anterior cartilages of ribs 8 to 10 are schematic extensions to the cartilage above.
 
 The scapula, clavicle, humerus, radius, ulna, eight carpals, five metacarpals and fourteen phalanges use BodyParts3D 4.0, © The Database Center for Life Science, licensed under CC Attribution 4.0 International. These surfaces come from the Human Atlas source assembly linked above. They were simplified, fitted to the existing joints, quantized, and mirrored for the opposite limb. The gripping hand is a posed adaptation of the open hand.
 

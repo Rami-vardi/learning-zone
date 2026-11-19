@@ -672,6 +672,10 @@
         if(movement==='hike')label(state.side==='right'?'Right reference leg':'Left reference leg',new T.Vector3(state.side==='right'?-1.1:1.1,1.0,.05));
       }
       if(['ribs','ribshift','scapula'].includes(movement)||(movement==='chain'&&state.mode==='chain')){label('Ribcage',torso.localToWorld(new T.Vector3(1.28,.3,0)));if(movement!=='ribs')label('Scapula',scapulae[0].node.localToWorld(new T.Vector3(-.45,.0,-.1)));}
+      if(movement==='ribs'&&state.mode==='local'){
+        label('Sternum',sternum.localToWorld(new T.Vector3(.12,.08,.14)));
+        label('Costal margin',torso.localToWorld(new T.Vector3(-.56,-.28,.34)));
+      }
       if(movement==='foot'){
         const leg=legs[state.side==='right'?0:1], landmarks=leg.footLandmarks;
         const at=(node,x,y,z)=>node.localToWorld(new T.Vector3(leg.side*x,y,z));
@@ -950,7 +954,7 @@
       exerciseArms.visible=false;equipment.visible=false;exerciseDebug=null;
       pelvis.rotation.set(0,0,0);pelvis.position.set(0,3.3,0);torso.rotation.set(0,0,0);torso.position.set(0,4.72,0);head.rotation.set(0,0,0);head.position.set(0,6.25,-.08);
       for(const l of legs){l.root.position.set(l.baseX,3.13,.01);l.root.rotation.set(0,0,0);l.femur.rotation.set(0,0,0);l.shin.position.set(l.side*.10,-1.63,0);l.shin.rotation.set(0,0,0);l.shin.scale.set(1,1,1);l.femur.scale.set(1,1,1);l.foot.position.set(0,-1.31,.04);l.foot.rotation.set(0,0,0);l.foot.scale.set(1,1,1);l.mid.rotation.set(0,0,0);l.mid.position.y=0;l.mid.scale.y=1;l.poseFootArch(0);l.poseToes?.(0);}
-      for(let i=0;i<ribs.length;i++){const r=ribs[i];r.position.set(0,.93-Math.floor(i/2)*.132,-.30);r.rotation.x=0;r.scale.set(1,1,1);for(const c of r.children){if(c.isMesh&&c.userData.azRestPositions){c.geometry.attributes.position.array.set(c.userData.azRestPositions);c.geometry.attributes.position.needsUpdate=true;if(c.userData.azRestNormals){c.geometry.attributes.normal.array.set(c.userData.azRestNormals);c.geometry.attributes.normal.needsUpdate=true;}else c.geometry.computeVertexNormals();}}}
+      for(let i=0;i<ribs.length;i++){const r=ribs[i];r.position.set(0,.93-Math.floor(i/2)*.132,-.30);r.rotation.set(0,0,0);r.scale.set(1,1,1);for(const c of r.children){if(c.isMesh&&c.userData.azRestPositions){c.geometry.attributes.position.array.set(c.userData.azRestPositions);c.geometry.attributes.position.needsUpdate=true;if(c.userData.azRestNormals){c.geometry.attributes.normal.array.set(c.userData.azRestNormals);c.geometry.attributes.normal.needsUpdate=true;}else c.geometry.computeVertexNormals();}}}
       for(const s of scapulae){s.node.position.set(s.side*.64,.53,-.36);s.node.rotation.set(0,-s.side*.20,0);}
       spineGuide.rotation.x=0;spineGuide.position.z=0;
       for(const s of spineGroups){s.node.position.set(0,s.y,s.z);s.node.rotation.set(0,0,0);}
@@ -967,7 +971,12 @@
       }
       if(m==='tilt'){pelvis.rotation.x=a*.18;pelvis.position.z=a*.04;spine(-a*.55);if(chain){torso.rotation.x=a*.08;torso.position.z=a*.10;for(const l of legs){l.femur.rotation.y=-l.side*a*.20;l.shin.rotation.y=-l.side*a*.14;l.foot.rotation.y=-l.side*a*.14;}}}
       if(m==='hip'){const l=legs.find(l=>l.side===selectedSide);l.femur.rotation.y=-l.side*a*.32;l.shin.rotation.y=-l.side*a*.24;l.foot.rotation.y=-l.side*a*.24;if(chain){pelvis.rotation.y=-selectedSide*a*.13;pelvis.rotation.z=-selectedSide*a*.055;l.foot.rotation.z=l.side*a*.12;l.poseFootArch(a*.42);}}
-      if(m==='ribs'){for(const r of ribs){r.rotation.x=-a*.105;r.scale.x=1+a*.055;r.scale.z=1+a*.035;}sternum.position.y+=a*.035;sternum.position.z+=a*.025;if(chain)spine(-a*.25);}
+      if(m==='ribs'){
+        if(fitCostalCartilage?.moveRibs)fitCostalCartilage.moveRibs(a);
+        else for(const r of ribs){r.rotation.x=-a*.105;r.scale.x=1+a*.055;r.scale.z=1+a*.035;}
+        sternum.position.y+=a*.043;sternum.position.z+=a*.025;
+        if(chain)spine(-a*.25);
+      }
       if(m==='ribshift'){torso.position.z=-a*.19;if(chain){scap(a);spine(a*.7);pelvis.rotation.x=-a*.10;}}
       if(m==='scapula'){scap(a);if(chain){torso.position.z=-a*.15;spine(a*.5);}}
       if(m==='foot'){const l=legs.find(l=>l.side===selectedSide);l.foot.rotation.z=l.side*a*.055;l.poseFootArch(a);if(chain){l.shin.rotation.y=-l.side*a*.16;l.femur.rotation.y=-l.side*a*.11;pelvis.rotation.y=-selectedSide*a*.045;}}

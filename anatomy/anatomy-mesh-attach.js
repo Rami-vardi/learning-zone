@@ -32,23 +32,7 @@ window.azAttachAnatomyMeshes=function(parts){
     return shaded;
   }
   remove(parts.head,parts.cervicalMeshes);
-  const skull=assets.skull,centre=skull.min.map((v,i)=>(v+skull.max[i])/2);
-  const skullGeometry=geometry(skull,p=>[(p[0]-centre[0])*.00405,(p[2]-centre[2])*.00405+.12,-(p[1]-centre[1])*.00405]);
-  paintJohnnyFace(T,skullGeometry);
-  const skullMaterial=new T.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.56,metalness:.12});
-  const skullMesh=new T.Mesh(skullGeometry,skullMaterial);
-  skullMesh.name='BodyParts3D skull, simplified';
-  parts.head.add(skullMesh);
-  const shadowMaterial=new T.MeshBasicMaterial({color:0x171821});
-  function recess(name,position,scale){
-    const mesh=new T.Mesh(new T.CircleGeometry(1,28),shadowMaterial);
-    mesh.name=name;
-    mesh.position.set(...position);
-    mesh.scale.set(...scale);
-    parts.head.add(mesh);
-  }
-  for(const side of [-1,1])recess('Johnny orbital shadow',[side*.132,.102,.185],[.091,.100,1]);
-  recess('Johnny nasal shadow',[0,-.080,.179],[.068,.094,1]);
+  parts.head.add(createJohnnySkull(T));
   remove(parts.pelvis);
   const pelvisMaterial = reliefMaterial(parts.materials.pelvis);
   for(const name of ['rightHip','leftHip','sacrum']){
@@ -102,33 +86,162 @@ window.azAttachAnatomyMeshes=function(parts){
   attachAtlasFeet(T, parts.legs, remove);
 };
 
-// Paint the red shell and gold faceplate on the skull's own surface. The
-// orbit, jaw and teeth retain the atlas geometry as Johnny turns.
-function paintJohnnyFace(T, geometry) {
-  const {position,color}=geometry.attributes;
-  const shell=new T.Color(0xbe2935), plate=new T.Color(0xf5c64c);
-  const cavity=new T.Color(0x221f26), shade=new T.Color();
-  const smooth=T.MathUtils.smoothstep;
-  for (let i=0;i<position.count;i++) {
-    const x=Math.abs(position.getX(i)), y=position.getY(i), z=position.getZ(i);
-    const edge=.180+.033*smooth(y,-.19,.01)+.035*smooth(y,.02,.22);
-    const browStripe=x-(.087+.048*smooth(y,.24,.53));
-    const face=Math.min(edge-x,z-(.045+.15*smooth(x,.13,.28)),y+.227,Math.max(.274-y,browStripe));
-    const onPlate=smooth(face,-.018,.014);
-    shade.copy(shell).lerp(plate,onPlate);
-    const seam=1-.24*(1-smooth(Math.abs(face),.006,.028));
-    const offset=i*3;
-    const relief=.72+.28*color.array[offset]/255;
-    shade.multiplyScalar(seam*relief);
-    const eye=(x-.137)**2/.096**2+(y-.113)**2/.083**2;
-    const nose=x*x/.053**2+(y+.065)**2/.094**2;
-    const recess=Math.max((1-smooth(eye,.54,1.05))*(1-smooth(z,.218,.295)),
-      (1-smooth(nose,.55,1.05))*(1-smooth(z,.230,.302)))*smooth(z,.02,.115);
-    shade.lerp(cavity,recess*.94);
-    color.array[offset]=Math.round(shade.r*255);
-    color.array[offset+1]=Math.round(shade.g*255);
-    color.array[offset+2]=Math.round(shade.b*255);
+// Johnny is a solid sculpted skull. Sculpting, paint and engravings share
+// the same surface so the eyes and mouth always turn with his head.
+function createJohnnySkull(T) {
+  // Height, half-width, brow/muzzle depth, posterior depth.
+  const sections=[
+    [-.312,0,.100,.100],[-.300,.062,.185,.019],[-.273,.122,.247,-.049],
+    [-.224,.164,.296,-.121],[-.174,.174,.322,-.172],[-.128,.183,.328,-.207],
+    [-.087,.234,.344,-.256],[-.035,.282,.351,-.321],[.026,.268,.338,-.368],
+    [.089,.260,.332,-.400],[.148,.281,.338,-.419],[.216,.297,.357,-.420],
+    [.290,.299,.351,-.402],[.365,.280,.319,-.361],[.432,.244,.260,-.300],
+    [.486,.186,.194,-.226],[.525,.115,.113,-.145],[.552,0,-.015,-.015]
+  ];
+  const goldPlate=[
+    [0,-.226],[.100,-.243],[.166,-.186],[.178,-.118],[.234,-.076],
+    [.254,-.010],[.230,.063],[.236,.181],[.260,.293],[.227,.392],
+    [.173,.464],[.124,.499],[.101,.452],[.070,.294],[0,.294]
+  ];
+  const eyeSocket=[
+    [.028,.107],[.066,.141],[.122,.165],[.182,.158],[.218,.132],
+    [.224,.095],[.205,.063],[.159,.047],[.103,.048],[.056,.069]
+  ];
+  const nasalSocket=[
+    [.003,.071],[.022,.038],[.040,-.004],[.042,-.046],
+    [.029,-.072],[.016,-.079],[.006,-.066]
+  ];
+  const teethOutline=[
+    [0,-.103],[.060,-.111],[.115,-.123],[.148,-.143],[.135,-.182],
+    [.102,-.209],[.056,-.222],[0,-.226]
+  ];
+  const cheekLine=[[.151,.049],[.187,.025],[.200,-.002],[.183,-.034],[.153,-.050]];
+  const upperJaw=[[.147,-.127],[.171,-.096],[.182,-.062],[.210,-.051]];
+  const browLine=[[.033,.152],[.076,.176],[.119,.188],[.161,.185],[.201,.165]];
+  const accentLine=[[.246,.326],[.234,.361],[.215,.390]];
+  const {lerp,smoothstep}=T.MathUtils;
+
+  function distance(x,y,outline,closed=true) {
+    let inside=false, nearest=Infinity;
+    const n=outline.length, end=closed?n:n-1;
+    for(let i=0;i<end;i++){
+      const [ax,ay]=outline[i], [bx,by]=outline[(i+1)%n];
+      const dx=bx-ax,dy=by-ay;
+      const t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy)));
+      nearest=Math.min(nearest,(x-ax-t*dx)**2+(y-ay-t*dy)**2);
+      if(closed && (ay>y)!==(by>y) && x<ax+(y-ay)*dx/dy)inside=!inside;
+    }
+    return (inside?-1:1)*Math.sqrt(nearest);
   }
+  function mirrorHalf(outline) {
+    return outline.concat(outline.slice(1,-1).reverse().map(([x,y])=>[-x,y]));
+  }
+  const plateOutline=mirrorHalf(goldPlate), mouthOutline=mirrorHalf(teethOutline);
+  function profile(y) {
+    let i=0;
+    while(i<sections.length-2 && y>sections[i+1][0])i++;
+    const a=sections[i],b=sections[i+1],before=sections[Math.max(0,i-1)],after=sections[Math.min(i+2,sections.length-1)];
+    const length=b[0]-a[0], t=(y-a[0])/length;
+    return [1,2,3].map(k=>{
+      const slopeA=(b[k]-before[k])/(b[0]-before[0]);
+      const slopeB=(after[k]-a[k])/(after[0]-a[0]);
+      return lerp(a[k],b[k],t*t*(3-2*t))+length*t*(1-t)*((1-t)*slopeA-t*slopeB);
+    });
+  }
+  const red=new T.Color(0xb92232), redHighlight=new T.Color(0xee4953);
+  const gold=new T.Color(0xf3bd42), cheekGold=new T.Color(0xffdb73);
+  const edge=new T.Color(0x45292e), glass=new T.Color(0x192131);
+  const innerSocket=new T.Color(0x281d31), teeth=new T.Color(0xffde91), toothLine=new T.Color(0x67442b);
+  const paint=new T.Color();
+  const positions=[],colors=[],indices=[];
+  const rows=144,columns=152;
+  const bottom=sections[0], top=sections.at(-1);
+  const blob=(x,y)=>Math.exp(-x*x-y*y);
+  function push(x,y,z,color) {
+    positions.push(x,y,z);
+    colors.push(Math.round(color.r*255),Math.round(color.g*255),Math.round(color.b*255));
+  }
+  push(0,bottom[0],bottom[2],edge);
+  for(let row=1;row<rows;row++){
+    const y=lerp(bottom[0],top[0],row/rows),[halfWidth,front,back]=profile(y);
+    const mid=(front+back)*.5;
+    for(let col=0;col<columns;col++){
+      const theta=2*Math.PI*col/columns, cos=Math.cos(theta);
+      const x=Math.sin(theta)*halfWidth, ax=Math.abs(x);
+      let z=mid+(cos>=0?(front-mid)*Math.pow(cos,.66):(mid-back)*cos);
+      // Leave the atlas neck visible beneath the rear of the skull.
+      const neck=smoothstep(y,-.284,-.154)*(1-smoothstep(y,-.10,.075));
+      z+=.028*(1-smoothstep(cos,-.40,.26))*neck;
+      const rearPanel=1-smoothstep(cos,.18,.47);
+      const backSeam=y-(.082+.085*Math.max(0,-cos));
+      const jawSeam=y-(-.172+.137*(1-Math.abs(cos)));
+      const cut=1-smoothstep(Math.min(Math.abs(backSeam),Math.abs(jawSeam)),.002,.017);
+      const side=1-smoothstep(cos,.42,.93);
+      paint.copy(red).lerp(redHighlight,.25*blob((y-.25)/.27,(Math.abs(cos)-.47)/.52));
+      paint.lerp(edge,.53*cut*rearPanel);
+      z+=.009*cut*rearPanel*cos;
+      if (cos>0) {
+        const eye=distance(ax,y,eyeSocket);
+        const nose=distance(ax,y,nasalSocket);
+        const mouth=distance(x,y,mouthOutline);
+        const plate=distance(x,y,plateOutline);
+        const faceBlend=smoothstep(cos,.21,.44);
+        const faceLit=blob((ax-.175)/.10,(y-.029)/.25);
+        paint.lerp(gold,faceBlend*(1-smoothstep(plate,-.005,.006)));
+        paint.lerp(cheekGold,faceBlend*.27*faceLit*(1-smoothstep(plate,-.012,.001)));
+        const rim=1-smoothstep(Math.abs(plate),.003,.012);
+        paint.lerp(edge,faceBlend*.67*rim);
+        const brows=.021*blob((ax-.132)/.091,(y-.182)/.035);
+        const cheeks=.037*blob((ax-.184)/.084,(y+.006)/.052);
+        const bridge=.019*blob(x/.047,(y-.069)/.072);
+        const muzzle=.022*blob(x/.128,(y+.159)/.072);
+        const eyeDepth=1-smoothstep(eye,-.021,.013),noseDepth=1-smoothstep(nose,-.009,.007);
+        z+=faceBlend*(brows+cheeks+bridge+muzzle-.045*eyeDepth-.023*noseDepth);
+        const etch=Math.min(distance(ax,y,cheekLine,false),distance(ax,y,upperJaw,false),
+          distance(ax,y,browLine,false),distance(ax,y,accentLine,false));
+        paint.lerp(edge,faceBlend*.57*(1-smoothstep(etch,.001,.009)));
+        paint.lerp(innerSocket,faceBlend*.73*(1-smoothstep(eye,.001,.013)));
+        paint.lerp(glass,faceBlend*(1-smoothstep(eye,-.007,.003)));
+        paint.lerp(glass,faceBlend*.97*(1-smoothstep(nose,-.005,.006)));
+        const dental=faceBlend*(1-smoothstep(mouth,-.005,.004));
+        if(dental>0){
+          const rowY=y+.164-.025*(ax/.148)**2;
+          const cell=(x+.014*(rowY<0?1:0))/.032;
+          const split=Math.abs(cell-Math.round(cell))*.032;
+          const seam=Math.min(split,Math.abs(rowY));
+          const detail=smoothstep(seam,.001,.0065);
+          const enamel=detail*(1-smoothstep(mouth,-.011,-.002));
+          paint.lerp(toothLine,dental);
+          paint.lerp(teeth,dental*enamel);
+          z+=dental*.007*enamel;
+        }
+      }
+      paint.multiplyScalar(.94+.06*(1-side));
+      push(x,y,z,paint);
+    }
+  }
+  const topIndex=positions.length/3;
+  push(0,top[0],top[2],red);
+  const last=topIndex-columns;
+  for(let i=0;i<columns;i++){
+    const next=(i+1)%columns;
+    indices.push(0,1+next,1+i);
+    for(let row=0;row<rows-2;row++){
+      const start=1+row*columns;
+      const a=start+i,b=start+next,c=a+columns,d=b+columns;
+      indices.push(a,b,c,b,d,c);
+    }
+    indices.push(topIndex,last+i,last+next);
+  }
+  const geometry=new T.BufferGeometry();
+  geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('color',new T.Uint8BufferAttribute(colors,3,true));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const material=new T.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.48,metalness:.18});
+  const skull=new T.Mesh(geometry,material);
+  skull.name='Johnny sculpted skull';
+  return skull;
 }
 
 function footGeometry(T, asset, side) {

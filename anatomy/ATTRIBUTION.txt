@@ -14,3 +14,5 @@ The scapula, clavicle, humerus, radius, ulna, eight carpals, five metacarpals an
 The cervical, thoracic and lumbar vertebrae use BodyParts3D 4.0 surfaces from the Human Atlas assembly credited above, simplified and fitted to the teaching model.
 
 The fibula uses the same BodyParts3D 4.0 Human Atlas source. Both sides are fitted to the ankle. Patellar tracking is a schematic approximation of sagittal motion during knee flexion (https://pubmed.ncbi.nlm.nih.gov/31019669/).
+
+Seven tarsals, five metatarsals, fourteen toe phalanges and two hallux sesamoids per foot use BodyParts3D 4.0 via the same Human Atlas source assembly. The left foot's bones were simplified, rotated in their shared frame, scaled to the ankle rig, quantized and mirrored for the right foot. Arch articulation illustrates the coupling observed under load (https://pubmed.ncbi.nlm.nih.gov/29134100/). Joint excursions and contact diagrams are teaching approximations.

@@ -12,6 +12,8 @@ function geometry(three, surface, inverse){
   const data = new DataView(bytes.buffer);
   const positions = new Float32Array(vertexCount * 3);
   for(let i=0; i<positions.length; i++) positions[i] = data.getInt16(i * 2, true) / 16000;
+  // Share the thoracic height calibration with the vertebral column.
+  for(let i=1; i<positions.length; i+=3) positions[i] = .93 + (positions[i] - .93) * (4.3 / 5.2);
   const indexOffset = positions.length * 2;
   const indices = new Uint16Array((bytes.length - indexOffset) / 2);
   for(let i=0; i<indices.length; i++) indices[i] = data.getUint16(indexOffset + i * 2, true);

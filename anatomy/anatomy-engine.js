@@ -323,7 +323,7 @@
       exArms.push({side,upper,fore,hand,clavicle});
     }
     const fitShoulderGirdle=window.azAttachUpperSkeleton?.({
-      T, torso, sternum, ribs, scapulae, arms, exArms, exerciseArms,
+      T, torso, head, sternum, ribs, scapulae, arms, exArms, exerciseArms, spineGroups, cervicalMeshes,
       boneMaterial:boneM, contextMaterial:ctxM, scapulaMaterial:mat('scapula')
     });
     function box(parent,size,pos,material){const m=mesh(new T.BoxGeometry(...size),material,parent);m.position.set(...pos);return m;}
@@ -941,6 +941,16 @@
       if(m==='scapula'){scap(a);if(chain){torso.position.z=-a*.15;spine(a*.5);}}
       if(m==='foot'){const l=legs.find(l=>l.side===selectedSide);l.foot.rotation.z=l.side*a*.055;l.poseFootArch(a);if(chain){l.shin.rotation.y=-l.side*a*.16;l.femur.rotation.y=-l.side*a*.11;pelvis.rotation.y=-selectedSide*a*.045;}}
       if(m==='chain'){pelvis.rotation.x=-a*.17;pelvis.position.z=-a*.07;if(chain){torso.position.z=-a*.19;torso.rotation.x=a*.055;scap(a);spine(a*.85);head.position.z=-.08-a*.10;head.rotation.x=a*.045;}}
+      if(['ribs','ribshift','scapula','chain'].includes(m)){
+        // The rib heads and thoracic vertebrae belong to the same moving cage.
+        // Lumbar motion still transitions separately into the pelvis.
+        torso.updateMatrix();
+        for(const vertebra of spineGroups.slice(5)){
+          vertebra.node.position.set(0,vertebra.y-4.72,vertebra.z).applyMatrix4(torso.matrix);
+          vertebra.node.quaternion.copy(torso.quaternion);
+        }
+        if(chain&&(m==='ribshift'||m==='scapula'))head.position.z+=torso.position.z*.62;
+      }
       // Seat both femoral heads in the moving acetabula. For a frontal
       // pelvic shift, knee flexion accommodates height while feet stay down.
       pelvis.updateMatrixWorld(true);

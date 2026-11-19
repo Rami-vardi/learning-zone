@@ -172,8 +172,8 @@
     // Clavicles and arms provide spatial context for scapular travel.
     const arms=[];
     for(const s of [-1,1]){
-      tube(torso,[[0,1.00,.33],[s*.46,1.05,.24],[s*.98,.91,.10]],.04,ctxM);
-      const a=new T.Group();a.position.set(s*1.04,.83,.02);torso.add(a);arms.push({node:a,side:s});
+      const clavicle=tube(torso,[[0,1.00,.33],[s*.46,1.05,.24],[s*.98,.91,.10]],.04,ctxM);
+      const a=new T.Group();a.position.set(s*1.04,.83,.02);torso.add(a);arms.push({node:a,side:s,clavicle});
       sphere(a,0,0,0,.14,.14,.14,ctxM);between(a,[0,-.06,0],[s*.16,-1.02,.04],.055,.065,ctxM);sphere(a,s*.16,-1.06,.04,.075,.075,.075,ctxM);
       between(a,[s*.15,-1.08,.04],[s*.08,-1.91,.18],.036,.046,ctxM);between(a,[s*.23,-1.08,.04],[s*.16,-1.9,.21],.028,.035,ctxM);
       for(let row=0;row<2;row++)for(let j=0;j<4;j++)sphere(a,s*(.025+j*.045),-1.94-row*.055,.20,.025,.026,.025,ctxM);
@@ -322,6 +322,10 @@
       for(let j=0;j<5;j++){let x=(j-2)*.035;between(hand,[x,0,0],[x*1.1,-.15,.015],.014,.018,boneM);between(hand,[x*1.1,-.15,.015],[x*1.05,-.22,.045],.012,.014,boneM);between(hand,[x*1.05,-.22,.045],[x*.95,-.245,.08],.011,.012,boneM);}
       exArms.push({side,upper,fore,hand,clavicle});
     }
+    const fitShoulderGirdle=window.azAttachUpperSkeleton?.({
+      T, torso, sternum, ribs, scapulae, arms, exArms, exerciseArms,
+      boneMaterial:boneM, contextMaterial:ctxM, scapulaMaterial:mat('scapula')
+    });
     function box(parent,size,pos,material){const m=mesh(new T.BoxGeometry(...size),material,parent);m.position.set(...pos);return m;}
     const barbell=new T.Group();equipment.add(barbell);between(barbell,[-1.6,0,0],[1.6,0,0],.035,.035,steel);
     for(const side of [-1,1]){const p=mesh(new T.CylinderGeometry(.26,.26,.12,24),steel,barbell);p.rotation.z=Math.PI/2;p.position.x=side*1.35;}
@@ -907,6 +911,7 @@
     function applyPose(amount=state.amount){
       setJointPose(amount);
       fitCostalCartilage?.();
+      fitShoulderGirdle?.(state.movement);
     }
     function setJointPose(amount){
       const a=Math.max(-1,Math.min(1,amount)),chain=state.mode==='chain',selectedSide=state.side==='right'?-1:1,m=state.movement;
@@ -1079,7 +1084,7 @@
       setView(name){if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
       resetCamera(){yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
-        if(disposed)return;disposed=true;skinRequest++;human?.dispose();human=null;drag=null;ro.disconnect();
+        if(disposed)return;disposed=true;skinRequest++;fitShoulderGirdle?.dispose();human?.dispose();human=null;drag=null;ro.disconnect();
         for(const off of canvasEvents.splice(0))off();
         const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,...tensionSpineMaterials.values(),steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
         scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});

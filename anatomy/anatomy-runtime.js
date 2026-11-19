@@ -52,7 +52,7 @@ window.azAppliedScenes.dips={
 
 window.azAppliedScenes.pushup={
  title:'Push-Up',wholeChainOnly:true,labels:['Arm Motion','Whole Chain'],ends:['Top','Bottom'],view:'side',
- captions:{a:['Begin supported on the hands and toes with straight elbows.','The elbows bend as the upper arms move relative to the trunk.','Press back toward the top while following the shoulder and elbow motion.'],b:['At the top, the pelvis tucks into PPT and the scapulae protract.','The pelvic tuck remains visible as the chest lowers between the arms.','Keep the pelvis tucked at the bottom, then press back up.']},
+ captions:{a:['Begin supported on the hands and toes with straight elbows.','The elbows bend as the upper arms move relative to the trunk.','The chest touches the floor. Press through the palms to return to the top.'],b:['At the top, the pelvis tucks into PPT and the scapulae protract.','The pelvic tuck remains visible as the chest lowers between the arms.','The chest touches the floor with the pelvis still tucked. Press back up.']},
   source:'Rami’s course describes PPT with scapular protraction as a global flexion pattern and distinguishes fixed hands in a push-up from a supported torso in the bench press. Shin et al. (2018) describe the added protraction of a push-up plus after elbow extension.',
  note:'The whole-chain view is a selected teaching example. Pelvic tilt, ribcage position and scapular movement are displayed as distinct motions rather than as an automatic one-to-one coupling.'
 };

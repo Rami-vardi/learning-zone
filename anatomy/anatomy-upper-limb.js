@@ -247,7 +247,7 @@ window.azAttachUpperSkeleton = function(parts) {
   }
 
   const floorHands = new Set(['pushup', 'tension_pushup', 'tension_cat']);
-  const openHands = new Set([...floorHands, 'lunge', 'tension_pogo']);
+  const openHands = new Set([...floorHands, 'lunge', 'tension_pogo', 'cgoblet']);
   const backSquats = new Set(['squat','cheels']);
   const joint = new T.Vector3(), target = new T.Vector3(), start = new T.Vector3(), end = new T.Vector3();
   const armAxis = new T.Vector3(), forearmAxis = new T.Vector3(), hinge = new T.Vector3(), forward = new T.Vector3();
@@ -256,38 +256,51 @@ window.azAttachUpperSkeleton = function(parts) {
   const clavicleLength = .914;
   const shoulderOffset = new T.Vector3(), collarAxis = new T.Vector3();
   const acromionOffset = new T.Vector3(), acromionArc = new T.Vector3(), collarRotation = new T.Quaternion();
-  const palmFrame = new T.Quaternion().setFromRotationMatrix(basis.makeBasis(vector(-1,0,0),vector(0,0,-1),vector(0,-1,0)));
-  // The supplied neutral hand has curved fingers. Level the palm and fingers
-  // together using the same wrist reference for all three floor exercises.
-  palmFrame.multiply(new T.Quaternion().setFromAxisAngle(axisX,.37));
-  const palmVertices = geometry('handOpen').attributes.position;
-  let palmBottom=Infinity;
-  for (let i=0;i<palmVertices.count;i++) {
-    probe.fromBufferAttribute(palmVertices,i).applyQuaternion(palmFrame);
-    palmBottom=Math.min(palmBottom,probe.y);
+  // These three atlas landmarks span the palm heel, thumb and ring finger.
+  // Register their support triangle to the floor on each mirrored hand.
+  const capitateDepth=.054;
+  const palmSupports = new Map();
+  for (const side of [-1,1]) {
+    const positions=geometry('handOpen',side).attributes.position;
+    const [heel,thumb,ring]=[256,948,1511].map(i=>new T.Vector3().fromBufferAttribute(positions,i));
+    const centre=heel.clone().add(thumb).add(ring).divideScalar(3);
+    const normal=new T.Vector3().crossVectors(thumb.clone().sub(heel),ring.clone().sub(heel)).normalize();
+    if (normal.z<0) normal.negate();
+    const level=new T.Quaternion().setFromUnitVectors(normal,axisZ);
+    const frame=new T.Quaternion().setFromRotationMatrix(basis.makeBasis(vector(-1,0,0),vector(0,0,-1),down));
+    frame.multiply(level);
+    palmSupports.set(side,{frame,centre,level});
   }
-  const gripCentre = vector(0,-.168,.112);
+  // The finger tunnel runs obliquely across the knuckles in the atlas.
+  // Register the handle to that line, with its midpoint between the fingers.
+  const gripCentre = vector(.05,-.123,.136);
+  const gripAlignment = new Map([-1,1].map(side => [side,new T.Quaternion()
+    .setFromUnitVectors(vector(1,side*.144,side*.154).normalize(),axisX)]));
+  // Present both palms under the upper dumbbell head, fingers forward.
+  const cupFrame = new T.Quaternion().setFromRotationMatrix(basis.makeBasis(axisX,vector(0,0,-1),axisY));
+  const cupCentre = vector(0,.04,.18);
   const gripAcross = new T.Vector3(), handUp = new T.Vector3(), palmNormal = new T.Vector3();
   const wristPoint = new T.Vector3(), elbowPole = new T.Vector3(), armReach = new T.Vector3();
   function fitHand(exercise,movement) {
     const {side,upper,fore,hand,contact} = exercise;
     exercise.fittedContact=null;
+    exercise.carpalPivot=null;
     if (!contact) return;
     const palm=floorHands.has(movement), cup=movement==='cgoblet';
     if (palm) {
-      hand.quaternion.copy(palmFrame);
-      wristPoint.copy(hand.position);
-      wristPoint.y=.08-palmBottom;
+      const support=palmSupports.get(side);
+      hand.quaternion.copy(support.frame);
       exercise.fittedContact=vector(contact.x,.08,contact.z);
+      wristPoint.copy(support.centre).applyQuaternion(hand.quaternion).negate().add(exercise.fittedContact);
+    } else if (cup) {
+      hand.quaternion.copy(torso.quaternion).multiply(cupFrame).multiply(palmSupports.get(side).level);
+      wristPoint.copy(cupCentre).applyQuaternion(torso.quaternion).negate().add(contact);
+      exercise.fittedContact=contact;
     } else {
       const across=gripAcross.set(-1,0,0);
       const up=handUp.subVectors(fore.position,hand.position);
       if (backSquats.has(movement)) {
         up.set(0,-1,-.08).applyQuaternion(torso.quaternion);
-      } else if (cup) {
-        up.set(0,-1,-.16).applyQuaternion(torso.quaternion);
-        palmNormal.set(-side,0,0).applyQuaternion(torso.quaternion);
-        across.crossVectors(up,palmNormal).normalize();
       } else if (movement==='dips') {
         across.set(0,0,side);
       } else if (movement==='csafety') {
@@ -301,16 +314,27 @@ window.azAttachUpperSkeleton = function(parts) {
       up.addScaledVector(across,-up.dot(across)).normalize();
       palmNormal.crossVectors(across,up).normalize();
       hand.quaternion.setFromRotationMatrix(basis.makeBasis(across,up,palmNormal));
-      wristPoint.copy(gripCentre);
-      if(cup)wristPoint.z=.057;
+      hand.quaternion.multiply(gripAlignment.get(side));
+      wristPoint.set(side*gripCentre.x,gripCentre.y,gripCentre.z);
       wristPoint.applyQuaternion(hand.quaternion).negate().add(contact);
       exercise.fittedContact=contact;
     }
 
     // Resolve the elbow after fitting the wrist, keeping the original bend
     // side and maintaining both bone lengths wherever the contact is reachable.
-    let upperLength=upper.position.distanceTo(fore.position);
-    let foreLength=fore.position.distanceTo(hand.position);
+    let upperLength=palm?1.08:upper.position.distanceTo(fore.position);
+    let foreLength=palm?.98:fore.position.distanceTo(hand.position);
+    hand.position.copy(wristPoint);
+    // An extended palm turns about the carpus. Solve to the capitate region
+    // while keeping the physical forearm length and the palm contact fixed.
+    const carpalDepth=(palm||cup)?capitateDepth:0;
+    if(carpalDepth){
+      wristPoint.addScaledVector(probe.copy(down).applyQuaternion(hand.quaternion),carpalDepth);
+      exercise.carpalOffset=exercise.carpalOffset||new T.Vector3();
+      exercise.carpalOffset.copy(wristPoint).sub(hand.position);
+      exercise.carpalPivot=true;
+      foreLength+=carpalDepth;
+    }
     armReach.subVectors(wristPoint,upper.position);
     const distance=armReach.length();
     armReach.divideScalar(distance);
@@ -319,21 +343,22 @@ window.azAttachUpperSkeleton = function(parts) {
     const along=(upperLength**2-foreLength**2+distance**2)/(2*distance);
     elbowPole.subVectors(fore.position,upper.position);
     if(backSquats.has(movement)) elbowPole.set(side*.45,-1,-.4).applyQuaternion(torso.quaternion);
+    else if(cup) elbowPole.set(side*.48,-1,.65).applyQuaternion(torso.quaternion);
+    else if(palm) elbowPole.set(side*(movement==='tension_cat'?.15:.60),0,-1);
     else if(movement==='bench') elbowPole.set(side,-.5,.60);
     else if(movement==='tension_swing') elbowPole.set(side,0,0);
     elbowPole.addScaledVector(armReach,-elbowPole.dot(armReach)).normalize();
     fore.position.copy(upper.position).addScaledVector(armReach,along)
       .addScaledVector(elbowPole,Math.sqrt(Math.max(0,upperLength**2-along**2)));
-    hand.position.copy(wristPoint);
     upper.scale.y=upper.position.distanceTo(fore.position);
-    fore.scale.y=fore.position.distanceTo(hand.position);
+    fore.scale.y=fore.position.distanceTo(wristPoint)-carpalDepth;
   }
 
-  function orientElbow(upper, forearm, wrist) {
+  function orientElbow(upper, forearm, wristPosition) {
     // Choose the sign of the flexion axis relative to the torso. As the
     // flexion plane becomes ambiguous, fade toward that reference direction.
     armAxis.subVectors(upper.position, forearm.position).normalize();
-    forearmAxis.subVectors(forearm.position, wrist.position).normalize();
+    forearmAxis.subVectors(forearm.position, wristPosition).normalize();
     hinge.crossVectors(forearmAxis, armAxis);
     const flexion=T.MathUtils.smoothstep(hinge.length(),.12,.55);
     hinge.normalize();
@@ -380,7 +405,9 @@ window.azAttachUpperSkeleton = function(parts) {
       joint.copy(headCentre).applyMatrix4(scapula.matrix);
       const mobile=movement==='press'||movement==='pullup'||movement==='bench';
       if (exerciseArms.visible) {
-        orientElbow(exercise.upper, exercise.fore, exercise.hand);
+        const wrist=target.copy(exercise.hand.position);
+        if(exercise.carpalPivot)wrist.add(exercise.carpalOffset);
+        orientElbow(exercise.upper, exercise.fore, wrist);
         // The exercise solver fixes the hands on their apparatus. Seat the
         // glenoid at the corresponding shoulder while retaining blade rotation.
         if(!mobile){
@@ -420,6 +447,11 @@ window.azAttachUpperSkeleton = function(parts) {
     seatMobileSocket(scapula,acromion,chest,bladePoints);
     return headCentre.clone().applyMatrix4(scapula.matrix);
   };
+  fit.floorPivot=(side,contact)=>{
+    const {centre,frame}=palmSupports.get(side);
+    return down.clone().multiplyScalar(capitateDepth).sub(centre).applyQuaternion(frame).add(contact);
+  };
+  fit.capitateDepth=capitateDepth;
   fit.fitHands = movement => {
     for (const {exercise} of joints) fitHand(exercise,movement);
   };

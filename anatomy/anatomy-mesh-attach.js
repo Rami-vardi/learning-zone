@@ -59,23 +59,44 @@ window.azAttachAnatomyMeshes=function(parts){
     mesh.name='BodyParts3D '+name;parts.pelvis.add(mesh);
   }
   // The meshes were fitted to the existing hip, knee and ankle anchors.
-  // Change the visible surface only, preserving the articulated foot and fibula.
+  // Change the visible surface only, preserving the articulation frames.
   if (assets.femur && assets.tibia && assets.patella) for (const leg of parts.legs) {
     const mirror = leg.side === 1;
     const transform = ([x, y, z]) => [mirror ? -x : x, y, z];
     const femurMaterial = reliefMaterial(leg.femurMat);
     const shinMaterial = reliefMaterial(leg.shinMat);
-    const makeBone = (name, material) => {
-      const bone = new T.Mesh(geometry(assets[name], transform, mirror), material);
+    const makeBone = (name, material, fit = transform) => {
+      const bone = new T.Mesh(geometry(assets[name], fit, mirror), material);
       bone.name = 'BodyParts3D ' + name;
       return bone;
     };
     const femur = makeBone('femur', femurMaterial);
     const patella = makeBone('patella', femurMaterial);
-    const tibia = makeBone('tibia', shinMaterial);
+    // Register the distal mortise to the talar dome in the assembled atlas
+    // foot. The proximal joint fitting and the existing ankle pivot stay put.
+    const tibia = makeBone('tibia', shinMaterial, position => {
+      const point = transform(position);
+      point[1] += .126 * T.MathUtils.smoothstep(-point[1], .59, 1.30);
+      return point;
+    });
     remove(leg.femur);
     remove(leg.shin, [leg.foot, leg.fibula]);
-    leg.femur.add(femur, patella);
+    // The patella travels around the distal femur as the knee flexes.
+    // Derive the angle from the articulated segments in the femoral frame.
+    const knee = new T.Vector3(leg.side * .10, -1.63, 0);
+    const pivot = new T.Group();
+    pivot.name = 'Patellofemoral joint';
+    pivot.position.copy(knee);
+    patella.position.copy(knee).multiplyScalar(-1);
+    pivot.add(patella);
+    leg.femur.add(femur, pivot);
+    const ankle = new T.Vector3();
+    leg.fitPatella = () => {
+      leg.foot.getWorldPosition(ankle);
+      leg.femur.worldToLocal(ankle).sub(knee);
+      const flexion = T.MathUtils.clamp(Math.atan2(-ankle.z, -ankle.y) + Math.atan2(.04, 1.31), 0, 2.75);
+      pivot.rotation.x = flexion * .64;
+    };
     leg.shin.add(tibia);
   }
 };

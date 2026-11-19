@@ -2,7 +2,7 @@ Three.js r160, Copyright 2010–2023 Three.js Authors. MIT License. Full license
 
 BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International. https://creativecommons.org/licenses/by/4.0/
 Official project: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/desc.html
-The included skull and pelvis meshes have been simplified and rescaled. The right femur (FJ3365), right tibia (FJ3387), and right patella (FJ3381) are BodyParts3D 4.0 geometry obtained from the MeshCrate knee reference (https://meshcrate.vip/3d-anatomy). The leg meshes were rotated, rescaled to Johnny's rig, adjusted for joint clearance, quantized, and mirrored for the left leg. The remaining skeletal elements, apart from the thorax and upper limbs described below, are schematic. Sunglasses and original teaching model geometry were created for this app.
+The included skull and pelvis meshes have been simplified and rescaled. The right femur (FJ3365), right tibia (FJ3387), and right patella (FJ3381) are BodyParts3D 4.0 geometry obtained from the MeshCrate knee reference (https://meshcrate.vip/3d-anatomy). The leg meshes were rotated, rescaled to Johnny's rig, adjusted for joint clearance, quantized, and mirrored for the left leg. The remaining skeletal elements, apart from the anatomy described below, are schematic. Sunglasses and original teaching model geometry were created for this app.
 
 Course material is cited in plain text in the interface. No course screenshots or private Drive material are included in these assets.
 
@@ -12,3 +12,5 @@ Geometry from Human Atlas, https://github.com/larryonthis/atlas/tree/1c38bf35c25
 The scapula, clavicle, humerus, radius, ulna, eight carpals, five metacarpals and fourteen phalanges use BodyParts3D 4.0, © The Database Center for Life Science, licensed under CC Attribution 4.0 International. These surfaces come from the Human Atlas source assembly linked above. They were simplified, fitted to the existing joints, quantized, and mirrored for the opposite limb. The gripping hand is a posed adaptation of the open hand.
 
 The cervical, thoracic and lumbar vertebrae use BodyParts3D 4.0 surfaces from the Human Atlas assembly credited above, simplified and fitted to the teaching model.
+
+The fibula uses the same BodyParts3D 4.0 Human Atlas source. Both sides are fitted to the ankle. Patellar tracking is a schematic approximation of sagittal motion during knee flexion (https://pubmed.ncbi.nlm.nih.gov/31019669/).

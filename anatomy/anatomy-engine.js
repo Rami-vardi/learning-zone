@@ -323,7 +323,7 @@
       exArms.push({side,upper,fore,hand,clavicle});
     }
     const fitShoulderGirdle=window.azAttachUpperSkeleton?.({
-      T, torso, head, sternum, ribs, scapulae, arms, exArms, exerciseArms, spineGroups, cervicalMeshes,
+      T, torso, head, sternum, ribs, scapulae, arms, exArms, exerciseArms, legs, spineGroups, cervicalMeshes,
       boneMaterial:boneM, contextMaterial:ctxM, scapulaMaterial:mat('scapula')
     });
     function box(parent,size,pos,material){const m=mesh(new T.BoxGeometry(...size),material,parent);m.position.set(...pos);return m;}
@@ -912,6 +912,7 @@
       setJointPose(amount);
       fitCostalCartilage?.();
       fitShoulderGirdle?.(state.movement);
+      for(const leg of legs) leg.fitPatella?.();
     }
     function setJointPose(amount){
       const a=Math.max(-1,Math.min(1,amount)),chain=state.mode==='chain',selectedSide=state.side==='right'?-1:1,m=state.movement;
@@ -962,6 +963,15 @@
           const beta=Math.asin(Math.min(1,L1*Math.sin(alpha)/L2));
           l.femur.rotation.x=-alpha;l.shin.position.set(l.side*.10,-L1*Math.cos(alpha),L1*Math.sin(alpha));l.shin.rotation.x=beta;l.foot.rotation.x=-beta;
         }else{l.shin.position.set(l.side*.10,-1.63,0);}
+      }
+      if(m!=='foot'){
+        // Each segment can have its own axial rotation, but its proximal
+        // joint still belongs at the end of the preceding segment.
+        for(const leg of legs){
+          leg.root.position.copy(pelvis.localToWorld(new T.Vector3(leg.side*.51,-.17,.005)));
+          const knee=leg.femur.localToWorld(new T.Vector3(leg.side*.10,-1.63,0));
+          leg.shin.position.copy(leg.root.worldToLocal(knee));
+        }
       }
       if(m==='foot'&&chain){
         // A mildly flexed loaded-leg example. Axial rotation and adduction are

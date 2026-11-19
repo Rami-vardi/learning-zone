@@ -1,0 +1,59 @@
+/* Controls added after the compact workspace was released. */
+.app-shell #lz-nav-toggle { display: none; }
+.app-shell .app-sidebar :is(button, a):focus-visible { outline: 2px solid #e2eaff; outline-offset: 1px; }
+.lze-root :is([data-result-status], [data-browse-heading], [data-guide-heading]):focus {
+  outline: 2px solid var(--lz-focus, #1a4b9a);
+  outline-offset: 3px;
+}
+#student-learning-board :is(.goal-field-label, .progression-field-label) { display: none; }
+.app-shell .app-skip-link {
+  position: fixed;
+  inset-block-start: .5rem;
+  inset-inline-start: .5rem;
+  z-index: 25;
+  padding: .65rem .85rem;
+  border-radius: var(--lz-control-radius);
+  color: var(--lz-on-accent);
+  background: var(--lz-blue);
+  transform: translateY(calc(-100% - 1rem));
+}
+.app-shell .app-skip-link:focus { transform: none; }
+
+@media (max-width: 700px) {
+  .app-shell .app-sidebar[data-mobile-menu] {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    row-gap: 0;
+    padding: 10px 14px;
+    height: auto;
+  }
+  .app-shell .app-sidebar[data-mobile-menu] .app-brand-mark { width: 34px; height: 34px; }
+  .app-shell .app-sidebar[data-mobile-menu] .app-brand > div { line-height: 1.2; }
+  .app-shell #lz-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 5px 10px;
+    border: 1px solid #657790;
+    border-radius: var(--lz-control-radius);
+    font: 550 .875rem/1.3 var(--lz-font);
+  }
+  .app-shell #lz-nav-toggle svg { width: 16px; height: 16px; }
+  .app-shell .app-sidebar[data-mobile-menu] :is(#workspace-navigation, #lz-account-controls) { grid-column: 1 / -1; display: none; }
+  .app-shell .app-sidebar[data-mobile-menu=open] #workspace-navigation { display: block; padding-block: 10px 6px; }
+  .app-shell .app-sidebar[data-mobile-menu=open] #lz-account-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 12px;
+    margin: 0;
+    padding: 5px 0 0;
+  }
+  .app-shell #lz-account-controls > :is(br, #account-role) { display: none; }
+  .app-shell #lz-account-controls #account-name { width: 100%; margin-top: 4px; }
+  .app-shell #lz-account-controls button { width: auto; min-height: 44px; padding: 5px; margin: 0; }
+  .app-shell .app-sidebar[data-mobile-menu=open] .app-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  .app-shell .app-sidebar[data-mobile-menu=open] .app-nav button { width: 100%; min-height: 44px; }
+}

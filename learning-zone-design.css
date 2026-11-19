@@ -1,24 +1,16 @@
-@font-face {
-  font-family: "Inter";
-  src: url("./assets/fonts/inter-latin.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-}
-
-/* Type and spacing shared by the desktop workspaces and compact layouts. */
+/* Shared interface geometry, based on the Exercise Progression design. */
 :root {
-  --lz-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --lz-ui-size: 1rem;
-  --lz-small-size: .875rem;
-  --lz-ui-leading: 1.5;
+  --lz-font: system-ui, sans-serif;
+  --lz-ui-size: .875rem;
+  --lz-small-size: .75rem;
+  --lz-ui-leading: 1.45;
   --lz-control-y: 7px;
   --lz-control-x: 9px;
   --lz-control-height: 36px;
   --lz-control-radius: 8px;
   --lz-panel-radius: 15px;
-  --lz-panel-pad: clamp(.875rem, 2vw, 1.5rem);
-  --lz-ui-gap: .75rem;
+  --lz-panel-pad: clamp(12px, 2.2vw, 20px);
+  --lz-ui-gap: 10px;
   --lz-entered: light-dark(#e3efff, #223d66);
   --lz-goal-bg: light-dark(#fdf7e7, #362e20);
   --lz-goal-border: light-dark(#e8d69e, #6b5730);
@@ -26,8 +18,8 @@
 }
 
 html[data-lz-text=large] {
-  --lz-ui-size: 1.125rem;
-  --lz-small-size: .9375rem;
+  --lz-ui-size: 1rem;
+  --lz-small-size: .875rem;
   --lz-control-height: 40px;
 }
 
@@ -39,7 +31,6 @@ body,
   font-family: var(--lz-font);
   font-size: var(--lz-ui-size);
   line-height: var(--lz-ui-leading);
-  font-optical-sizing: auto;
 }
 
 .app-shell .app-topbar {
@@ -48,17 +39,17 @@ body,
 }
 
 .app-shell .app-zone { padding: var(--lz-panel-pad); }
-.app-shell .app-sidebar { padding: 24px 14px 16px; gap: 28px; }
+.app-shell .app-sidebar { padding: 20px 14px; gap: 20px; }
 .app-shell .app-nav { gap: 4px; }
-.app-shell .app-nav button { padding: 10px 12px; gap: 10px; border-radius: var(--lz-control-radius); }
+.app-shell .app-nav button { padding: 7px 9px; gap: 8px; border-radius: var(--lz-control-radius); }
 .app-shell .app-sidebar-footer { padding-top: 10px; }
 
 .app-shell :is(.app-heading, .lze-heading, .lzc-head, .lzl-head) { margin-bottom: 14px; }
 .app-shell :is(.app-heading, .lze-heading, .lzcases, .lzlib, #lz-anatomy-zone, #student-learning-board) h1 {
-  font-size: clamp(1.5rem, 1.12rem + .82vw, 1.9rem);
-  line-height: 1.16;
-  letter-spacing: -.035em;
-  font-weight: 670;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  font-weight: 700;
 }
 
 .app-shell :is(.lze-root, .lzcases, .lzlib, .lz-wb, #student-learning-board) h2,
@@ -69,8 +60,7 @@ body,
 
 .app-shell :is(.app-heading .eyebrow, .lze-eyebrow, .lzc-eyebrow, .lzl-eyebrow, .nav-caption) {
   font-size: var(--lz-small-size);
-  letter-spacing: .09em;
-  font-weight: 600;
+  letter-spacing: .11em;
 }
 
 .app-shell button,
@@ -137,6 +127,9 @@ body,
 .app-shell .lzcases table { font-size: var(--lz-ui-size); }
 .app-shell .lzcases :is(th, td) { font-size: inherit; padding: 6px 9px; }
 .app-shell .lzcases th { background: var(--lz-neutral, #f3f6fb); }
+.app-shell :is(#lz-anatomy-zone, #lz-anatomy-tension) :is(button, select) { min-height: var(--lz-control-height); }
+.app-shell #lz-anatomy-zone :is(.azc-toolbar, .azc-main, .azc-bottom) { padding: var(--lz-panel-pad); gap: var(--lz-ui-gap); }
+.app-shell #lz-anatomy-zone .azc-mode button { font-size: var(--lz-ui-size); padding: var(--lz-control-y) var(--lz-control-x); }
 .app-shell .lz-wb :is(.wb-top, .wb-toolbar, .wb-cell-line, .wb-tabs) { padding: 7px 10px; gap: 7px; }
 .app-shell .lz-wb :is(.wb-home, .wb-home-start, .wb-dialog) { padding: var(--lz-panel-pad); }
 .app-shell .lz-wb .wb-home-board { padding: 12px; gap: 9px; }
@@ -232,47 +225,6 @@ html[data-lz-theme-ready] #student-learning-board .progression-dialog .progressi
 #student-learning-board .exercise.role-goal { border-left-color: var(--lz-goal-border); }
 #student-learning-board .role-goal .role-badge { background: var(--lz-goal-bg); color: var(--lz-goal-text); }
 
-#student-learning-board .progression-entry-actions button { min-height: var(--lz-control-height); font-size: var(--lz-ui-size); }
-#student-learning-board .progression-entry-actions button > span { font-size: inherit; }
-#student-learning-board :is(.goal-field-label, .progression-field-label) { display: none; }
-#student-learning-board .exercise-move { margin-top: 8px; color: var(--lz-sub); font-size: var(--lz-ui-size); }
-#student-learning-board .exercise-move > summary { width: fit-content; min-height: var(--lz-control-height); align-content: center; cursor: pointer; }
-#student-learning-board .exercise-move-controls { display: grid; gap: 8px; padding: 4px 0; }
-#student-learning-board .exercise-reorder { display: flex; gap: 6px; }
-#student-learning-board .exercise-move-controls label { display: grid; gap: 4px; min-width: 0; font-size: inherit; }
-#student-learning-board .exercise-move-controls select { width: 100%; min-width: 0; min-height: var(--lz-control-height); }
-#student-learning-board .exercise .lz-drag-handle { flex: 0 0 auto; touch-action: none; opacity: .8; }
-#student-learning-board .exercise :is(.summary-toggle,.exercise-head .remove,.set-topline .actions button) { min-width: var(--lz-control-height); min-height: var(--lz-control-height); }
-#student-learning-board .progression-dialog [data-progression-keep-draft] { color: var(--lz-blue); border-color: var(--lz-blue); }
-
-@media (max-width: 760px) {
-  #student-learning-board .workout-scroll > .day-grid:has(> .day) { grid-template-columns: minmax(0, 1fr); max-width: none; }
-  #student-learning-board .athlete-goals > .table-wrap { overflow: visible; }
-  #student-learning-board table.athlete-goals-table { display: block; min-width: 0; border: 0; }
-  #student-learning-board .athlete-goals-table colgroup { display: none; }
-  #student-learning-board .athlete-goals-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  #student-learning-board .athlete-goals-table tbody { display: grid; gap: 9px; }
-  #student-learning-board .athlete-goals-table tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 9px; border: 1px solid var(--lz-line); border-radius: var(--lz-control-radius); }
-  #student-learning-board .athlete-goals-table tbody td:nth-child(n) { text-align: start; min-width: 0; padding: 0; border: 0; background: transparent; }
-  #student-learning-board .athlete-goals-table tbody .goal-drag-cell { grid-row: 1; grid-column: 1; }
-  #student-learning-board .athlete-goals-table tbody .goal-delete-cell { grid-row: 1; grid-column: 2; justify-self: end; }
-  #student-learning-board .athlete-goals-table tbody .goal-edit-cell:nth-child(2) { grid-column: 1 / -1; }
-  #student-learning-board .athlete-goals-table tbody :is(input,select) { width: 100%; max-width: 100%; min-height: var(--lz-control-height); text-align: start; }
-  #student-learning-board .athlete-goals-table .goal-field-label { display: block; margin-bottom: 3px; font-weight: 600; color: var(--lz-ink); }
-}
-
-@media (max-width: 520px) {
-  #student-learning-board .progression-dialog table.progression-table { display: block; border: 0; }
-  #student-learning-board .progression-dialog .progression-table colgroup { display: none; }
-  #student-learning-board .progression-dialog .progression-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  #student-learning-board .progression-dialog .progression-table tbody { display: grid; gap: 8px; }
-  #student-learning-board .progression-dialog .progression-table tbody tr { display: grid; gap: 6px; padding: 8px; border: 1px solid var(--lz-line); border-radius: var(--lz-control-radius); }
-  #student-learning-board .progression-dialog .progression-table tbody :is(th,td):nth-child(n) { width: auto; min-width: 0; padding: 0; border: 0; background: transparent; }
-  #student-learning-board .progression-dialog .progression-table .progression-week { font-size: 1rem; font-weight: 700; }
-  #student-learning-board .progression-dialog .progression-field-label { display: block; margin-bottom: 3px; font-size: var(--lz-ui-size); color: var(--lz-sub); }
-  #student-learning-board .progression-dialog .progression-table textarea { min-height: var(--lz-control-height); }
-}
-
 @media (max-width: 700px) {
   .app-shell .app-sidebar { padding: 12px; gap: 10px; }
   .app-shell .app-nav button { gap: 6px; }
@@ -293,141 +245,4 @@ html[data-lz-theme-ready] #student-learning-board .progression-dialog .progressi
 @media (pointer: coarse) {
   :root { --lz-control-height: 44px; }
   .app-shell :is(.app-nav, .wb-toolbar) button { min-height: var(--lz-control-height); }
-}
-
-/* Keep controls in later mounted workspaces on the same type scale. */
-.app-shell .app-zone :is(button, input, select, textarea),
-.app-modal :is(button, input, select, textarea),
-.lz-appearance-dialog :is(button, input, select, textarea) {
-  font-family: var(--lz-font);
-}
-.app-shell :is(.app-heading, .lze-heading, .lzc-head, .lzl-head) p,
-#student-learning-board .new-profile > p,
-#student-learning-board .new-profile > div > p {
-  font-size: max(1rem, var(--lz-ui-size));
-  line-height: 1.55;
-  max-width: 72ch;
-}
-.app-shell :is(.lzc-table-wrap, .mirror-table, .progression-dialog, .goal-progression-card, .wb-cell-line) {
-  font-variant-numeric: tabular-nums;
-}
-.app-shell .app-brand { gap: 11px; }
-.app-shell .app-brand b { font-weight: 640; font-size: 1.075rem; letter-spacing: -.025em; }
-.app-shell .app-brand small { font-size: .72rem; letter-spacing: .1em; }
-.app-shell .app-brand-mark {
-  width: 38px;
-  height: 38px;
-  flex: none;
-  border: 1px solid #ffffff26;
-  border-radius: 10px;
-  box-shadow: none;
-}
-.app-shell .app-brand-mark svg { width: 22px; height: 22px; }
-.app-shell .nav-caption { color: #a5b7d0; margin-bottom: 10px; }
-.app-shell .app-nav button { font-size: var(--lz-small-size); line-height: 1.35; }
-.app-shell .app-nav button[aria-current=page] { font-weight: 640; }
-.app-shell .app-nav button svg { width: 18px; height: 18px; flex: none; }
-.app-shell .app-sidebar-footer { padding: 14px 7px 0; line-height: 1.4; }
-.app-shell .app-sidebar-footer strong { font-size: var(--lz-ui-size); font-weight: 600; }
-.app-shell .app-sidebar-footer :is(span, button) { font-size: var(--lz-small-size); }
-.app-shell .app-breadcrumb { font-size: var(--lz-small-size); }
-.app-shell .app-sidebar :is(button, a):focus-visible { outline-color: #e2eaff; outline-offset: 1px; }
-.app-shell #lz-nav-toggle { display: none; }
-.app-shell .app-main { min-width: 0; }
-.app-shell .app-skip-link {
-  position: fixed;
-  inset-block-start: .5rem;
-  inset-inline-start: .5rem;
-  z-index: 25;
-  padding: .65rem .85rem;
-  border-radius: var(--lz-control-radius);
-  color: var(--lz-on-accent);
-  background: var(--lz-blue);
-  transform: translateY(calc(-100% - 1rem));
-}
-.app-shell .app-skip-link:focus { transform: none; }
-.app-shell #student-learning-board .new-profile { gap: 12px; }
-#student-learning-board .new-profile > h1 { margin: 0; }
-#student-learning-board .new-profile > p { margin: -5px 0 4px; }
-#student-learning-board .new-profile form { gap: 15px; }
-#student-learning-board .new-profile label { font-size: var(--lz-ui-size); font-weight: 550; }
-#student-learning-board .new-profile :is(input, select) { min-height: 42px; }
-.app-shell :is(.lzc-card, .lzl-item, .lze-menu-tile, .lze-tile, .athlete-card) {
-  box-shadow: 0 2px 5px var(--lz-shadow);
-}
-.app-shell :is(.lzl-item, .lzc-panel, .lze-root .lze-guide-section) p { line-height: 1.56; }
-
-@media (min-width: 701px) {
-  .app-shell .app-sidebar { height: 100dvh; overflow-y: auto; scrollbar-width: thin; }
-  .app-shell .app-sidebar-footer { flex-shrink: 0; }
-  .app-shell .app-zone { padding-inline: clamp(1rem, 2vw, 2rem); }
-}
-@media (max-width: 700px) {
-  .app-shell .app-sidebar[data-mobile-menu] {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    row-gap: 0;
-    padding: 10px 14px;
-    height: auto;
-  }
-  .app-shell .app-sidebar[data-mobile-menu] .app-brand-mark { width: 34px; height: 34px; }
-  .app-shell .app-sidebar[data-mobile-menu] .app-brand > div { line-height: 1.2; }
-  .app-shell #lz-nav-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    min-height: 44px;
-    padding: 5px 10px;
-    border: 1px solid #657790;
-    border-radius: var(--lz-control-radius);
-    font: 550 .875rem/1.3 var(--lz-font);
-  }
-  .app-shell #lz-nav-toggle svg { width: 16px; height: 16px; }
-  .app-shell .app-sidebar[data-mobile-menu] :is(#workspace-navigation, #lz-account-controls) { grid-column: 1 / -1; display: none; }
-  .app-shell .app-sidebar[data-mobile-menu=open] #workspace-navigation { display: block; padding-block: 10px 6px; }
-  .app-shell .app-sidebar[data-mobile-menu=open] #lz-account-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 3px 12px;
-    margin: 0;
-    padding: 5px 0 0;
-  }
-  .app-shell #lz-account-controls > :is(br, #account-role) { display: none; }
-  .app-shell #lz-account-controls #account-name { width: 100%; margin-top: 4px; }
-  .app-shell #lz-account-controls button { width: auto; min-height: 44px; padding: 5px; margin: 0; }
-  .app-shell .app-sidebar[data-mobile-menu=open] .app-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-  .app-shell .app-sidebar[data-mobile-menu=open] .app-nav button { width: 100%; min-height: 44px; }
-  .app-shell .app-topbar { padding-inline: 14px; }
-  .app-shell .lzcases .lzc-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
-  .app-shell .lzlib .lzl-layout { grid-template-columns: minmax(0, 1fr); }
-  .app-shell .lzlib .lzl-item, .app-shell .lzlib .lzl-search, .app-shell .lzcases .lzc-panel { min-width: 0; }
-}
-
-@media (max-width: 420px) {
-  .app-shell .app-nav button { padding-inline: 7px; }
-  .app-shell .app-nav button svg { width: 16px; height: 16px; }
-  .app-shell .app-nav button { overflow-wrap: anywhere; }
-}
-
-html[data-lz-signed-in=false] #student-learning-board .new-profile {
-  width: min(100%, 31rem);
-  margin: clamp(1rem, 7vh, 4rem) auto 1rem;
-  padding: clamp(1.25rem, 2.4vw, 2rem);
-}
-html[data-lz-signed-in=false] #student-learning-board .new-profile form { margin-top: 6px; }
-html[data-lz-signed-in=false] #student-learning-board .new-profile .primary { min-height: 42px; }
-@media (max-width: 700px) {
-  html[data-lz-signed-in=false] #student-learning-board .new-profile { margin-top: .5rem; }
-}
-
-@media (max-width: 700px) {
-  .app-shell .lzcases .lzc-table-wrap table:not(:has(colgroup)) { min-width: 18.75rem; }
-  .app-shell .lzcases .lzc-table-wrap table:not(:has(colgroup)) th {
-    padding-inline: .3rem;
-    font-size: max(.875rem, var(--lz-small-size));
-    overflow-wrap: normal;
-  }
-  .app-shell .lzcases .lzc-table-wrap table:not(:has(colgroup)) th:nth-child(2) { width: 38%; }
 }

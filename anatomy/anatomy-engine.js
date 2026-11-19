@@ -92,7 +92,7 @@
     function draw(){if(disposed)return;ctx.clearRect(0,0,w,h);const m=state.movement;focusY=['ribs','ribshift','scapula'].includes(m)?5.0:m==='foot'?(state.mode==='chain'?3.34:.32):m==='chain'&&state.mode==='chain'?3.34:state.mode==='chain'?3.34:2.73;const span=['ribs','ribshift','scapula'].includes(m)?2.5:m==='foot'?(state.mode==='chain'?7.4:1.35):m==='chain'&&state.mode==='chain'?7.4:state.mode==='chain'?7.4:3.1;scale=(h-72)/span*zoom;if(['rdl','squat','press','row','pullup','dips'].includes(m)){focusY=m==='pullup'?4.0:3.1;scale=(h-72)/(m==='pullup'?9.0:7.6)*zoom;}const old=state.labels;if(state.ghost&&Math.abs(state.amount)>.1){state.labels=false;drawModel(0,.12);state.labels=old;}drawModel(state.amount);}
     function resize(){if(disposed)return;w=Math.max(150,container.clientWidth);h=Math.max(200,container.clientHeight||490);let r=Math.min(window.devicePixelRatio||1,2);canvas.width=w*r;canvas.height=h*r;ctx.setTransform(r,0,0,r,0,0);draw();}
     let drag=null;onCanvas('pointerdown',e=>{drag=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);});onCanvas('pointermove',e=>{if(!drag)return;yaw-=(e.clientX-drag[0])*.008;pitch=Math.max(-.45,Math.min(.65,pitch+(e.clientY-drag[1])*.006));drag=[e.clientX,e.clientY];draw();});onCanvas('pointerup',()=>drag=null);onCanvas('pointercancel',()=>drag=null);onCanvas('wheel',e=>{e.preventDefault();zoom=Math.max(.6,Math.min(1.7,zoom*(e.deltaY>0?.94:1.06)));draw();},{passive:false});const ro=new ResizeObserver(resize);ro.observe(container);resize();
-    return{update(next){if(next.movement&&next.movement!==state.movement)zoom=1;state=Object.assign({},state,next);draw();},setView(name){yaw=name==='front'?0:name==='back'?Math.PI:name==='side'?Math.PI/2:.45;pitch=.06;draw();},resetCamera(){yaw=0;pitch=.04;zoom=1;draw();},resize,dispose(){if(disposed)return;disposed=true;ro.disconnect();for(const off of canvasEvents.splice(0))off();canvas.remove();},isFallback:true};
+    return{zoomCamera(factor){zoom=Math.max(.55,Math.min(2.4,zoom/factor));draw();},update(next){if(next.movement&&next.movement!==state.movement)zoom=1;state=Object.assign({},state,next);draw();},setView(name){yaw=name==='front'?0:name==='back'?Math.PI:name==='side'?Math.PI/2:.45;pitch=.06;draw();},resetCamera(){yaw=0;pitch=.04;zoom=1;draw();},resize,dispose(){if(disposed)return;disposed=true;ro.disconnect();for(const off of canvasEvents.splice(0))off();canvas.remove();},isFallback:true};
   }
   window.createAnatomyViewer=function(container,initial={}){
     const T=window.THREE;
@@ -367,7 +367,7 @@
       function setFrame(d){delta=d;U=new T.Vector3(0,Math.sin(d),Math.cos(d));F=new T.Vector3(0,-Math.cos(d),Math.sin(d));origin=anchor.clone().addScaledVector(U,3.08);baseAngle=Math.PI/2-d;}
       // The atlas shoulder blades are deeper than the original schematic
       // surfaces. Raise the upper back to the pad, tapering into the neck.
-      const bladeSupport=fitShoulderGirdle ? .18 : 0;
+      const bladeSupport=fitShoulderGirdle ? (b?.073:.18) : 0;
       const spineOffset=r=>-.14+.035*Math.sin(r/2.5*Math.PI*2)+(push?-(b?.055*Math.pow(1-phase,2):0)*bow(r,.9,2.60)-(b?.035:0)*bow(r,.12,1.25):(b?.31:.025)*bow(r,.12,1.65)-((b?.18:.13)+benchLift)*smooth(.10,1.80,r)+bladeSupport*smooth(.20,1.80,r)*(1-smooth(2.45,3.00,r)));
       const centreAt=r=>origin.clone().addScaledVector(U,r).addScaledVector(F,spineOffset(r));
       const angleAt=r=>{const d=centreAt(r+.008).sub(centreAt(Math.max(0,r-.008)));return Math.atan2(d.z,d.y);};
@@ -635,7 +635,7 @@
     const ghost=new T.Group();scene.add(ghost);const ghostMaterial=new T.LineBasicMaterial({color:0x6f92bd,transparent:true,opacity:.15});
     function rebuildGhost(){
       ghost.children.slice().forEach(o=>{ghost.remove(o);if(o.geometry)o.geometry.dispose();});
-      model.updateMatrixWorld(true);model.traverseVisible(o=>{if(!o.isMesh||o.material===ctxM||o.parent===head)return;const line=new T.LineSegments(new T.EdgesGeometry(o.geometry,28),ghostMaterial);line.matrixAutoUpdate=false;line.matrix.copy(o.matrixWorld);ghost.add(line);});
+      model.updateMatrixWorld(true);model.traverseVisible(o=>{if(!o.isMesh||o.material===ctxM||o.parent===head||o.parent.parent===head)return;const line=new T.LineSegments(new T.EdgesGeometry(o.geometry,28),ghostMaterial);line.matrixAutoUpdate=false;line.matrix.copy(o.matrixWorld);ghost.add(line);});
     }
     const labelLayer=document.createElement('div');Object.assign(labelLayer.style,{position:'absolute',inset:'0',pointerEvents:'none',overflow:'hidden'});container.style.position='relative';container.appendChild(labelLayer);
     const labelNodes={};
@@ -688,10 +688,10 @@
       onCanvas('pointercancel',end);
       onCanvas('wheel',e=>{
         e.preventDefault();
-        distance=Math.max(2.0,Math.min(16,distance*(e.deltaY>0?1.06:.94)));
-        render();
+        zoomCamera(e.deltaY>0?1.06:1/1.06);
       },{passive:false});
     }
+    function zoomCamera(factor){distance=Math.max(1.3,Math.min(50,distance*factor));render();}
     function softwareCanvas(){
       const element=document.createElement('canvas');
       const context=element.getContext('2d');
@@ -758,7 +758,7 @@
         for(let i=0;i<len;i+=3){
           const ia=index?index.getX(i):i,ib=index?index.getX(i+1):i+1,ic=index?index.getX(i+2):i+2;
           const a=ia*3,b=ib*3,c=ic*3;
-          const ax=projected[a],ay=projected[a+1],bx=projected[b],by=projected[b+1],cx=projected[c],cy=projected[c+1];
+          let ax=projected[a],ay=projected[a+1],bx=projected[b],by=projected[b+1],cx=projected[c],cy=projected[c+1];
           const winding=(bx-ax)*(cy-ay)-(by-ay)*(cx-ax);
           if(Math.abs(winding)<.08||
               material.side===T.FrontSide&&winding>0||material.side===T.BackSide&&winding<0)continue;
@@ -777,10 +777,28 @@
             mb.fromBufferAttribute(position,ib).applyMatrix4(mesh.matrixWorld);
             mc.fromBufferAttribute(position,ic).applyMatrix4(mesh.matrixWorld);
             normal.crossVectors(ab.subVectors(mb,ma),ac.subVectors(mc,ma)).normalize();
-            const shade=.64+.36*Math.max(0,normal.dot(lightDirection)*(winding<0?1:-1));
-            displayColor.multiplyScalar(shade);
+            const facing=winding<0?1:-1;
+            const diffuse=Math.max(0,normal.dot(lightDirection)*facing);
+            if(material.userData.helmetFinish){
+              // Match the lacquer and brushed metal under a wide studio light.
+              ab.subVectors(camera.position,ma).normalize().add(lightDirection).normalize();
+              const shine=Math.pow(Math.max(0,normal.dot(ab)*facing),10/material.roughness);
+              displayColor.multiplyScalar(.42+.64*diffuse).addScalar(.44*shine);
+            }else displayColor.multiplyScalar(.64+.36*diffuse);
           }
           displayColor.convertLinearToSRGB();
+          // Canvas antialiases individual paths against their background.
+          // Overlap opaque facets by a fraction of a pixel to close hairline seams.
+          if(material.opacity===1){
+            const la=Math.hypot(bx-cx,by-cy),lb=Math.hypot(ax-cx,ay-cy),lc=Math.hypot(ax-bx,ay-by);
+            const perimeter=la+lb+lc;
+            const ix=(la*ax+lb*bx+lc*cx)/perimeter,iy=(la*ay+lb*by+lc*cy)/perimeter;
+            const grow=.43*perimeter/Math.abs(winding);
+            const ga=Math.min(grow,.85/Math.max(.001,Math.hypot(ax-ix,ay-iy)));
+            const gb=Math.min(grow,.85/Math.max(.001,Math.hypot(bx-ix,by-iy)));
+            const gc=Math.min(grow,.85/Math.max(.001,Math.hypot(cx-ix,cy-iy)));
+            ax+=(ax-ix)*ga;ay+=(ay-iy)*ga;bx+=(bx-ix)*gb;by+=(by-iy)*gb;cx+=(cx-ix)*gc;cy+=(cy-iy)*gc;
+          }
           triangles.push({ax,ay,bx,by,cx,cy,z:(az+bz+cz)/3,
             fill:`rgb(${Math.round(displayColor.r*255)},${Math.round(displayColor.g*255)},${Math.round(displayColor.b*255)})`,
             opacity:material.opacity,order:material.depthTest===false?mesh.renderOrder:0});
@@ -1253,7 +1271,7 @@
       if(tensionIds.has(m)){poseTension(m,Math.max(0,a));return;}
       if(previewIds.has(m)){posePreview(a);return;}
       if(exerciseIds.has(m)){poseExercise(Math.max(0,a));return;}
-      function scap(pro){for(const s of scapulae){s.node.position.x=s.side*(.64+.14*pro);s.node.position.z=-.36+.23*pro;s.node.rotation.y=-s.side*(.20+.58*pro);s.node.rotation.z=s.side*pro*.045;}}
+      function scap(pro){for(const s of scapulae){s.node.position.x=s.side*(.64+.098*pro);s.node.position.z=-.36+.12*pro;s.node.rotation.y=-s.side*(.20+.30*pro);s.node.rotation.z=s.side*pro*.025;}}
       function spine(flex){spineGuide.rotation.x=flex*.035;spineGuide.position.z=-flex*.05;for(let i=0;i<spineGroups.length;i++){const s=spineGroups[i],f=(i+1)/spineGroups.length;s.node.position.z=s.z-flex*Math.sin(f*Math.PI)*.16;s.node.rotation.x=flex*.12;}}
       if(m==='hike'){
         const angle=selectedSide*a*.12;pelvis.rotation.z=angle;pelvis.position.y-=Math.abs(a)*.078;pelvis.position.x=-selectedSide*a*.035;
@@ -1412,6 +1430,7 @@
     focus();applyPose();resize();
     return {
       debugPoseSnapshot:capturePose,
+      zoomCamera,
       debugCamera:()=>({yaw,pitch,distance,target:target.toArray()}),
       update(next){const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();applyPose(0);rebuildGhost();}applyPose();render();},
       setView(name){if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},

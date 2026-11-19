@@ -32,7 +32,7 @@ window.azAttachAnatomyMeshes=function(parts){
     return shaded;
   }
   remove(parts.head,parts.cervicalMeshes);
-  parts.head.add(createJohnnySkull(T));
+  parts.head.add(createJohnnyHelmet(T));
   remove(parts.pelvis);
   const pelvisMaterial = reliefMaterial(parts.materials.pelvis);
   for(const name of ['rightHip','leftHip','sacrum']){
@@ -86,162 +86,207 @@ window.azAttachAnatomyMeshes=function(parts){
   attachAtlasFeet(T, parts.legs, remove);
 };
 
-// Johnny is a solid sculpted skull. Sculpting, paint and engravings share
-// the same surface so the eyes and mouth always turn with his head.
-function createJohnnySkull(T) {
-  // Height, half-width, brow/muzzle depth, posterior depth.
-  const sections=[
-    [-.312,0,.100,.100],[-.300,.062,.185,.019],[-.273,.122,.247,-.049],
-    [-.224,.164,.296,-.121],[-.174,.174,.322,-.172],[-.128,.183,.328,-.207],
-    [-.087,.234,.344,-.256],[-.035,.282,.351,-.321],[.026,.268,.338,-.368],
-    [.089,.260,.332,-.400],[.148,.281,.338,-.419],[.216,.297,.357,-.420],
-    [.290,.299,.351,-.402],[.365,.280,.319,-.361],[.432,.244,.260,-.300],
-    [.486,.186,.194,-.226],[.525,.115,.113,-.145],[.552,0,-.015,-.015]
-  ];
-  const goldPlate=[
-    [0,-.226],[.100,-.243],[.166,-.186],[.178,-.118],[.234,-.076],
-    [.254,-.010],[.230,.063],[.236,.181],[.260,.293],[.227,.392],
-    [.173,.464],[.124,.499],[.101,.452],[.070,.294],[0,.294]
-  ];
-  const eyeSocket=[
-    [.028,.107],[.066,.141],[.122,.165],[.182,.158],[.218,.132],
-    [.224,.095],[.205,.063],[.159,.047],[.103,.048],[.056,.069]
-  ];
-  const nasalSocket=[
-    [.003,.071],[.022,.038],[.040,-.004],[.042,-.046],
-    [.029,-.072],[.016,-.079],[.006,-.066]
-  ];
-  const teethOutline=[
-    [0,-.103],[.060,-.111],[.115,-.123],[.148,-.143],[.135,-.182],
-    [.102,-.209],[.056,-.222],[0,-.226]
-  ];
-  const cheekLine=[[.151,.049],[.187,.025],[.200,-.002],[.183,-.034],[.153,-.050]];
-  const upperJaw=[[.147,-.127],[.171,-.096],[.182,-.062],[.210,-.051]];
-  const browLine=[[.033,.152],[.076,.176],[.119,.188],[.161,.185],[.201,.165]];
-  const accentLine=[[.246,.326],[.234,.361],[.215,.390]];
-  const {lerp,smoothstep}=T.MathUtils;
+// Mark III style helmet in the local coordinates of Johnny's cervical joint.
+function createJohnnyHelmet(T) {
+  const helmet=new T.Group();
+  helmet.name='Johnny Iron Man helmet';
+  const {lerp,clamp}=T.MathUtils;
+  const metal=(name,color,metalness,roughness)=>{
+    const material=new T.MeshStandardMaterial({name,color,metalness,roughness});
+    material.userData.helmetFinish=true;
+    return material;
+  };
+  const ruby=metal('Candy apple red',0x9e1927,.47,.26);
+  const red=metal('Crimson lacquer',0xbc2832,.46,.26);
+  const deepRed=metal('Oxblood edges',0x621a21,.42,.32);
+  const gold=metal('Brushed champagne gold',0xe9b961,.55,.33);
+  const warmGold=metal('Gold bevel',0xca914c,.50,.32);
+  const seal=metal('Graphite gaskets',0x191b22,.22,.40);
+  const titanium=metal('Dark titanium',0x434853,.54,.31);
+  const lens=new T.MeshBasicMaterial({name:'Ice blue lens edge',color:0x80dcef,toneMapped:false});
+  const emitter=new T.MeshBasicMaterial({name:'White eye emitters',color:0xf0ffff,toneMapped:false});
 
-  function distance(x,y,outline,closed=true) {
-    let inside=false, nearest=Infinity;
-    const n=outline.length, end=closed?n:n-1;
-    for(let i=0;i<end;i++){
-      const [ax,ay]=outline[i], [bx,by]=outline[(i+1)%n];
-      const dx=bx-ax,dy=by-ay;
-      const t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy)));
-      nearest=Math.min(nearest,(x-ax-t*dx)**2+(y-ay-t*dy)**2);
-      if(closed && (ay>y)!==(by>y) && x<ax+(y-ay)*dx/dy)inside=!inside;
-    }
-    return (inside?-1:1)*Math.sqrt(nearest);
+  function mesh(name,geometry,material){
+    const part=new T.Mesh(geometry,material);
+    part.name=name;
+    helmet.add(part);
+    return part;
   }
-  function mirrorHalf(outline) {
-    return outline.concat(outline.slice(1,-1).reverse().map(([x,y])=>[-x,y]));
-  }
-  const plateOutline=mirrorHalf(goldPlate), mouthOutline=mirrorHalf(teethOutline);
-  function profile(y) {
+  // Width and front/rear depths follow the skull envelope. The neck sits
+  // inside the lower lip, and the occiput keeps the supine head contact.
+  const sections=[
+    [-.303,.125,.190,.035],[-.272,.176,.251,-.030],[-.194,.221,.308,-.155],
+    [-.095,.259,.337,-.259],[.015,.286,.342,-.348],[.145,.302,.343,-.409],
+    [.245,.300,.353,-.418],[.340,.294,.343,-.391],[.420,.267,.300,-.338],
+    [.485,.216,.227,-.270],[.529,.139,.135,-.176],[.549,.060,.043,-.085],
+    [.553,.004,-.016,-.024]
+  ];
+  function section(y){
     let i=0;
     while(i<sections.length-2 && y>sections[i+1][0])i++;
-    const a=sections[i],b=sections[i+1],before=sections[Math.max(0,i-1)],after=sections[Math.min(i+2,sections.length-1)];
-    const length=b[0]-a[0], t=(y-a[0])/length;
-    return [1,2,3].map(k=>{
-      const slopeA=(b[k]-before[k])/(b[0]-before[0]);
-      const slopeB=(after[k]-a[k])/(after[0]-a[0]);
-      return lerp(a[k],b[k],t*t*(3-2*t))+length*t*(1-t)*((1-t)*slopeA-t*slopeB);
+    const a=sections[i],b=sections[i+1],t=clamp((y-a[0])/(b[0]-a[0]),0,1);
+    return [1,2,3].map(k=>lerp(a[k],b[k],t));
+  }
+  function shellPoint(angle,y,lift=0){
+    const [w,front,back]=section(y),c=Math.cos(angle),s=Math.sin(angle);
+    const mid=(front+back)*.5;
+    const z=mid+(front-mid)*Math.sign(c)*Math.pow(Math.abs(c),c>0?.78:1);
+    return new T.Vector3((w+lift)*s,y,z+lift*c);
+  }
+  function frontPoint(x,y,relief){
+    const [w,front,back]=section(y);
+    const arc=Math.pow(Math.max(.002,1-(x/w)**2),.39);
+    return new T.Vector3(x,y,(front+back)*.5+(front-back)*.5*arc+relief);
+  }
+  // Make a surface with consistent outward winding. The point function runs
+  // left to right and bottom to top on the face, and around the shell.
+  function surface(name,material,cols,rows,point){
+    const positions=[],indices=[];
+    for(let j=0;j<=rows;j++)for(let i=0;i<=cols;i++){
+      const p=point(i/cols,j/rows);
+      positions.push(p.x,p.y,p.z);
+      if(i<cols&&j<rows){
+        const a=j*(cols+1)+i,b=a+1,c=a+cols+1,d=c+1;
+        indices.push(a,b,c,b,d,c);
+      }
+    }
+    const geometry=new T.BufferGeometry();
+    geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    return mesh(name,geometry,material);
+  }
+  const bottom=sections[0][0],top=sections.at(-1)[0];
+  surface('Crimson helmet shell',ruby,72,48,(u,v)=>shellPoint(2*Math.PI*u,lerp(bottom,top,v)));
+  for(const [y,sign] of [[bottom,-1],[top,1]]){
+    const rim=Array.from({length:72},(_,i)=>shellPoint(i*Math.PI/36,y));
+    const center=rim.reduce((v,p)=>v.add(p),new T.Vector3()).divideScalar(rim.length);
+    const vertices=[];
+    for(let i=0;i<rim.length;i++){
+      const a=rim[i],b=rim[(i+1)%rim.length];
+      for(const v of (sign<0?[center,b,a]:[center,a,b]))vertices.push(v.x,v.y,v.z);
+    }
+    const g=new T.BufferGeometry();
+    g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.computeVertexNormals();
+    mesh(sign<0?'Helmet base':'Crown cap',g,sign<0?seal:ruby);
+  }
+
+  // Control rows run from the centerline toward each temple. The third
+  // coordinate sets the depth of the brow, nose bridge and malar planes.
+  const browBottom=[[0,.204,.037],[.062,.205,.037],[.079,.209,.036],[.128,.216,.035],[.188,.226,.032],[.229,.236,.029],[.248,.241,.022],[.266,.230,.014]];
+  const browBevel=browBottom.map(([x,y,d])=>[x,y+.012,d+.005]);
+  const browMiddle=[[0,.318,.034],[.063,.321,.033],[.088,.326,.032],[.132,.331,.028],[.188,.335,.024],[.224,.338,.020],[.244,.341,.016],[.261,.344,.012]];
+  const browTop=[[0,.420,.015],[.057,.423,.015],[.068,.425,.015],[.106,.494,.013],[.143,.486,.013],[.177,.469,.012],[.208,.442,.012],[.237,.413,.010]];
+  const cheekTop=[[0,.200,.035],[.057,.200,.035],[.079,.173,.035],[.127,.176,.036],[.180,.184,.037],[.222,.201,.034],[.247,.212,.020],[.265,.220,.011]];
+  const cheekRidge=[[0,.112,.043],[.054,.115,.040],[.085,.117,.036],[.135,.123,.033],[.190,.135,.031],[.226,.148,.035],[.250,.158,.028],[.273,.166,.010]];
+  const cheekMid=[[0,.010,.046],[.053,.012,.040],[.086,.014,.031],[.139,.011,.025],[.187,.020,.037],[.209,.041,.035],[.240,.067,.004],[.275,.093,.010]];
+  const mouthEdge=[[0,-.090,.041],[.045,-.090,.038],[.083,-.092,.035],[.125,-.098,.031],[.147,-.103,.026],[.155,-.139,.039],[.177,-.156,.022],[.207,-.126,.011]];
+  const jawTop=mouthEdge.map(([x,y,d])=>[x,y-.014,d-.007]);
+  const jawBase=[[0,-.162,.029],[.038,-.164,.028],[.045,-.182,.026],[.108,-.181,.024],[.139,-.184,.019],[.160,-.220,.018],[.184,-.228,.015],[.204,-.190,.009]];
+
+  function rowPoint(row,t){
+    const f=clamp(t,0,1)*(row.length-1),i=Math.min(row.length-2,Math.floor(f));
+    return row[i].map((value,k)=>lerp(value,row[i+1][k],f-i));
+  }
+  function facePanel(name,rows,material,edgeMaterial=warmGold){
+    const sample=(u,v)=>{
+      const f=v*(rows.length-1),j=Math.min(rows.length-2,Math.floor(f));
+      const a=rowPoint(rows[j],Math.abs(2*u-1)),b=rowPoint(rows[j+1],Math.abs(2*u-1));
+      const x=lerp(a[0],b[0],f-j)*Math.sign(2*u-1);
+      return frontPoint(x,lerp(a[1],b[1],f-j),lerp(a[2],b[2],f-j));
+    };
+    const cols=56,steps=(rows.length-1)*4;
+    surface(name,material,cols,steps,sample);
+    // The bevels have real thickness, including inside the eye apertures.
+    const perimeter=[];
+    for(let i=0;i<cols;i++)perimeter.push(sample(i/cols,0));
+    for(let i=0;i<steps;i++)perimeter.push(sample(1,i/steps));
+    for(let i=cols;i>0;i--)perimeter.push(sample(i/cols,1));
+    for(let i=steps;i>0;i--)perimeter.push(sample(0,i/steps));
+    surface(name+' bevel',edgeMaterial,perimeter.length,1,(u,v)=>{
+      const p=perimeter[Math.round(u*perimeter.length)%perimeter.length].clone();
+      p.z-=.012*(1-v);
+      return p;
     });
   }
-  const red=new T.Color(0xb92232), redHighlight=new T.Color(0xee4953);
-  const gold=new T.Color(0xf3bd42), cheekGold=new T.Color(0xffdb73);
-  const edge=new T.Color(0x45292e), glass=new T.Color(0x192131);
-  const innerSocket=new T.Color(0x281d31), teeth=new T.Color(0xffde91), toothLine=new T.Color(0x67442b);
-  const paint=new T.Color();
-  const positions=[],colors=[],indices=[];
-  const rows=144,columns=152;
-  const bottom=sections[0], top=sections.at(-1);
-  const blob=(x,y)=>Math.exp(-x*x-y*y);
-  function push(x,y,z,color) {
-    positions.push(x,y,z);
-    colors.push(Math.round(color.r*255),Math.round(color.g*255),Math.round(color.b*255));
+  facePanel('Raised forehead and brow',[browBottom,browBevel,browMiddle,browTop],gold);
+  facePanel('Faceted cheek and bridge',[mouthEdge,cheekMid,cheekRidge,cheekTop],gold);
+  facePanel('Lower gold jaw',[jawBase,jawTop],warmGold);
+
+  // The red chin steps forward below the gold jaw. Three distinct planes
+  // catch light under the mouth and continue into the mandible on either side.
+  const chinLip=[[0,-.156,.040],[.033,-.157,.040],[.042,-.174,.038],[.108,-.179,.034],[.141,-.186,.027],[.169,-.225,.021]];
+  const chinBreak=[[0,-.221,.044],[.038,-.221,.044],[.049,-.223,.043],[.096,-.227,.040],[.119,-.233,.037],[.156,-.260,.024]];
+  const chinBase=[[0,-.293,.015],[.033,-.293,.015],[.052,-.292,.016],[.076,-.291,.017],[.096,-.290,.018],[.124,-.280,.012]];
+  facePanel('Crimson chin armor',[chinBreak,chinLip],red,deepRed);
+  facePanel('Under-chin chamfer',[chinBase,chinBreak],deepRed,ruby);
+  const crownLow=[[0,.424,.023],[.030,.424,.023],[.056,.426,.019],[.066,.428,.013]];
+  const crownHigh=[[0,.473,.013],[.036,.472,.013],[.068,.471,.012],[.089,.473,.009]];
+  facePanel('Recessed crown bridge',[crownLow,crownHigh],ruby,deepRed);
+
+  const mouthBase=jawTop.map(([x,y,d])=>[x,y-.004,d-.003]);
+  const mouthLip=mouthEdge.map(([x,y,d])=>[x,y+.002,d-.012]);
+  function insetStrip(name,low,high,material){
+    surface(name,material,56,2,(u,v)=>{
+      const t=Math.abs(2*u-1),a=rowPoint(low,t),b=rowPoint(high,t);
+      return frontPoint(Math.sign(2*u-1)*lerp(a[0],b[0],v),lerp(a[1],b[1],v),lerp(a[2],b[2],v));
+    });
   }
-  push(0,bottom[0],bottom[2],edge);
-  for(let row=1;row<rows;row++){
-    const y=lerp(bottom[0],top[0],row/rows),[halfWidth,front,back]=profile(y);
-    const mid=(front+back)*.5;
-    for(let col=0;col<columns;col++){
-      const theta=2*Math.PI*col/columns, cos=Math.cos(theta);
-      const x=Math.sin(theta)*halfWidth, ax=Math.abs(x);
-      let z=mid+(cos>=0?(front-mid)*Math.pow(cos,.66):(mid-back)*cos);
-      // Leave the atlas neck visible beneath the rear of the skull.
-      const neck=smoothstep(y,-.284,-.154)*(1-smoothstep(y,-.10,.075));
-      z+=.028*(1-smoothstep(cos,-.40,.26))*neck;
-      const rearPanel=1-smoothstep(cos,.18,.47);
-      const backSeam=y-(.082+.085*Math.max(0,-cos));
-      const jawSeam=y-(-.172+.137*(1-Math.abs(cos)));
-      const cut=1-smoothstep(Math.min(Math.abs(backSeam),Math.abs(jawSeam)),.002,.017);
-      const side=1-smoothstep(cos,.42,.93);
-      paint.copy(red).lerp(redHighlight,.25*blob((y-.25)/.27,(Math.abs(cos)-.47)/.52));
-      paint.lerp(edge,.53*cut*rearPanel);
-      z+=.009*cut*rearPanel*cos;
-      if (cos>0) {
-        const eye=distance(ax,y,eyeSocket);
-        const nose=distance(ax,y,nasalSocket);
-        const mouth=distance(x,y,mouthOutline);
-        const plate=distance(x,y,plateOutline);
-        const faceBlend=smoothstep(cos,.21,.44);
-        const faceLit=blob((ax-.175)/.10,(y-.029)/.25);
-        paint.lerp(gold,faceBlend*(1-smoothstep(plate,-.005,.006)));
-        paint.lerp(cheekGold,faceBlend*.27*faceLit*(1-smoothstep(plate,-.012,.001)));
-        const rim=1-smoothstep(Math.abs(plate),.003,.012);
-        paint.lerp(edge,faceBlend*.67*rim);
-        const brows=.021*blob((ax-.132)/.091,(y-.182)/.035);
-        const cheeks=.037*blob((ax-.184)/.084,(y+.006)/.052);
-        const bridge=.019*blob(x/.047,(y-.069)/.072);
-        const muzzle=.022*blob(x/.128,(y+.159)/.072);
-        const eyeDepth=1-smoothstep(eye,-.021,.013),noseDepth=1-smoothstep(nose,-.009,.007);
-        z+=faceBlend*(brows+cheeks+bridge+muzzle-.045*eyeDepth-.023*noseDepth);
-        const etch=Math.min(distance(ax,y,cheekLine,false),distance(ax,y,upperJaw,false),
-          distance(ax,y,browLine,false),distance(ax,y,accentLine,false));
-        paint.lerp(edge,faceBlend*.57*(1-smoothstep(etch,.001,.009)));
-        paint.lerp(innerSocket,faceBlend*.73*(1-smoothstep(eye,.001,.013)));
-        paint.lerp(glass,faceBlend*(1-smoothstep(eye,-.007,.003)));
-        paint.lerp(glass,faceBlend*.97*(1-smoothstep(nose,-.005,.006)));
-        const dental=faceBlend*(1-smoothstep(mouth,-.005,.004));
-        if(dental>0){
-          const rowY=y+.164-.025*(ax/.148)**2;
-          const cell=(x+.014*(rowY<0?1:0))/.032;
-          const split=Math.abs(cell-Math.round(cell))*.032;
-          const seam=Math.min(split,Math.abs(rowY));
-          const detail=smoothstep(seam,.001,.0065);
-          const enamel=detail*(1-smoothstep(mouth,-.011,-.002));
-          paint.lerp(toothLine,dental);
-          paint.lerp(teeth,dental*enamel);
-          z+=dental*.007*enamel;
-        }
-      }
-      paint.multiplyScalar(.94+.06*(1-side));
-      push(x,y,z,paint);
+  insetStrip('Recessed mouth joint',mouthBase,mouthLip,seal);
+  const eyeFloor=cheekTop.map(([x,y,d])=>[x,y-.004,d-.013]);
+  const eyeRoof=browBottom.map(([x,y,d])=>[x,y+.003,d-.014]);
+  insetStrip('Graphite optical bed',eyeFloor,eyeRoof,seal);
+  for(const side of [-1,1]){
+    // A dark reveal around each lens is visible even at normal teaching scale.
+    function optic(name,mat,inset,raised){
+      surface(name,mat,24,4,(u,v)=>{
+        const t=side<0?1-u:u;
+        const x=lerp(.079+inset,.239-inset,t),k=clamp((x-.079)/.160,0,1);
+        const upper=.204+.031*k,lower=.180+.025*k-.007*Math.sin(Math.PI*k);
+        const cut=.009*(1-clamp(k/.10,0,1))+.007*clamp((k-.87)/.13,0,1);
+        return frontPoint(side*x,lerp(lower+cut+inset*.42,upper-inset*.30,v),.024+raised);
+      });
     }
+    optic('Cool lens surround',lens,0,0);
+    optic('Luminous eye slit',emitter,.004,.002);
   }
-  const topIndex=positions.length/3;
-  push(0,top[0],top[2],red);
-  const last=topIndex-columns;
-  for(let i=0;i<columns;i++){
-    const next=(i+1)%columns;
-    indices.push(0,1+next,1+i);
-    for(let row=0;row<rows-2;row++){
-      const start=1+row*columns;
-      const a=start+i,b=start+next,c=a+columns,d=b+columns;
-      indices.push(a,b,c,b,d,c);
+
+  // The temple shells, mandible rails and rear leaves wrap around the head.
+  // A narrow graphite reveal exposes the join between adjacent armor plates.
+  function armorBand(name,mat,start,end,lo,hi,raise){
+    surface(name,mat,36,8,(u,v)=>{
+      const a=lerp(start,end,u),y=lerp(lo(u),hi(u),v);
+      const bevel=Math.min(1,u*60,(1-u)*60,v*10,(1-v)*10);
+      return shellPoint(a,y,raise*(.48+.52*bevel));
+    });
+  }
+  const rad=T.MathUtils.degToRad;
+  for(const side of [-1,1]){
+    function sideBand(name,mat,from,to,lo,hi,raise){
+      if(side>0)armorBand(name,mat,rad(from),rad(to),lo,hi,raise);
+      else armorBand(name,mat,-rad(to),-rad(from),u=>lo(1-u),u=>hi(1-u),raise);
     }
-    indices.push(topIndex,last+i,last+next);
+    sideBand('Burgundy temple armor',red,65,148,u=>.025+.09*u,u=>.366+.117*Math.sin(Math.PI*u)-.068*u,.013);
+    sideBand('Articulated mandible rail',red,49,143,u=>-.221+.238*u,u=>-.126+.201*u,.016);
+    sideBand('Mandible shadow joint',deepRed,55,142,u=>-.130+.203*u,u=>-.114+.202*u,.011);
+    const earZ=-.067,earY=.139;
+    for(const [name,r,h,x,mat] of [
+      ['Ear housing gasket',.109,.024,.295,seal],['Turned ear bezel',.103,.016,.308,deepRed],
+      ['Temple pivot',.095,.014,.319,red],['Inset pivot face',.078,.005,.327,ruby]
+    ]){
+      const disc=mesh(name,new T.CylinderGeometry(r,r,h,40),mat);
+      disc.rotation.z=side*Math.PI/2;disc.position.set(side*x,earY,earZ);
+    }
+    // A shallow machined recess breaks the circular pivot face.
+    const slot=mesh('Temple pivot recess',new T.BoxGeometry(.003,.009,.076),deepRed);
+    slot.position.set(side*.331,earY,earZ);slot.rotation.x=-.49;
   }
-  const geometry=new T.BufferGeometry();
-  geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));
-  geometry.setAttribute('color',new T.Uint8BufferAttribute(colors,3,true));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  const material=new T.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.48,metalness:.18});
-  const skull=new T.Mesh(geometry,material);
-  skull.name='Johnny sculpted skull';
-  return skull;
+  for(const [name,y1,y2,mat] of [
+    ['Rear crown plate',.215,.444,red],['Occipital armor',.073,.206,ruby],['Nape lip',-.084,.061,red]
+  ]){
+    armorBand(name,mat,rad(130),rad(230),u=>y1+.033*Math.sin(Math.PI*u),u=>y2+.030*Math.sin(Math.PI*u),.009);
+  }
+  return helmet;
 }
 
 function footGeometry(T, asset, side) {

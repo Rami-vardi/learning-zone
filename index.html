@@ -439,6 +439,13 @@ body{margin:0;background:#f3f6fa;font-family:Arial,sans-serif;color-scheme:light
 .lze-root .lze-menu-grid{gap:12px;margin-bottom:16px}.lze-root .lze-menu-tile{gap:9px;min-height:115px;padding:18px 16px;transition:border-color .15s,box-shadow .15s,transform .15s}.lze-root .lze-menu-tile:hover{transform:translateY(-2px)}.lze-root .lze-menu-symbol{display:flex;align-items:center;justify-content:center;width:58px;height:58px;flex-shrink:0;border-radius:15px;background:#eaf1ff;color:#315ac4}.lze-root .lze-menu-symbol .lze-category-pictogram{width:44px;height:44px}.lze-root .lze-menu-tile strong{width:100%;text-align:center;font-size:17px;line-height:1.3}.lze-root .lze-subcategory-tile{background:#eaf1ff;color:#2454a9;border-color:#d6e4ff;min-height:76px;padding:17px 14px}.lze-root .lze-subcategory-tile:hover{background:#dfebff;border-color:#9db9ee}.lze-root .lze-subcategory-tile.is-active{background:#315bc1;color:#fff;border-color:#315bc1;box-shadow:0 3px 10px #315bc129}.lze-root .lze-muscle-menu{background:#e0f3ef;color:#176e65;border-color:#c8e8e1}.lze-root .lze-muscle-menu:hover{background:#d3eee7;border-color:#8dc9bb}.lze-root .lze-muscle-menu.is-active{background:#197a6d;border-color:#197a6d;color:#fff}.lze-root .lze-lenses{margin:18px 0 12px}.lze-root .lze-menu-nav{margin-bottom:20px}.lze-root .lze-heading{margin-bottom:14px}.lze-root .lze-families{gap:8px;align-items:center;margin:12px 0}.lze-root .lze-families .lze-button{padding:9px 13px;background:#eaf1ff;color:#2454a9;border-color:#d6e4ff;text-align:center}.lze-root .lze-families .lze-button:hover{background:#dfebff;border-color:#9db9ee}.lze-root .lze-families .lze-button.is-active{background:#315bc1;color:#fff;border-color:#315bc1;box-shadow:0 3px 10px #315bc129}.lze-root .lze-tile-icon{display:flex;align-items:center;justify-content:center}.lze-root .lze-favorite{display:flex;align-items:center;justify-content:center}.lze-root .lze-favorite[aria-pressed=true] svg{fill:#dce6ff}.lze-root .lze-menu-heading{margin-bottom:12px}.lze-root .lze-local-toolbar{margin-bottom:14px}.lze-root .lze-grid{gap:12px}.lze-root .lze-tile{padding:12px}.lze-root .lze-path-list{gap:12px}@media(prefers-reduced-motion:reduce){.lze-root .lze-menu-tile{transition:none}.lze-root .lze-menu-tile:hover{transform:none}}
 
 .progression-dialog .progression-config{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-bottom:14px}.progression-foundation{font-size:14px;margin:6px 0 0;color:#63748a}.progression-table{table-layout:fixed;width:100%}.progression-table th,.progression-table td{padding:10px 8px;vertical-align:top}.progression-table .progression-week{width:78px;white-space:nowrap}.progression-week-controls{display:grid;gap:8px}.progression-week-controls label{display:grid;gap:4px;font-size:12px}.progression-week-controls select{width:100%;padding:8px}.progression-planned-fields{display:grid;grid-template-columns:65px minmax(100px,1fr) minmax(80px,1fr);gap:8px}.progression-planned-fields label{display:grid;gap:5px;font-size:12px}.progression-planned-fields input{width:100%;min-width:0;padding:9px}.progression-plan-textarea,.progression-table .actual-results textarea{width:100%;min-height:80px;resize:vertical;line-height:1.45}.progression-table .actual-results{border-left:1px solid #dfe7f1;padding-left:16px}.progression-table .actual-results textarea{background:#f3f6fb}.progression-range{display:flex;gap:5px;align-items:center}.progression-range input{min-width:0;width:100%}.progression-reseed{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.progression-discard-dialog{max-width:480px;width:calc(100% - 40px);padding:22px;border:1px solid #dfe7f1;border-radius:16px;color:#182b45}.progression-discard-dialog::backdrop{background:#13243c66}.progression-discard-dialog .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}.progression-discard-dialog p{line-height:1.5}.progression-plan-text{white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:850px){.progression-table{min-width:700px}.progression-planned-fields{grid-template-columns:60px minmax(95px,1fr) minmax(75px,1fr)}}
+
+#student-learning-board .progression-entry-actions,#student-learning-board .exercise-reorder {display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+#student-learning-board .exercise-move {margin-top:8px}
+#student-learning-board .exercise-move summary {width:fit-content;padding-block:6px;cursor:pointer}
+#student-learning-board .exercise-move-controls {display:grid;gap:6px;padding-block:4px}
+#student-learning-board .exercise-move-controls label {display:grid;gap:4px}
+#student-learning-board .exercise-move-controls select {max-width:100%}
 .progression-autosave-status{display:inline-block;margin-top:7px;font-size:13px;color:#63748a}.progression-autosave-status[data-state=saved]{color:#25715d}.progression-autosave-status[data-state=error]{color:#a43d3d}.progression-dialog [data-progression-error]:empty{display:none}
 
 </style><style>
@@ -2235,8 +2242,24 @@ function goalTable(){
 function board(){return `<div class="tabs" role="tablist" aria-label="Workouts"><button class="cursor-interaction" role="tab" aria-selected="${selectedDay==='all'}" data-workout="all">All Workouts (${current.days.length})</button>${current.days.map((d,i)=>`<button class="cursor-interaction" role="tab" aria-selected="${selectedDay===d.id}" data-workout="${d.id}">${esc(d.name||'Day '+(i+1))}</button>`).join('')}</div><div class="day-grid">${current.days.filter(d=>selectedDay==='all'||selectedDay===d.id).map(d=>`<article class="day"><div class="day-title">${field(d.name,`data-day="${d.id}" data-key="name" aria-label="Workout Name" placeholder="Name this day"`)}</div><div class="day-tools"><select data-day="${d.id}" data-key="type" aria-label="Workout Type">${options(['Full body','Upper','Lower','Other'],d.type)}</select><button class="remove cursor-interaction" data-remove-day="${d.id}">Delete Day</button></div><div class="day-body">${d.exercises.map(e=>exerciseEditor(d,e)).join('')}<button class="cursor-interaction" data-add-ex="${d.id}">+ Add Exercise</button></div></article>`).join('')}</div>${current.days.length?'':'<p>No workouts yet. Add a day to begin.</p>'}`}
 function mirror(){const groups=new Map();current.days.forEach(d=>{if(!groups.has(d.type))groups.set(d.type,[]);groups.get(d.type).push(d)});if(current.days.length<2)return '<p>Add at least two workouts to compare days.</p>';return [...groups].map(([type,ds])=>`<div class="mirror-block"><h3>${esc(type)} mirror</h3>${ds.length<2?`<p>${esc(ds[0].name)}: add another ${esc(type.toLowerCase())} workout to compare.</p>`:`<div class="table-wrap"><table class="mirror-table"><thead><tr><th>Exercise position</th>${ds.map(d=>`<th>${esc(d.name)}</th>`).join('')}</tr></thead><tbody>${Array.from({length:Math.max(0,...ds.map(d=>d.exercises.length))},(_,i)=>`<tr><td>${i+1}</td>${ds.map(d=>{const e=d.exercises[i];return `<td>${e?`${esc(e.name||'Unnamed exercise')}<small>${esc(e.sets)} sets · ${esc(reps(e))} · ${esc(e.mode==='top'?'Per set loads':e.load||'Load Not Set')}</small>`:'No exercise'}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>`}</div>`).join('')}
 
-function rawRender(){if(selectedDay!=='all'&&!current.days.some(d=>d.id===selectedDay))selectedDay='all';screen.innerHTML=`<main><div class="intro"><div><button class="cursor-interaction" data-action="roster">My Athletes</button><h1 style="margin-top:14px">${esc(current.name)}</h1><p>${current.days.length} workouts</p></div></div>${goalTable()}<section><div class="section-head"><h2>Training Program</h2><button class="primary cursor-interaction" data-action="add-day">+ Add Day</button></div><div class="tabs" role="tablist" aria-label="Program views">${[['board','Program Board'],['mirror','Day Mirror'],['exercise','Exercise Mirror'],['progression','Goal Exercise Progression']].map(([key,title])=>`<button class="cursor-interaction" role="tab" aria-selected="${view===key}" data-view="${key}">${title}</button>`).join('')}</div>${view==='board'?board():view==='mirror'?mirror():view==='exercise'?exerciseMirror():goalProgressionView()}</section></main>`}
-function render(){normalize();rawRender();decorate();decorateLearning()}
+function rawRender(){if(selectedDay!=='all'&&!current.days.some(d=>d.id===selectedDay))selectedDay='all';screen.innerHTML=`<main><div class="intro"><div><button class="cursor-interaction" data-action="roster">My Athletes</button><h1 style="margin-top:14px">${esc(current.name)}</h1><p>${current.days.length} workout${current.days.length===1?'':'s'}</p></div></div>${goalTable()}<section><div class="section-head"><h2>Training Program</h2><button class="primary cursor-interaction" data-action="add-day">+ Add Day</button></div><div class="tabs" role="tablist" aria-label="Program views">${[['board','Program Board'],['mirror','Day Mirror'],['exercise','Exercise Mirror'],['progression','Goal Exercise Progression']].map(([key,title])=>`<button class="cursor-interaction" role="tab" aria-selected="${view===key}" data-view="${key}">${title}</button>`).join('')}</div>${view==='board'?board():view==='mirror'?mirror():view==='exercise'?exerciseMirror():goalProgressionView()}</section></main>`}
+function render(){normalize();rawRender();decorate();decorateLearning();screen.querySelectorAll('[role="tablist"][aria-label="Program views"] [role="tab"], [role="tablist"][aria-label="Workouts"] [role="tab"]').forEach(tab=>{tab.tabIndex=tab.getAttribute('aria-selected')==='true'?0:-1;});}
+const programTabSelector='[role="tab"][data-view], [role="tab"][data-workout]';
+screen.addEventListener('click',event=>{
+  const tab=event.target.closest(programTabSelector);
+  if(!tab)return;
+  const v=tab.dataset.view,workout=tab.dataset.workout;
+  queueMicrotask(()=>screen.querySelector(v?`[role="tab"][data-view="${v}"]`:`[role="tab"][data-workout="${workout}"]`)?.focus({preventScroll:true}));
+},true);
+screen.addEventListener('keydown',event=>{
+  const tab=event.target.closest(programTabSelector);
+  if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  const tabs=[...tab.closest('[role="tablist"]').querySelectorAll(programTabSelector)];
+  const index=tabs.indexOf(tab);
+  const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+  event.preventDefault();
+  tabs[next].click();
+});
 screen.addEventListener('submit',event=>{if(!event.target.matches('[data-profile]'))return;event.preventDefault();const data=new FormData(event.target);const name=data.get('name').trim();if(!name)return;current={id:uid(),name,goals:[{name:'',ceiling:'',floor:'',goal:'',priority:'Choose'}],days:Array.from({length:Number(data.get('workouts'))},(_,i)=>day('Day '+(i+1)))};athletes.push(current);resetComparison();view='board';render();say('Athlete profile created. Add Goals and exercises.')});
 screen.addEventListener('click',event=>{if(learningClick(event))return;if(advancedClick(event))return;const b=event.target.closest('button');if(!b)return;const v=b.dataset;if(v.action==='roster'){preserveDraft();roster();return}if(v.action==='create'){clearUndo();profile();return}if(v.open){current=athletes.find(a=>a.id===Number(v.open));resetComparison();view='board';render();say('Athlete workspace opened. Changes save automatically.');return}if(!current)return;if(v.view){view=v.view;render();return}if(v.workout){selectedDay=v.workout==='all'?'all':Number(v.workout);render();return}if(v.action==='add-day'){current.days.push(day(unusedDayName()));selectedDay='all';view='board';say('Workout added. Tabs and mirrors updated.')}if(v.action==='add-goal')current.goals.push({name:'',ceiling:'',floor:'',goal:'',priority:'Choose'});if(v.addEx)current.days.find(d=>d.id===Number(v.addEx)).exercises.push(ex());if(v.removeDay){const d=current.days.find(d=>d.id===Number(v.removeDay));askDelete('Delete '+(d.name||'this day')+'?', 'This removes the workout and its '+d.exercises.length+' exercise entries. Your goals stay unchanged.',()=>{current.days=current.days.filter(item=>item.id!==d.id)});return}if(v.removeEx){const d=current.days.find(d=>d.id===Number(v.day));const e=d.exercises.find(e=>e.id===Number(v.removeEx));askDelete('Delete '+(e.name||'this exercise')+'?', 'Remove this exercise and its set targets from '+(d.name||'this workout')+'? Other workouts stay unchanged.',()=>{d.exercises=d.exercises.filter(item=>item.id!==e.id)});return}if(v.removeGoal!==undefined){askDelete('Delete this goal?', 'Remove the selected goal from this athlete profile?',()=>{current.goals.splice(Number(v.removeGoal),1)});return}render()});
 function update(event){
@@ -2504,13 +2527,53 @@ function convertPrescription(e,mode){
 }
 function learningUpdate(event){const el=event.target,v=el.dataset;if(v.patternFilter!==undefined){compareGoal=el.value;render();return true}if(v.linkKey==='role'){if(event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;e.role=el.value;e.roleManual=true;render()}return true}if(v.key==='name'&&v.ex&&event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;bindExerciseName(e,el.value);automaticRoles();render();return true}return false}
 function learningClick(event){const b=event.target.closest('button');if(!b)return false;if(b.dataset.addEx){const d=current.days.find(d=>d.id===Number(b.dataset.addEx));const e=ex('','','fixed','','','');e.sets='1';e.collapsed=false;d.exercises.push(e);render();return true}return false}
-function decorateLearning(){screen.querySelectorAll('[data-remove-goal]').forEach(b=>{b.innerHTML=icon('trash-2');b.setAttribute('aria-label','Delete Goal')});screen.querySelectorAll('.exercise[data-entry-id]').forEach(()=>{});screen.querySelectorAll('.day-grid .day').forEach(card=>{const dayId=Number(card.querySelector('[data-key="type"]').dataset.day);const exercises=card.querySelectorAll('.day-body > .exercise');exercises.forEach((el,i)=>{const e=current.days.find(d=>d.id===dayId).exercises[i];el.draggable=true;el.dataset.dragId=e.id;el.dataset.dragDay=dayId;el.querySelector('.exercise-summary').insertAdjacentHTML('afterbegin','<span class="lz-drag-handle" aria-label="Drag exercise">'+icon('grip-vertical')+'</span>');el.insertAdjacentHTML('beforeend',`<div class="lz-move"><label>Move to <select aria-label="Move exercise to workout" data-move-ex="${e.id}"><option value="">Choose workout</option>${current.days.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label><button data-move-up="${e.id}" aria-label="Move exercise up">${icon('arrow-up')}</button><button data-move-down="${e.id}" aria-label="Move exercise down">${icon('arrow-down')}</button></div>`)})});if(window.lucide)lucide.createIcons({attrs:{width:16,height:16}})}
-root.addEventListener('dragstart',event=>{if(event.target.closest('input,select,button')){event.preventDefault();return}const el=event.target.closest('[data-drag-id]');if(!el)return;dragged={id:Number(el.dataset.dragId),day:Number(el.dataset.dragDay)};event.dataTransfer.setData('text/plain','learning-exercise');event.dataTransfer.effectAllowed='move'});
+function decorateLearning(){
+  screen.querySelectorAll('[data-remove-goal]').forEach(button=>{button.innerHTML=icon('trash-2');button.setAttribute('aria-label','Delete Goal');});
+  screen.querySelectorAll('.day-grid .day').forEach(card=>{
+    const dayId=Number(card.querySelector('[data-key="type"]').dataset.day);
+    const day=current.days.find(item=>item.id===dayId);
+    const destinations=current.days.filter(item=>item.id!==dayId);
+    card.querySelectorAll('.day-body > .exercise').forEach((element,index)=>{
+      const exercise=day.exercises[index];
+      element.dataset.dragId=exercise.id;
+      element.dataset.dragDay=dayId;
+      if(day.exercises.length===1&&!destinations.length)return;
+      element.querySelector('.exercise-summary').insertAdjacentHTML('afterbegin',`<span class="lz-drag-handle" draggable="true" title="Drag to move exercise" aria-hidden="true">${icon('grip-vertical')}</span>`);
+      element.insertAdjacentHTML('beforeend',`<details class="exercise-move" data-move-menu="${exercise.id}">
+        <summary>Move exercise</summary>
+        <div class="exercise-move-controls">
+          ${day.exercises.length>1?`<div class="exercise-reorder"><button type="button" data-move-up="${exercise.id}" ${index===0?'disabled':''}>${icon('arrow-up')}Up</button><button type="button" data-move-down="${exercise.id}" ${index===day.exercises.length-1?'disabled':''}>${icon('arrow-down')}Down</button></div>`:''}
+          ${destinations.length?`<label>Move to workout<select data-move-ex="${exercise.id}"><option value="">Choose workout</option>${destinations.map(item=>`<option value="${item.id}">${esc(item.name||'Untitled Workout')}</option>`).join('')}</select></label>`:''}
+        </div>
+      </details>`);
+    });
+  });
+  if(window.lucide)lucide.createIcons({attrs:{width:16,height:16}});
+}
+root.addEventListener('dragstart',event=>{const handle=event.target.closest('.lz-drag-handle');const element=handle?.closest('[data-drag-id]');if(!element)return;dragged={id:Number(element.dataset.dragId),day:Number(element.dataset.dragDay)};event.dataTransfer.setData('text/plain','learning-exercise');event.dataTransfer.effectAllowed='move';});
 root.addEventListener('dragover',event=>{if(dragged&&event.target.closest('.day')){event.preventDefault();event.dataTransfer.dropEffect='move'}});
-function moveExercise(id,destination,before=null){const source=current.days.find(d=>d.exercises.some(e=>e.id===id));const target=current.days.find(d=>d.id===destination);if(!source||!target||before===id)return;const e=source.exercises.find(e=>e.id===id);source.exercises=source.exercises.filter(x=>x.id!==id);const index=before===null?target.exercises.length:target.exercises.findIndex(x=>x.id===before);target.exercises.splice(index<0?target.exercises.length:index,0,e);render();schedule()}
+function moveExercise(id,destination,before=null){const source=current.days.find(d=>d.exercises.some(e=>e.id===id));const target=current.days.find(d=>d.id===destination);if(!source||!target||before===id)return;const e=source.exercises.find(e=>e.id===id);source.exercises=source.exercises.filter(x=>x.id!==id);const index=before===null?target.exercises.length:target.exercises.findIndex(x=>x.id===before);target.exercises.splice(index<0?target.exercises.length:index,0,e);if(selectedDay!=='all')selectedDay=target.id;render();schedule();say((e.name||'Exercise')+' moved to '+(target.name||'the selected workout')+'.');}
 root.addEventListener('drop',event=>{const dayCard=event.target.closest('.day');if(!dragged||!dayCard)return;event.preventDefault();const dest=Number(dayCard.querySelector('[data-key="type"]').dataset.day),before=event.target.closest('[data-drag-id]');moveExercise(dragged.id,dest,before?Number(before.dataset.dragId):null);dragged=null});root.addEventListener('dragend',()=>{dragged=null});
-root.addEventListener('change',event=>{if(event.target.dataset.moveEx&&event.target.value)moveExercise(Number(event.target.dataset.moveEx),Number(event.target.value))});
-root.addEventListener('click',event=>{const b=event.target.closest('[data-move-up],[data-move-down]');if(!b)return;const id=Number(b.dataset.moveUp||b.dataset.moveDown);const d=current.days.find(d=>d.exercises.some(e=>e.id===id));const i=d.exercises.findIndex(e=>e.id===id),j=i+(b.dataset.moveUp?-1:1);if(j<0||j>=d.exercises.length)return;[d.exercises[i],d.exercises[j]]=[d.exercises[j],d.exercises[i]];render();schedule()});
+root.addEventListener('change',event=>{
+  if(!event.target.dataset.moveEx||!event.target.value)return;
+  const id=Number(event.target.dataset.moveEx);
+  moveExercise(id,Number(event.target.value));
+  screen.querySelector(`[data-move-menu="${id}"] summary`)?.focus();
+});
+root.addEventListener('click',event=>{
+  const button=event.target.closest('[data-move-up],[data-move-down]');
+  if(!button||!current)return;
+  const id=Number(button.dataset.moveUp||button.dataset.moveDown);
+  const day=current.days.find(item=>item.exercises.some(exercise=>exercise.id===id));
+  if(!day)return;
+  const from=day.exercises.findIndex(exercise=>exercise.id===id),to=from+(button.dataset.moveUp?-1:1);
+  if(to<0||to>=day.exercises.length)return;
+  [day.exercises[from],day.exercises[to]]=[day.exercises[to],day.exercises[from]];
+  render();schedule();
+  const menu=screen.querySelector(`[data-move-menu="${id}"]`);
+  if(menu){menu.open=true;(menu.querySelector(button.dataset.moveUp?'[data-move-up]:enabled':'[data-move-down]:enabled')||menu.querySelector('summary')).focus();}
+  say((day.exercises[to].name||'Exercise')+' moved to position '+(to+1)+'.');
+});
 function exerciseMirror(){
  const entries=allEntries().filter(x=>matchesDay(x.d)&&matchesBody(x.e)),patterns=[...new Set([...current.goals.flatMap(g=>StudentPatterns.classify(g.name).patterns),...entries.flatMap(x=>x.e.patterns)])];
  if(compareGoal!=='all'&&!patterns.includes(compareGoal))compareGoal='all';const roles=['Goal','Primary','Secondary','Tertiary','Choose'];
@@ -2525,7 +2588,43 @@ let progressionExercise=null,progressionDraft=null;
 const progressionDialog=document.createElement('dialog');progressionDialog.className='progression-dialog';root.append(progressionDialog);
 function chooseWorkout(){return new Promise(resolve=>{const dialog=document.createElement('dialog');dialog.className='app-modal';dialog.innerHTML=`<form><h2>Choose a Workout</h2><label>Workout<select required>${current.days.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label><div class="actions" style="margin-top:20px"><button type="button">Cancel</button><button class="primary" type="submit">Add Exercise</button></div></form>`;document.body.append(dialog);dialog.querySelector('form').onsubmit=event=>{event.preventDefault();const id=Number(dialog.querySelector('select').value);dialog.close();dialog.remove();resolve(id);};const cancel=()=>{dialog.close();dialog.remove();resolve(null);};dialog.querySelector('[type=button]').onclick=cancel;dialog.oncancel=event=>{event.preventDefault();cancel();};dialog.showModal();});}
 function applyGoalRowColors(){screen.querySelectorAll('[data-key="priority"]').forEach(select=>{const tr=select.closest('tr');if(tr){tr.classList.toggle('goal-floor',select.value==='Floor');tr.classList.toggle('goal-ceiling',select.value==='Ceiling');}});}
-function decorateProgressions(){screen.querySelectorAll('.lz-move').forEach(n=>n.remove());applyGoalRowColors();screen.querySelectorAll('.day-grid').forEach(grid=>{grid.style.setProperty('--workout-count',Math.max(1,grid.children.length));if(!grid.parentElement.classList.contains('workout-scroll')){const wrap=document.createElement('div');wrap.className='workout-scroll';grid.before(wrap);wrap.append(grid);}});screen.querySelectorAll('[data-drag-id]').forEach(card=>{const id=Number(card.dataset.dragId),e=allEntries().find(x=>x.e.id===id)?.e;if(!e)return;const toolbar=document.createElement('div');toolbar.className='progression-entry';const b=document.createElement('button');b.type='button';b.className='primary';b.dataset.createProgression=id;b.textContent=e.progression?'Edit Progression':'Create Progression';toolbar.append(b);if(e.progression){const s=document.createElement('span');s.textContent=e.progression.weeks+' weeks';toolbar.append(s);}card.append(toolbar);});}
+function progressionEntryActions(exercise) {
+  const mainLabel = exercise.progression ? 'Edit Progression' : 'Create Progression';
+  return `<div class="progression-entry-actions">
+    <button type="button" class="primary" data-create-progression="${exercise.id}">${mainLabel}</button>
+    <button type="button" data-create-progression="${exercise.id}" data-new-alternative>${icon('plus')}<span>Add Alternative Progression</span></button>
+  </div>`;
+}
+function decorateProgressions() {
+  applyGoalRowColors();
+  screen.querySelectorAll('.day-grid').forEach(grid => {
+    grid.style.setProperty('--workout-count', Math.max(1, grid.children.length));
+    if (grid.parentElement.classList.contains('workout-scroll')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'workout-scroll';
+    grid.before(wrap);
+    wrap.append(grid);
+  });
+  const entries = new Map(allEntries().map(({e})=>[e.id,e]));
+  screen.querySelectorAll('[data-drag-id]').forEach(card => {
+    const exercise = entries.get(Number(card.dataset.dragId));
+    if (!exercise) return;
+    const toolbar = document.createElement('div');
+    toolbar.className = 'progression-entry';
+    toolbar.innerHTML = progressionEntryActions(exercise);
+    if (exercise.progression) {
+      const summary = document.createElement('span');
+      const weeks = exercise.progression.weeks;
+      const alternatives = exercise.progression.alternatives?.length || 0;
+      summary.textContent = weeks + (weeks === 1 ? ' week' : ' weeks') +
+        (alternatives ? ' · ' + alternatives + (alternatives === 1 ? ' alternative' : ' alternatives') : '');
+      toolbar.append(summary);
+    }
+    const moveMenu = card.querySelector('[data-move-menu]');
+    if(moveMenu)moveMenu.before(toolbar);
+    else card.append(toolbar);
+  });
+}
 let progressionClosing=false,progressionTimer=null,progressionSaving=null,progressionToken=0,progressionRevision=0,progressionSavedRevision=0,progressionTrackId=0;
 
 function activeProgression() {
@@ -2585,25 +2684,26 @@ function updateProgressionEditor() {
   updateProgressionTable();
   progressComparisonPanel();
 }
-function openProgression(id) {
+function openProgression(id, newAlternative = false) {
   const e=allEntries().find(x=>x.e.id===id)?.e;
   if(!e)return;
   rows(e);clearTimeout(progressionTimer);progressionToken++;progressionRevision=progressionSavedRevision=0;
-  progressionExercise={owner,athlete:current.id,id};
+  progressionExercise={owner,athlete:current.id,id,newAlternative};
   progressionTrackId=0;
   progressionDraft=LZProgression.ensure(LZProgression.create(e.progression,e.mode));
   if(!e.progression)LZProgression.seedWeekOne(progressionDraft,e);
+  if(newAlternative)progressionTrackId=LZProgression.addAlternative(progressionDraft).id;
   progressionDialog.setAttribute('aria-labelledby','progression-title');
   progressionDialog.innerHTML=`<form><header>
     <div><span class="eyebrow">Exercise Progression</span>${exerciseNumberLabel(e)}<h2 id="progression-title">${esc(e.name||'Exercise')}</h2><p>${esc(current.name)}</p></div>
-    <div class="progression-header-actions"><button class="progression-alt-add" type="button" data-progression-add>Add Alternative Progression</button><button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></div>
+    <div class="progression-header-actions"><button class="progression-alt-add" type="button" data-progression-add>${icon('plus')}<span>Add Alternative Progression</span></button><button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></div>
   </header>
   <div class="progression-content">
     ${progressionGoal(e)}
     <div class="progression-tabs" role="group" aria-label="Progression to edit" data-progression-tabs hidden></div>
     <div class="progression-config">
       <div class="progression-controls"><label class="weeks-label">How many weeks? <input type="text" inputmode="numeric" data-progression-weeks></label></div>
-      <div class="progression-actions"><span class="progression-autosave-status" data-progression-save-status role="status" aria-live="polite">Saving…</span><button type="button" data-progression-retry hidden>Retry Saving</button><button class="progression-delete" type="button" data-progression-delete hidden>Delete Alternative</button></div>
+      <div class="progression-actions"><span class="progression-autosave-status" data-progression-save-status role="status" aria-live="polite">Saving…</span><button type="button" data-progression-retry hidden>Retry Saving</button><button type="button" data-progression-keep-draft hidden>Keep Draft and Close</button><button class="progression-delete" type="button" data-progression-delete hidden>Delete Alternative</button></div>
     </div>
     <div class="table-wrap" data-progress-table></div>
     <p data-progression-error role="alert"></p>
@@ -2611,22 +2711,52 @@ function openProgression(id) {
   <section class="progression-comparison-section" data-progression-comparison hidden></section></form>`;
   updateProgressionEditor();
   progressionDialog.showModal();
+  if(newAlternative)progressionDialog.querySelector('[data-pfield="planned"]').focus();
   queueProgressionAutosave(true);
   if(window.lucide)lucide.createIcons({attrs:{width:18,height:18}});
 }
 function askProgressionChoice(title,description,choices){return new Promise(resolve=>{const d=document.createElement('dialog');d.className='progression-discard-dialog';d.innerHTML=`<h2>${esc(title)}</h2><p>${esc(description)}</p><div class="actions">${choices.map(([id,label])=>`<button type="button" data-choice="${id}">${esc(label)}</button>`).join('')}</div>`;document.body.append(d);let settled=false;const done=id=>{if(settled)return;settled=true;d.close();d.remove();resolve(id);};d.onclick=event=>{const b=event.target.closest('[data-choice]');if(b)done(b.dataset.choice);};d.oncancel=event=>{event.preventDefault();done('keep');};d.showModal();d.querySelector('button').focus();});}
 function progressionEntry(){if(!progressionExercise||progressionExercise.owner!==owner||progressionExercise.athlete!==current?.id)return null;return allEntries().find(x=>x.e.id===progressionExercise.id)?.e||null;}
-function progressionSaveStatus(state,text){const status=progressionDialog.querySelector('[data-progression-save-status]');if(status){status.dataset.state=state;status.textContent=text;}const retry=progressionDialog.querySelector('[data-progression-retry]');if(retry)retry.hidden=state!=='error';}
+function progressionSaveStatus(state,text){const status=progressionDialog.querySelector('[data-progression-save-status]');if(status){status.dataset.state=state;status.textContent=text;}const retry=progressionDialog.querySelector('[data-progression-retry]');if(retry)retry.hidden=state!=='error';const keep=progressionDialog.querySelector('[data-progression-keep-draft]');if(keep)keep.hidden=true;}
 function syncProgressionDraft(){const e=progressionEntry();if(!e||!progressionDraft)return false;e.progression=clone(progressionDraft);preserveDraft();return true;}
 function progressionGuidance(){const track=activeProgression(),raw=track.weeksInput,n=Number(raw),message=String(raw).trim()===''||!Number.isInteger(n)||n<1||n>52?'Choose a whole number from 1 to 52 weeks.':LZProgression.validate(track);const status=progressionDialog.querySelector('[data-progression-error]');if(status)status.textContent=message?'Saved as entered. '+message:'';}
-function progressionAutosaveError(err,token=progressionToken){if(token!==progressionToken)return;syncProgressionDraft();progressionSaveStatus('error','Saving failed. Your work is preserved on this device where possible.');const status=progressionDialog.querySelector('[data-progression-error]');if(status)status.textContent=err.message||String(err);error(err);}
+function progressionAutosaveError(err,token=progressionToken){
+  if(token!==progressionToken||!progressionEntry())return;
+  syncProgressionDraft();
+  const kept=preserveDraft();
+  progressionSaveStatus('error',kept?'Saving failed. Your draft is preserved on this device.':'Saving failed. Keep this editor open and retry.');
+  progressionDialog.querySelector('[data-progression-keep-draft]').hidden=!kept;
+  progressionDialog.querySelector('[data-progression-error]').textContent=err.message||String(err);
+  error(err);
+}
 function queueProgressionAutosave(immediate=false){if(!syncProgressionDraft())return Promise.resolve();progressionRevision++;progressionSaveStatus('saving','Saving…');clearTimeout(progressionTimer);if(immediate){const token=progressionToken;return flushProgressionAutosave().catch(err=>{progressionAutosaveError(err,token);});}progressionTimer=setTimeout(()=>{const token=progressionToken;flushProgressionAutosave().catch(err=>progressionAutosaveError(err,token));},350);return Promise.resolve();}
 async function flushProgressionAutosave(){clearTimeout(progressionTimer);const token=progressionToken;if(!progressionEntry()||!progressionDraft)return;if(progressionSaving){await progressionSaving;if(token===progressionToken&&progressionRevision>progressionSavedRevision)return flushProgressionAutosave();return;}const operation=(async()=>{while(token===progressionToken&&progressionRevision>progressionSavedRevision){const revisionToSave=progressionRevision;if(!syncProgressionDraft())return;progressionSaveStatus('saving','Saving…');await flush();if(token!==progressionToken||!progressionEntry())return;progressionSavedRevision=revisionToSave;}if(token===progressionToken){progressionSaveStatus('saved','Saved');progressionGuidance();progressComparisonPanel();}})();progressionSaving=operation;try{await operation;}finally{if(progressionSaving===operation)progressionSaving=null;}}
-async function requestProgressionClose(){if(progressionClosing)return;progressionClosing=true;const token=progressionToken;try{await flushProgressionAutosave();if(token===progressionToken){progressionDialog.close();render();}}catch(err){progressionAutosaveError(err,token);}finally{progressionClosing=false;}}
+function finishProgressionClose(){
+  const context=progressionExercise;
+  const shouldRender=Boolean(progressionEntry());
+  clearTimeout(progressionTimer);
+  progressionToken++;
+  progressionExercise=null;
+  progressionDraft=null;
+  progressionDialog.close();
+  if(shouldRender){
+    render();
+    const selector=`[data-create-progression="${context.id}"]`+(context.newAlternative?'[data-new-alternative]':':not([data-new-alternative])');
+    screen.querySelector(selector)?.focus({preventScroll:true});
+  }
+}
+async function requestProgressionClose(){
+  if(progressionClosing)return;
+  progressionClosing=true;
+  const token=progressionToken;
+  try{await flushProgressionAutosave();if(token===progressionToken)finishProgressionClose();}
+  catch(err){progressionAutosaveError(err,token);}
+  finally{progressionClosing=false;}
+}
 window.addEventListener('beforeunload',()=>{if(progressionDialog.open){syncProgressionDraft();flushProgressionAutosave().catch(()=>{});}});
 window.addEventListener('blur',()=>{if(progressionDialog.open){const token=progressionToken;flushProgressionAutosave().catch(err=>progressionAutosaveError(err,token));}});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&progressionDialog.open){const token=progressionToken;syncProgressionDraft();flushProgressionAutosave().catch(err=>progressionAutosaveError(err,token));}});
-screen.addEventListener('click',event=>{const b=event.target.closest('[data-create-progression]');if(b){event.stopImmediatePropagation();openProgression(Number(b.dataset.createProgression));}},true);
+screen.addEventListener('click',event=>{const b=event.target.closest('[data-create-progression]');if(b){event.stopImmediatePropagation();openProgression(Number(b.dataset.createProgression),b.hasAttribute('data-new-alternative'));}},true);
 screen.addEventListener('change',event=>{if(event.target.matches('[data-key="priority"]'))applyGoalRowColors();});
 root.addEventListener('dragover',event=>{if(!dragged)return;const target=event.target.closest('.day');screen.querySelectorAll('.day.drop-target').forEach(n=>{if(n!==target)n.classList.remove('drop-target');});target?.classList.add('drop-target');});
 root.addEventListener('dragleave',event=>{const day=event.target.closest('.day');if(day&&!day.contains(event.relatedTarget))day.classList.remove('drop-target');});
@@ -2649,13 +2779,19 @@ progressionDialog.addEventListener('input', event=>{
 });
 progressionDialog.addEventListener('change', event=>{
   const el=event.target;
-  if(el.dataset.pweek!==undefined || el.matches('[data-progression-weeks]'))queueProgressionAutosave(true);
+  if(el.dataset.pweek!==undefined || el.matches('[data-progression-weeks]')){
+    progressComparisonPanel();
+    queueProgressionAutosave(true);
+  }
 });
 progressionDialog.addEventListener('click', async event=>{
   if(event.target.closest('[data-close-progression]')){
     requestProgressionClose();
   }else if(event.target.closest('[data-progression-retry]')){
     queueProgressionAutosave(true);
+  }else if(event.target.closest('[data-progression-keep-draft]')){
+    if(syncProgressionDraft()&&preserveDraft())finishProgressionClose();
+    else progressionSaveStatus('error','The draft could not be kept on this device. Keep this editor open and retry.');
   }else if(event.target.closest('[data-progression-add]')){
     progressionTrackId=LZProgression.addAlternative(progressionDraft).id;
     updateProgressionEditor();
@@ -2676,7 +2812,7 @@ progressionDialog.addEventListener('click', async event=>{
     progressionDraft.alternatives=progressionDraft.alternatives.filter(item=>item.id!==track.id);
     progressionTrackId=0;
     updateProgressionEditor();
-    (progressionDialog.querySelector('[data-progression-add]')||progressionDialog.querySelector('[data-close-progression]')).focus();
+    progressionDialog.querySelector('[data-progression-add]').focus();
     queueProgressionAutosave(true);
   }
 });
@@ -2689,7 +2825,7 @@ function goalProgressionView() {
     const p=e.progression?LZProgression.ensure(LZProgression.create(e.progression,e.mode)):null;
     return `<article class="goal-progression-card" data-progression-entry="${e.id}"><header>
       <div>${exerciseNumberLabel(e,d)}<h3>${esc(e.name||'Unnamed Exercise')}</h3><p>${esc(d.name)} · ${esc(e.role)}</p></div>
-      <button class="primary" data-create-progression="${e.id}">${p?'Edit Progression':'Create Progression'}</button>
+      ${progressionEntryActions(e)}
     </header>${progressionGoal(e)}${p?progressionComparison(p):'<p>No progression entered yet.</p>'}</article>`;
   }).join('')}</div>`;
 }
@@ -2706,7 +2842,7 @@ bootstrap();
 <script src="whiteboard-v2-store.js?v=20261117-empty-trash"></script>
 <script src="whiteboard-shared-store.js?v=20261116"></script>
 <script src="whiteboard-v2.js?v=20261119-cell-color"></script>
-<script src="anatomy-zone.js?v=squat-balance"></script>
+<script src="anatomy-zone.js?v=johnny-mark-iii"></script>
 <script>
 (()=>{'use strict';
 let active='programs',libraryInstance=null,navigation=Promise.resolve(),contentEpoch=0,loadAbort=null;const board=document.querySelector('#student-learning-board'),extra=document.querySelector('#extra-zone'),heading=document.querySelector('#zone-heading');

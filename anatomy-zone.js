@@ -1,7 +1,7 @@
 /* Learning Zone Anatomy, lazy local asset entry. */
 (function(){
   'use strict';
-  const VERSION='20261119-squat-balance';
+  const VERSION='20261119-johnny-mark-iii';
   if(window.LZAnatomy?.version===VERSION)return;
   const source=document.currentScript?.src||new URL('anatomy-zone.js',document.baseURI).href;
   const base=new URL('./anatomy/',source);
@@ -20,7 +20,7 @@
   function loadStyle(){
     if(style)return style;
     style=new Promise((resolve,reject)=>{
-      const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('anatomy-zone.css?v=6e936bc0438c',base).href;
+      const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('anatomy-zone.css?v=2ccedc9d63f9',base).href;
       link.onload=()=>{link.onload=link.onerror=null;resolve();};
       link.onerror=()=>{link.remove();style=null;reject(Error('Anatomy Zone styles could not load. Open the zone again to retry.'));};
       document.head.appendChild(link);

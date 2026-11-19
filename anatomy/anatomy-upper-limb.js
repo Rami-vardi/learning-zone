@@ -63,87 +63,90 @@ window.azAttachUpperSkeleton = function(parts) {
   for (const item of parts.cervicalMeshes) discard(item);
   for (let index = 1; index <= 7; index++) add(head, 'C' + index, parts.contextMaterial);
 
-  // Track the actual posterolateral rib surface as the chest flexes. The
-  // blade stays rigid, with its glenoid fixed at the shoulder throughout.
+  // Follow the outer rib envelope between adjacent ribs. Each surface normal
+  // includes the slope toward the neck as well as curvature around the chest.
   function chestSurface(side) {
-    const samples = [], point = new T.Vector3();
-    for (let level=1; level<=9; level++) {
-      const frame=parts.ribs[(level-1)*2+(side===1?1:0)], mesh=frame.children[0];
-      const vertices=mesh.geometry.attributes.position, sectors=[];
+    const rows=[], point=new T.Vector3();
+    for (let level=1;level<=10;level++) {
+      const frame=parts.ribs[(level-1)*2+(side===1?1:0)], vertices=frame.children[0].geometry.attributes.position;
+      const row=new Map();
       frame.updateMatrix();
-      for (let index=0; index<vertices.count; index++) {
-        point.fromBufferAttribute(vertices,index).applyMatrix4(frame.matrix);
-        const x=point.x*side, z=point.z+.04;
-        if (x<.18 || z>.04) continue;
-        const sector=Math.floor((Math.atan2(-z,x)+.15)*10), radius=x*x+z*z;
-        if (!sectors[sector] || radius>sectors[sector].radius) sectors[sector]={radius,index};
+      for (let i=0;i<vertices.count;i++) {
+        point.fromBufferAttribute(vertices,i).applyMatrix4(frame.matrix);
+        const x=side*point.x, z=-point.z-.04, angle=Math.atan2(z,x);
+        if(x<.08 || angle<-.35 || angle>1.46)continue;
+        const sector=Math.round(angle/.105),radius=x*x+z*z;
+        if(!row.has(sector)||radius>row.get(sector).radius)row.set(sector,{frame,vertices,i,radius,sector,point:new T.Vector3(),normal:new T.Vector3()});
       }
-      for (const cell of sectors) if (cell) samples.push({frame,vertices,index:cell.index,point:new T.Vector3()});
+      rows.push(row);
     }
-    return samples;
+    const samples=[];
+    for(let r=0;r<rows.length;r++)for(const [s,p] of rows[r]){
+      p.before=rows[r].get(s-1)||p;p.after=rows[r].get(s+1)||p;
+      p.above=rows[r-1]?.get(s)||p;p.below=rows[r+1]?.get(s)||p;
+      if(p.before!==p.after&&p.above!==p.below)samples.push(p);
+    }
+    return {rows,samples,side};
+  }
+  const tangent=new T.Vector3(), vertical=new T.Vector3();
+  function updateChest(chest) {
+    for(const row of chest.rows){
+      const frame=row.values().next().value.frame;frame.updateMatrix();
+      for(const p of row.values())p.point.fromBufferAttribute(p.vertices,p.i).applyMatrix4(frame.matrix);
+    }
+    for(const p of chest.samples){
+      tangent.subVectors(p.after.point,p.before.point);
+      vertical.subVectors(p.above.point,p.below.point);
+      p.normal.crossVectors(tangent,vertical).normalize().multiplyScalar(chest.side);
+    }
   }
   function bladeContactPoints(shape,frame,side) {
     const cells=new Map(), point=new T.Vector3(), vertices=shape.attributes.position;
-    for (let i=0; i<vertices.count; i++) {
+    for(let i=0;i<vertices.count;i++){
       point.fromBufferAttribute(vertices,i).applyMatrix4(frame.matrix);
-      if (point.y>.87 || point.x*side>.94) continue;
-      const cell=Math.floor(point.y/.115)+','+Math.floor(point.x*side/.12);
-      if (!cells.has(cell) || point.z>cells.get(cell).z) cells.set(cell,point.clone());
+      if(point.y>.91||point.x*side>.92)continue;
+      const cell=Math.floor(point.y/.085)+','+Math.floor(point.x*side/.085);
+      if(!cells.has(cell)||point.z>cells.get(cell).z)cells.set(cell,point.clone());
     }
     const inverse=frame.matrix.clone().invert();
     return [...cells.values()].map(p=>p.applyMatrix4(inverse));
   }
-  const shift=new T.Vector3(), radial=new T.Vector3(), probe=new T.Vector3(), before=new T.Vector3();
+  const probe=new T.Vector3(), before=new T.Vector3();
   const axisX=vector(1,0,0), axisY=vector(0,1,0), axisZ=vector(0,0,1), increment=new T.Quaternion();
-  const ribAverage=new T.Vector3();
-  function seatBlade(frame,pivot,ribs,markers,exercise) {
-    for (const sample of ribs) {
-      sample.frame.updateMatrix();
-      sample.point.fromBufferAttribute(sample.vertices,sample.index).applyMatrix4(sample.frame.matrix);
-    }
-    for (let iteration=0; iteration<4; iteration++) {
-      frame.updateMatrix(); before.copy(pivot).applyMatrix4(frame.matrix);
-      let xx=.10, yy=.10, zz=.32, xy=0, xz=0, yz=0, bx=0, by=0, bz=0;
-      for (const marker of markers) {
+  const pivotA=new T.Vector3(),pivotB=new T.Vector3(), surfaceNormal=new T.Vector3(),armLever=new T.Vector3(),moment=new T.Vector3();
+  function seatBlade(frame,pivot,acromion,chest,markers,clearance,stiffness) {
+    updateChest(chest);
+    frame.updateMatrix();before.copy(pivot).applyMatrix4(frame.matrix);
+    pivotA.subVectors(before,start).normalize();
+    // Rotations about either attachment axis preserve both joint contacts
+    // and clavicle length. Solve together, with a small soft tissue clearance.
+    let totalA=0,totalB=0;
+    for (let iteration=0;iteration<5;iteration++) {
+      pivotB.copy(acromion).applyMatrix4(frame.matrix).sub(before).normalize();
+      let aa=.24+stiffness,ab=0,bb=.24+stiffness,ar=-stiffness*totalA,br=-stiffness*totalB;
+      for(const marker of markers){
         probe.copy(marker).applyMatrix4(frame.matrix);
-        let best=Infinity, nearest, total=0;
-        ribAverage.set(0,0,0);
-        for (const {point} of ribs) {
-          const distance=point.distanceToSquared(probe);
-          if (distance<best) {best=distance;nearest=point;}
-          if (exercise) {
-            const weight=1/(.035+distance)**3;
-            ribAverage.addScaledVector(point,weight);
-            total+=weight;
-          }
+        let sum=0,gap=0;surfaceNormal.set(0,0,0);
+        for(const sample of chest.samples){
+          const dx=probe.x-sample.point.x,dy=probe.y-sample.point.y,dz=probe.z-sample.point.z;
+          const d2=dx*dx+dy*dy+dz*dz;
+          const inv=1/(.009+d2),weight=inv*inv*inv;
+          const n=sample.normal;gap+=weight*(dx*n.x+dy*n.y+dz*n.z);sum+=weight;
+          surfaceNormal.addScaledVector(n,weight);
         }
-        if (!nearest) continue;
-        if (exercise) nearest=ribAverage.divideScalar(total);
-        radial.set(nearest.x,0,nearest.z+.04).normalize();
-        const clearance=shift.copy(probe).sub(nearest).dot(radial);
-        const error=.055-clearance;
-        const weight=exercise?3-2*T.MathUtils.smoothstep(clearance,-.015,.045):clearance<.015?3:1;
-        shift.copy(probe).sub(before);
-        const dx=radial.z*shift.y, dy=radial.x*shift.z-radial.z*shift.x, dz=-radial.x*shift.y;
-        xx+=weight*dx*dx; xy+=weight*dx*dy; yy+=weight*dy*dy;
-        xz+=weight*dx*dz; yz+=weight*dy*dz; zz+=weight*dz*dz;
-        bx+=weight*dx*error; by+=weight*dy*error; bz+=weight*dz*error;
+        gap/=sum;surfaceNormal.divideScalar(sum);
+        const error=clearance-gap, weight=1+12*(1-T.MathUtils.smoothstep(gap,-.015,.038));
+        armLever.subVectors(probe,before);moment.crossVectors(armLever,surfaceNormal);
+        const a=moment.dot(pivotA),b=moment.dot(pivotB);
+        aa+=weight*a*a;ab+=weight*a*b;bb+=weight*b*b;ar+=weight*a*error;br+=weight*b*error;
       }
-      const diagonal=zz-yz*yz/yy, mixed=xz-xy*yz/yy, xDiagonal=xx-xy*xy/yy;
-      const xRhs=bx-xy*by/yy, zRhs=bz-yz*by/yy, determinant=xDiagonal*diagonal-mixed*mixed;
-      const rawPitch=(diagonal*xRhs-mixed*zRhs)/determinant;
-      const rawRoll=(xDiagonal*zRhs-mixed*xRhs)/determinant;
-      const pitch=T.MathUtils.clamp(rawPitch,-.13,.13), roll=T.MathUtils.clamp(rawRoll,-.09,.09);
-      const yaw=T.MathUtils.clamp((by-xy*rawPitch-yz*rawRoll)/yy,-.19,.19);
-      frame.quaternion.premultiply(increment.setFromAxisAngle(axisX,pitch));
-      frame.quaternion.premultiply(increment.setFromAxisAngle(axisY,yaw));
-      frame.quaternion.premultiply(increment.setFromAxisAngle(axisZ,roll));
-      frame.updateMatrix();
-      frame.position.add(before.sub(probe.copy(pivot).applyMatrix4(frame.matrix)));
+      const det=aa*bb-ab*ab, a=T.MathUtils.clamp((bb*ar-ab*br)/det,-.13,.13), b=T.MathUtils.clamp((aa*br-ab*ar)/det,-.13,.13);
+      totalA+=a;totalB+=b;
+      frame.quaternion.premultiply(increment.setFromAxisAngle(pivotB,b));
+      frame.quaternion.premultiply(increment.setFromAxisAngle(pivotA,a));
+      frame.updateMatrix();frame.position.add(armLever.copy(before).sub(probe.copy(pivot).applyMatrix4(frame.matrix)));frame.updateMatrix();
     }
-    frame.updateMatrix();
   }
-
   const joints = [];
   sternum.updateMatrix();
   for (const arm of arms) {
@@ -304,7 +307,7 @@ window.azAttachUpperSkeleton = function(parts) {
     segment.quaternion.copy(rotation.setFromRotationMatrix(basis.makeBasis(lateral,axis,forward)));
   }
 
-  function alignClavicle(scapula, headCentre, acromion, allowGlide) {
+  function alignClavicle(scapula, headCentre, acromion) {
     scapula.updateMatrix();
     joint.copy(headCentre).applyMatrix4(scapula.matrix);
     end.copy(acromion).applyMatrix4(scapula.matrix);
@@ -319,21 +322,12 @@ window.azAttachUpperSkeleton = function(parts) {
     acromionArc.copy(acromionOffset).addScaledVector(collarAxis,-acromionOffset.dot(collarAxis));
     acromionArc.setLength(Math.sqrt(Math.max(0,radius ** 2 - along ** 2))).addScaledVector(collarAxis,along);
     collarRotation.setFromUnitVectors(acromionOffset.normalize(),acromionArc.normalize());
-    const correction = 2 * Math.acos(Math.min(1,Math.abs(collarRotation.w)));
-    if (correction > .50) collarRotation.slerp(increment.identity(),1 - .50 / correction);
     scapula.quaternion.premultiply(collarRotation);
     scapula.updateMatrix();
     scapula.position.add(joint.sub(target.copy(headCentre).applyMatrix4(scapula.matrix)));
     scapula.updateMatrix();
 
-    end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
-    const reach = end.length();
-    if (allowGlide) {
-      // Free shoulder motion can glide along the thorax to finish the fit.
-      // Exercise shoulders are set by the contact solver and stay fixed.
-      scapula.position.addScaledVector(end,(clavicleLength - reach) / reach);
-      scapula.updateMatrix();
-    }
+
   }
   const fit = function(movement) {
     for (const {arm, exercise, exerciseHand, scapula, headCentre, acromion, sternoclavicular, chest, bladePoints} of joints) {
@@ -347,11 +341,16 @@ window.azAttachUpperSkeleton = function(parts) {
         scapula.position.add(target.sub(joint));
         scapula.updateMatrix();
       }
-      if (scapula.visible && torso.visible) seatBlade(scapula,headCentre,chest,bladePoints,exerciseArms.visible);
       arm.clavicle.visible = exerciseArms.visible || scapula.visible || arm.node.visible;
       sternum.updateMatrix();
       start.copy(sternoclavicular).applyMatrix4(sternum.matrix);
-      alignClavicle(scapula,headCentre,acromion,!exerciseArms.visible);
+      if(exerciseArms.visible)alignClavicle(scapula,headCentre,acromion);
+      else{
+        end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
+        scapula.position.addScaledVector(end,clavicleLength/end.length()-1);
+        scapula.updateMatrix();
+      }
+      if(scapula.visible&&torso.visible)seatBlade(scapula,headCentre,acromion,chest,bladePoints,exerciseArms.visible?.044:.058,movement==='tension_cat'?2.4:0);
       if (!exerciseArms.visible) arm.node.position.copy(joint.copy(headCentre).applyMatrix4(scapula.matrix));
       end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
       arm.clavicle.position.copy(start);

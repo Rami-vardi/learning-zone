@@ -17,6 +17,6 @@ The fibula uses the same BodyParts3D 4.0 Human Atlas source. Both sides are fitt
 
 Seven tarsals, five metatarsals, fourteen toe phalanges and two hallux sesamoids per foot use BodyParts3D 4.0 via the same Human Atlas source assembly. The left foot's bones were simplified, rotated in their shared frame, scaled to the ankle rig, quantized and mirrored for the right foot. Arch articulation illustrates the coupling observed under load (https://pubmed.ncbi.nlm.nih.gov/29134100/). Joint excursions and contact diagrams are teaching approximations.
 
-Johnny’s display skull is sculpted for Learning Zone. It is a stylized character model.
+Johnny’s articulated helmet was modeled for Learning Zone. Inside it, the skull uses 46 cranial and dental structures from BodyParts3D 4.0 via the Human Atlas assembly credited above. Each structure was simplified independently and fitted to the helmet.
 
 The locomotion comparison reuses the credited BodyParts3D human pelvis, skull and limb surfaces. Chimpanzee skull and pelvic shapes are schematic adaptations, and limb lengths have been adjusted for the comparison. The infant figure and movement sequences were created for Learning Zone.

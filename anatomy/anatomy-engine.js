@@ -1,10 +1,10 @@
 (function(){
   'use strict';
   const deadliftBuilds=window.azDeadliftBuilds={
-    longLong:{label:'Long torso, long arms',torso:1.10,arm:1.09},
-    longShort:{label:'Long torso, short arms',torso:1.10,arm:.91},
-    shortLong:{label:'Short torso, long arms',torso:.90,arm:1.09},
-    shortShort:{label:'Short torso, short arms',torso:.90,arm:.91}
+    longLong:{label:'Long torso, long arms',torso:0.8250,arm:1.2317},
+    longShort:{label:'Long torso, short arms',torso:0.8250,arm:1.0283},
+    shortLong:{label:'Short torso, long arms',torso:0.6750,arm:1.2317},
+    shortShort:{label:'Short torso, short arms',torso:0.6750,arm:1.0283}
   };
   // Relative sagittal turns from L5 upward, fitted to the two ends of each
   // lesson's spine. Seventeen evenly spaced poses share the same atlas disc
@@ -26,11 +26,6 @@
     cgoblet:'+fP1/gYJCwwMDAkE/PPq+fP1/wcJDA0NDAoE/PLn+vL1AAkLDQ8ODgoE++/k+vL2AgsMDxAQDwsE+u3g+/L2Aw4NEBIREAwE+evd+/L2BRAPEhMSEQwE+Ona/PP3BhIQExQTEg0E9+fX/PP4BxQRFBUUEg0E9uXV/fP4CRYSFRYVEw4E9ePS/fT5ChgTFhgWFA4D9OHP/vT6DBoVGBkXFQ4D8+DN/vX7DhwWGRoYFQ8D8t7L//X8Dx4WGhoZFg8C8d3JAPb9ESAXGhsZFg8C8NvHAPf/EiIYGxwaFg4B79rGAfgAFCMZHBwaFg4B79nEAvkBFSUZHB0aFg4B7tjE',
     csafety:'+fP1/gYJCwwMDAkE/PPp+vP1AAgKDA4NDQoE+/Hm+vL2AQsMDhAPDgsE+u7i+/L2Aw4NEBIREAwE+evd+/L3BRAPEhMTEQ0E+OjZ/PP3BxMRFBUUEg0E9ubW/fP4CRYSFRYVEw4E9ePS/fT5CxkUFxgXFA4D9OHP/vT7DRsVGBkYFQ4D8t/L//X8Dx4WGhoZFg8C8d3JAPf+ESAYGxsZFg8C8NvHAfj/FCMZHBwaFg4B79nFAvkBFiUaHR0aFg4A7dfEA/sDGCgbHh4bFg7/7NXEBfwFGiocHh4bFg3+6tPEBv4HHS0cHx4bFgz96dHECP8IHi8dHx8bFgz86NDE',
     tension_cat:'bhySktE8PDw7KMnExMTEbg2Skto8PDw6HsfExMTEbvmYmv40NDU0FczIx8TEbQTBxAEHBwoNAOfh2MnEaw/o6e3m5ejs8vbz6tjHYwb08Ozm5eXn6+7v7ujaQQkC+PDq5+bl5ujr8PX4ChMPAfXv6+jn5uju9gIP0hoWB/v28u/u7vD2/wwarRkWDQYDAP79/P0ABQwTpBgbFQ8NCwkIBgYHCg0RqRkjGxQRDgwKCQgKDhQZrhspHxYSDwwKCQkMEhkgshwtIRcTDw0LCQoNFBwksx0uIhgTDw0KCQoOFB0mtB0vIhgTDw0KCQoOFR4mtB0vIhgTDw0KCQoOFR4m',
-    tension_deadlift:'a2sjICsqJyAVCPbdxMTEamYRHCssKiQZC/fbxMTEa0v6FCgtLikfEv3fxMTEaBPsCiMrLy0lGgfqyMTER+bkAhslKisnHw/318rGEejs/g0UGBkYFQ4C8eHX+vH0/gYJDA0NDAoE/PLo+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq',
-    deadlift_types_longLong:'bmAXGhsYFRAKBPzw4dDHaysBDRYYGBYSDQT35tPGUP75BQ4RExMRDgj+8eHTH/7+AgQFBQUFBAL/+/fyBQQDAf/+/v39/f7/AAMFAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQH',
-    deadlift_types_longShort:'bm5sZ14i7d748N3JycoPbmlKQDMRAvn89Ojf2dTrbT8PFRkXFhMOCAD05NPHWQf6BhATFRQSDgj97t3OJ/39AgYHBwcHBQP/+vPtBwMDAf///v7+/v7/AAIEAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQH',
-    deadlift_types_shortLong:'LJP1bm48PDw8Oc3FxMTECpfPYGc6Ozs7NenKxsTE87fKIzosMTMyLA3q2crE69Pb+xQdJSgoJBoH79PE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE',
-    deadlift_types_shortShort:'VUEDQ208PDws88XExMTETOzqWG48PDw4FsrExMTEIJ/iaGw8PDw7M9rGxMTE+qzQPkoyNjc2Mv/f0MfE7c7YAxohKCsqJxkC6dDE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE',
     tilt:'CwUKGSMVFxcVEw0E9+jZzQkDCBYgFBYWFRMOBfjq288HAAUSHBIUFRQSDgX67N7SBP0CDhgQExQTEQ4G++7h1gH7/wsUDxESEhENBv3w5Nr/+fwHEA0PERAQDQf+8+fe/ff6BAwLDQ8PDgwH//Xr4/r1+AEICQsNDQ0LBgD47+j49Pb+BAcJCgsLCQYB+/Tv9vP1+/8EBgcICAgGAv359fTy9Pj7AgMEBQYGBQMB/vzy8vP19/8AAQIDAwQEBAQD8PPz8/P8/f3+/wACBQcKDO709fHv+fn5+vv9AAULERbs9vfw6vb09PT19/0FDxki6fj57+fz8O/v8PP6BBIhLeX5++7k8e3r6+zv9wQVJjY=',
     foot_local:'+uXo/hAVGBgUDQLv1g==',
     foot_chain:'/jEvBOXg3d3j6fsePAUtKgTn39vc4+v9HTwLKiYE6N7a2+Ps/hw8EiYhA+re2dvj7gEcOhwhGQPs3djb5PEFHDUmHBIC7tzW2uX0CRwyLBgNAu/c1trl9gscMCsWDALx3tjc5vYJGDEnFgwD8uDa3ub1BxUzKxYMAvHe2Nzm9gkYMSwYDQLv3Nba5fYLHDAmHBIC7tzW2uX0CRwyHCEZA+zd2Nvk8QUcNRImIQPq3tnb4+4BHDoLKiYE6N7a3OPs/hw8BC4qBOff3Nzj6/wdPP0yMATl4N3d4+n6Hjw=',
@@ -830,7 +825,7 @@
     const ghost=new T.Group();scene.add(ghost);const ghostMaterial=new T.LineBasicMaterial({color:0x6f92bd,transparent:true,opacity:.15});
     function rebuildGhost(){
       ghost.children.slice().forEach(o=>{ghost.remove(o);if(o.geometry)o.geometry.dispose();});
-      model.updateMatrixWorld(true);model.traverseVisible(o=>{if(!o.isMesh||o.material===ctxM||o.parent===head||o.parent.parent===head)return;const line=new T.LineSegments(new T.EdgesGeometry(o.geometry,28),ghostMaterial);line.matrixAutoUpdate=false;line.matrix.copy(o.matrixWorld);ghost.add(line);});
+      model.updateMatrixWorld(true);model.traverseVisible(o=>{if(!o.isMesh||o.material===ctxM)return;for(let ancestor=o.parent;ancestor;ancestor=ancestor.parent)if(ancestor===head)return;const line=new T.LineSegments(new T.EdgesGeometry(o.geometry,28),ghostMaterial);line.matrixAutoUpdate=false;line.matrix.copy(o.matrixWorld);ghost.add(line);});
     }
     const labelLayer=document.createElement('div');Object.assign(labelLayer.style,{position:'absolute',inset:'0',pointerEvents:'none',overflow:'hidden'});container.style.position='relative';container.appendChild(labelLayer);
     const labelNodes=new Map(), occupied=[];
@@ -897,7 +892,56 @@
       instance.dispose();
       instance.forceContextLoss?.();
     }
-    let drag=null;
+    let drag=null,helmetFrame=0,helmetProgress=0,helmetOpen=false,helmetDistance=1,helmetYaw=0,helmetPitch=0;
+    const helmetButton=document.createElement('button');
+    helmetButton.type='button';helmetButton.className='azc-helmet-toggle';helmetButton.hidden=true;
+    helmetButton.textContent='Open helmet';helmetButton.setAttribute('aria-pressed','false');
+    container.setAttribute('role','group');
+    container.appendChild(helmetButton);
+    helmetButton.addEventListener('click',toggleHelmet);
+    function closeHelmet(){
+      if(!helmetOpen&&!helmetProgress)return;
+      cancelAnimationFrame(helmetFrame);helmetFrame=0;helmetOpen=false;helmetProgress=0;
+      skull.userData.setOpening(0);helmetButton.textContent='Open helmet';helmetButton.setAttribute('aria-pressed','false');
+    }
+    function toggleHelmet(){
+      if(!skull?.userData.setOpening||helmetButton.hidden)return;
+      if(helmetProgress===0){
+        const normal=new T.Vector3(.38,.12,1).applyQuaternion(skull.getWorldQuaternion(new T.Quaternion())).normalize();
+        helmetYaw=Math.atan2(Math.sin(Math.atan2(normal.x,normal.z)-yaw),Math.cos(Math.atan2(normal.x,normal.z)-yaw));
+        helmetPitch=Math.asin(normal.y)-pitch;helmetDistance=distance;
+      }
+      helmetOpen=!helmetOpen;
+      helmetButton.textContent=helmetOpen?'Close helmet':'Open helmet';
+      helmetButton.setAttribute('aria-pressed',String(helmetOpen));
+      cancelAnimationFrame(helmetFrame);
+      const start=performance.now(),from=helmetProgress,to=Number(helmetOpen);
+      const duration=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?0:490*Math.abs(from-to);
+      function animate(now){
+        if(disposed)return;
+        const t=duration?Math.min(1,(now-start)/duration):1;
+        helmetProgress=from+(to-from)*t;skull.userData.setOpening(helmetProgress);
+        render();if(t<1)helmetFrame=requestAnimationFrame(animate);
+      }
+      animate(start);
+    }
+    const helmetRay=new T.Raycaster();
+    function helmetAt(event){
+      if(helmetButton.hidden)return false;
+      const rect=canvas.getBoundingClientRect();
+      const pointer=new T.Vector2((event.clientX-rect.left)*2/rect.width-1,1-(event.clientY-rect.top)*2/rect.height);
+      helmetRay.setFromCamera(pointer,camera);
+      const hits=[];skull.traverseVisible(o=>{if(o.isMesh)o.raycast(helmetRay,hits);});
+      if(!hits.length)return false;
+      const nearest=Math.min(...hits.map(h=>h.distance));
+      const blockers=[];
+      model.traverseVisible(o=>{
+        if(!o.isMesh)return;
+        for(let parent=o.parent;parent;parent=parent.parent)if(parent===skull)return;
+        o.raycast(helmetRay,blockers);
+      });
+      return !blockers.some(h=>h.distance<nearest-.004);
+    }
     function configureCanvas(){
       clearCanvasEvents();
       drag=null;
@@ -911,21 +955,28 @@
         onCanvas('webglcontextrestored',render);
       }
       onCanvas('pointerdown',e=>{
-        drag={x:e.clientX,y:e.clientY};
+        if(drag||e.button!==0)return;
+        drag={id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:false};
         canvas.setPointerCapture(e.pointerId);
         canvas.style.cursor='grabbing';
       });
       onCanvas('pointermove',e=>{
-        if(!drag)return;
+        if(!drag||e.pointerId!==drag.id)return;
+        if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5)return;
+        drag.moved=true;
         yaw-=(e.clientX-drag.x)*.008;
         pitch=T.MathUtils.clamp(pitch+(e.clientY-drag.y)*.006,-Math.PI/2,Math.PI/2);
-        drag={x:e.clientX,y:e.clientY};
+        drag.x=e.clientX;drag.y=e.clientY;
         controls.onOrbit?.(yaw,pitch);
         render();
       });
-      const end=()=>{drag=null;canvas.style.cursor='grab';};
-      onCanvas('pointerup',end);
-      onCanvas('pointercancel',end);
+      const end=e=>{
+        if(!drag||e.pointerId!==drag.id)return;
+        const tap=e.type==='pointerup'&&!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5;
+        drag=null;canvas.style.cursor='grab';
+        if(tap&&helmetAt(e))toggleHelmet();
+      };
+      onCanvas('pointerup',end);onCanvas('pointercancel',end);onCanvas('lostpointercapture',end);
       onCanvas('wheel',e=>{
         e.preventDefault();
         const factor=e.deltaY>0?1.06:1/1.06;
@@ -985,20 +1036,25 @@
         if(!mesh.isMesh||!mesh.material.visible||mesh.material.opacity<=0)return;
         const geometry=mesh.geometry,{position,color}=geometry.attributes,index=geometry.index;
         const material=mesh.material,vertexColors=material.vertexColors&&color;
-        const normalization=vertexColors?.normalized&&vertexColors.array.BYTES_PER_ELEMENT===1?1/255:1;
         let projected=projectedBuffers.get(geometry);
-        if(!projected){projected=new Float32Array(position.count*3);projectedBuffers.set(geometry,projected);}
+        if(!projected){projected=new Float32Array(position.count*4);projectedBuffers.set(geometry,projected);}
         cameraModel.multiplyMatrices(projection,mesh.matrixWorld);
         for(let i=0;i<position.count;i++){
-          point.fromBufferAttribute(position,i).applyMatrix4(cameraModel);
-          projected[i*3]=(point.x*.5+.5)*width;
-          projected[i*3+1]=(-point.y*.5+.5)*height;
-          projected[i*3+2]=point.z;
+          point.fromBufferAttribute(position,i);
+          const matrix=cameraModel.elements,offset=i*4;
+          projected[offset+3]=matrix[3]*point.x+matrix[7]*point.y+matrix[11]*point.z+matrix[15];
+          point.applyMatrix4(cameraModel);
+          projected[offset]=(point.x*.5+.5)*width;
+          projected[offset+1]=(-point.y*.5+.5)*height;
+          projected[offset+2]=point.z;
         }
         const len=index?index.count:position.count;
         for(let i=0;i<len;i+=3){
           const ia=index?index.getX(i):i,ib=index?index.getX(i+1):i+1,ic=index?index.getX(i+2):i+2;
-          const a=ia*3,b=ib*3,c=ic*3;
+          const a=ia*4,b=ib*4,c=ic*4;
+          // A perspective divide reverses points behind the eye. Exclude
+          // those facets before the software painter sorts the visible head.
+          if(Math.min(projected[a+3],projected[b+3],projected[c+3])<camera.near)continue;
           let ax=projected[a],ay=projected[a+1],bx=projected[b],by=projected[b+1],cx=projected[c],cy=projected[c+1];
           const winding=(bx-ax)*(cy-ay)-(by-ay)*(cx-ax);
           if(Math.abs(winding)<.08||
@@ -1008,10 +1064,9 @@
           if(Math.min(az,bz,cz)>1||Math.max(az,bz,cz)<-1)continue;
           displayColor.copy(material.color);
           if(vertexColors){
-            const rgb=vertexColors.array;
-            displayColor.r*=(rgb[a]+rgb[b]+rgb[c])*normalization/3;
-            displayColor.g*=(rgb[a+1]+rgb[b+1]+rgb[c+1])*normalization/3;
-            displayColor.b*=(rgb[a+2]+rgb[b+2]+rgb[c+2])*normalization/3;
+            displayColor.r*=(vertexColors.getX(ia)+vertexColors.getX(ib)+vertexColors.getX(ic))/3;
+            displayColor.g*=(vertexColors.getY(ia)+vertexColors.getY(ib)+vertexColors.getY(ic))/3;
+            displayColor.b*=(vertexColors.getZ(ia)+vertexColors.getZ(ib)+vertexColors.getZ(ic))/3;
           }
           if(!material.isMeshBasicMaterial){
             ma.fromBufferAttribute(position,ia).applyMatrix4(mesh.matrixWorld);
@@ -1101,7 +1156,22 @@
       }
       ctx.stroke();
     }
-    function cameraUpdate(){camera.up.set(-Math.sin(yaw)*Math.sin(pitch),Math.cos(pitch),-Math.cos(yaw)*Math.sin(pitch));camera.position.set(target.x+Math.sin(yaw)*Math.cos(pitch)*distance,target.y+Math.sin(pitch)*distance,target.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.lookAt(target);camera.updateProjectionMatrix();}
+    function cameraUpdate(){
+      let centre=target,azimuth=yaw,elevation=pitch,radius=distance;
+      if(state.movement==='baby'&&developmentModel){
+        centre=developmentModel.babyCenter();
+      }
+      if(helmetProgress&&head.visible&&!isDevelopment()){
+        const t=helmetProgress*helmetProgress*(3-2*helmetProgress);
+        const point=skull.localToWorld(new T.Vector3(0,.28,.01));
+        centre=centre.clone().lerp(point,t);azimuth+=helmetYaw*t;
+        elevation=T.MathUtils.clamp(pitch+helmetPitch*t,-Math.PI/2,Math.PI/2);
+        radius=T.MathUtils.lerp(distance,Math.max(1.6,2.70*distance/helmetDistance),t);
+      }
+      camera.up.set(-Math.sin(azimuth)*Math.sin(elevation),Math.cos(elevation),-Math.cos(azimuth)*Math.sin(elevation));
+      camera.position.set(centre.x+Math.sin(azimuth)*Math.cos(elevation)*radius,centre.y+Math.sin(elevation)*radius,centre.z+Math.cos(azimuth)*Math.cos(elevation)*radius);
+      camera.lookAt(centre);camera.updateProjectionMatrix();
+    }
     // Use tracked points on the displayed surfaces, including deforming cartilage.
     const sideRib=ribs[9].children[0],ribPoints=sideRib.geometry.attributes.position;
     let lateralVertex=0;
@@ -1123,7 +1193,8 @@
       const tag=document.createElement('span');tag.className='azc-species-tag';tag.textContent=name;
       tag.hidden=true;labelLayer.appendChild(tag);return tag;
     });
-    function render(){if(disposed)return;cameraUpdate();
+    function render(){if(disposed)return;cameraUpdate();camera.updateMatrixWorld(true);
+      helmetButton.hidden=isDevelopment()||!head.visible||!skull||(!helmetOpen&&!screenPoint(skull.getWorldPosition(new T.Vector3())).visible);
       if(isDevelopment()){
         const comparing=state.movement==='chimp';
         const anchors=comparing?developmentModel.layout(yaw,state.mode==='chain'):[];
@@ -1155,6 +1226,12 @@
       if(state.movement==='tilt'){labelPelvicLandmarks();return;}
       const movement=state.movement;
       if(movement==='lunge'&&exerciseDebug){label('Pelvis',landmarks[2].getWorldPosition(new T.Vector3()));const f=exerciseDebug.legs.find(l=>l.side===-1),b=exerciseDebug.legs.find(l=>l.side===1);label('Right front',new T.Vector3(...f.ankle));label('Left rear',new T.Vector3(...b.ankle));return;}
+      if(movement==='deadlift_types'&&tensionDebug){
+        const leg=tensionDebug.joints[0],arm=exArms[0],bar=tensionDebug.bar;
+        label('Shoulder',arm.upper.getWorldPosition(new T.Vector3()));
+        label('Hip joint',new T.Vector3(...leg.hip));
+        label('Bar',new T.Vector3(-1.57,bar[1],bar[2]));return;
+      }
       if(exerciseIds.has(movement)){label('Pelvis',landmarks[2].getWorldPosition(new T.Vector3()));label('Shoulder',exArms[0].upper.getWorldPosition(new T.Vector3()));if(['pullup','dips'].includes(movement)&&exerciseDebug){const grip=exerciseDebug.arms[0].grip;label('Fixed grip',new T.Vector3(...grip));}else label('Ribcage',ribPoint());return;}
       if(['hike','tilt','hip','chain','ribshift'].includes(movement)){
         label('Pelvis',landmarks[2].getWorldPosition(new T.Vector3()));if(movement==='hip')label(state.side==='right'?'Right femur':'Left femur',legs[state.side==='right'?0:1].femur.localToWorld(new T.Vector3(0,-.90,.03)));
@@ -1382,22 +1459,20 @@
       const ankleY=.08-Math.min(...tensionFootPoints(legs[0]).map(v=>v.y)),ankleZ=.045;
       const thigh=Math.sqrt(1.63**2+.10**2-.05**2),shin=Math.sqrt(1.31**2+.04**2-.05**2);
       const reach=2.06*build.arm+.103,torsoY=2.25*build.torso+.17;
-      const barZ=.25,setupShin=-.048;
+      // Set the first frame from fixed joint lengths, the grounded plates and
+      // a shoulder slightly ahead of the shaft. The rear intersection places
+      // the hip behind the knee without prescribing a hip height for each build.
+      const barZ=.25,setupShin=.036,shoulderLead=.20;
       const kneeY=ankleY+shin*Math.cos(setupShin),kneeZ=ankleZ+shin*Math.sin(setupShin);
-      const startThigh=1.15+.30*(build.torso-1)-.55*(build.arm-1);
-      const hipY=kneeY+thigh*Math.cos(startThigh),hipZ=kneeZ-thigh*Math.sin(startThigh);
-      // With the feet and bar fixed, solve the hip-to-shoulder pitch that
-      // lets each build reach the shaft with the same hand placement.
-      let low=0,high=1.67;
-      for(let i=0;i<36;i++){
-        const pitch=(low+high)/2;
-        const sy=hipY+torsoY*Math.cos(pitch)-.015*Math.sin(pitch);
-        const sz=hipZ+torsoY*Math.sin(pitch)+.015*Math.cos(pitch);
-        if(Math.hypot(sy-.90,sz-barZ,1.04-deadliftGripX)>reach)low=pitch;else high=pitch;
-      }
-      const startPitch=(low+high)/2;
+      const shoulderY=.90+Math.sqrt(reach**2-(1.04-deadliftGripX)**2-shoulderLead**2);
+      const dy=shoulderY-kneeY,dz=barZ+shoulderLead-kneeZ,span=Math.hypot(dy,dz);
+      const along=(thigh**2+span**2-torsoY**2-.015**2)/(2*span);
+      const back=Math.sqrt(thigh**2-along**2);
+      const hipY=kneeY+(along*dy+back*dz)/span,hipZ=kneeZ+(along*dz-back*dy)/span;
+      const startThigh=Math.atan2(kneeZ-hipZ,hipY-kneeY);
+      const startPitch=Math.atan2(barZ+shoulderLead-hipZ,shoulderY-hipY)-Math.atan2(.015,torsoY);
       const finishLean=.052*lift;
-      const shinAngle=setupShin*(1-lift)**2-finishLean,thighAngle=startThigh*(1-lift)+finishLean;
+      const shinAngle=setupShin*(1-lift)**3-.088*Math.sin(lift*Math.PI)**.85-finishLean,thighAngle=startThigh*(1-lift)+finishLean;
       const ky=ankleY+shin*Math.cos(shinAngle),kz=ankleZ+shin*Math.sin(shinAngle);
       const hip=V(0,ky+thigh*Math.cos(thighAngle),kz-thigh*Math.sin(thighAngle));
       const Q=new T.Quaternion().setFromAxisAngle(V(1,0,0),startPitch*(1-lift)**.80);
@@ -1501,9 +1576,27 @@
       pelvis.position.copy(origin);pelvis.quaternion.copy(Q);pelvis.updateMatrixWorld(true);torso.position.copy(turn(0,1.42,0));torso.quaternion.copy(Q);head.position.copy(turn(0,2.95,-.08));head.quaternion.copy(Q);
       for(const v of spineGroups){v.node.position.copy(turn(0,v.y-3.3,v.z));v.node.quaternion.copy(Q);v.node.scale.y=build?.torso||1;}sternum.position.copy(sternumRest);
       for(const l of legs){
-        const fQ=new T.Quaternion().setFromAxisAngle(V(1,0,0),footPitch);let minY=Infinity;for(const x of tensionFootPoints(l))minY=Math.min(minY,x.clone().applyQuaternion(fQ).y);
-        const A=V(l.side*.61,.08-minY+footLift,.045),H=pelvis.localToWorld(V(l.side*.51,-.17,.005)),K=kneeTargets?.get(l.side)||twoJoint(H,A,L1,L2,V(0,0,1)),fd=K.clone().sub(H),sd=A.clone().sub(K);
-        l.root.position.copy(H);l.femur.quaternion.setFromUnitVectors(V(l.side*.10,-1.63,0).normalize(),fd.clone().normalize());l.femur.scale.set(1,1,1);l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(V(0,-1.31,.04).normalize(),sd.clone().normalize());l.shin.scale.set(1,1,1);l.root.updateMatrixWorld(true);l.foot.position.copy(l.shin.worldToLocal(A.clone()));l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(fQ);l.foot.scale.set(1,1,1);
+        const toeOut=pull?l.side*T.MathUtils.degToRad(build?14:30):0;
+        const fQ=new T.Quaternion().setFromEuler(new T.Euler(footPitch,toeOut,0,'YXZ'));
+        let minY=Infinity;
+        for(const x of tensionFootPoints(l))minY=Math.min(minY,x.clone().applyQuaternion(fQ).y);
+        const A=V(l.side*.61,.08-minY+footLift,.045),H=pelvis.localToWorld(V(l.side*.51,-.17,.005));
+        const K=kneeTargets?.get(l.side)||twoJoint(H,A,L1,L2,V(0,0,1));
+        l.root.position.copy(H);
+        l.femur.quaternion.setFromUnitVectors(V(l.side*.10,-1.63,0).normalize(),K.clone().sub(H).normalize());
+        l.shin.quaternion.setFromUnitVectors(V(0,-1.31,.04).normalize(),A.clone().sub(K).normalize());
+        if(pull){
+          // Turn the knee toward the toes around the fixed hip-to-ankle line.
+          // The hip and ankle stay fixed as the knee changes direction.
+          const turnLeg=new T.Quaternion().setFromAxisAngle(H.clone().sub(A).normalize(),toeOut);
+          K.sub(H).applyQuaternion(turnLeg).add(H);
+          l.femur.quaternion.premultiply(turnLeg);
+          l.shin.quaternion.premultiply(turnLeg);
+        }
+        l.femur.scale.set(1,1,1);l.shin.scale.set(1,1,1);
+        l.shin.position.copy(K).sub(H);l.root.updateMatrixWorld(true);
+        l.foot.position.copy(l.shin.worldToLocal(A.clone()));
+        l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(fQ);l.foot.scale.set(1,1,1);
         jointChecks.push({side:l.side,hip:H.toArray(),knee:K.toArray(),ankle:A.toArray(),footMinHeight:minY+A.y,footPitch});
       }
       for(const arm of exArms){arm.lengthFactor=build?.arm||1;const s=arm.side,S=turn(s*1.04,2.25,.02);let E,W,G;
@@ -1660,6 +1753,14 @@
     }
     function seatSurface(level){
       const {node,surface,pos,q}=level;
+      if(state.movement==='deadlift_types'){
+        // Apply each proportion in the bone's own axes. Rotating a child of
+        // a nonuniformly scaled guide would shear it during a hip hinge.
+        node.updateMatrix();
+        surface.matrixAutoUpdate=false;
+        surface.matrix.compose(pos,q,node.scale).premultiply(guideInverse.copy(node.matrix).invert());
+        surface.matrixWorldNeedsUpdate=true;return;
+      }
       workQ.copy(node.quaternion).invert();
       surface.position.copy(pos).sub(node.position).applyQuaternion(workQ).divide(node.scale);
       surface.quaternion.copy(workQ).multiply(q);
@@ -1676,7 +1777,7 @@
       const toChest=guideInverse.copy(torso.matrix).invert();
       for(let i=0;i<ribs.length;i++){
         const level=axial[16-Math.floor(i/2)],rib=ribs[i];
-        level.node.updateMatrix();level.surface.updateMatrix();rib.updateMatrix();
+        level.node.updateMatrix();if(level.surface.matrixAutoUpdate)level.surface.updateMatrix();rib.updateMatrix();
         actualFrame.multiplyMatrices(level.node.matrix,level.surface.matrix);
         ribDelta.copy(toChest).multiply(actualFrame)
           .multiply(fromGuide.copy(level.node.matrix).invert()).multiply(torso.matrix).multiply(rib.matrix);
@@ -1705,17 +1806,23 @@
       const m=state.movement;
       let key=m,phase=amount;
       if(['rdl','squat','row','press','dips','pullup'].includes(m))key+='_'+(state.scenario==='b'?'b':'a');
-      if(m==='deadlift_types')key+='_'+(deadliftBuilds[state.bodyType]?state.bodyType:'longLong');
+      const profile=m==='deadlift_types',bracedPull=profile||m==='tension_deadlift';
+      // The pelvis and the cervical bones retain their original dimensions.
+      // Seat the two ends of the scaled thoracolumbar column against them.
+      if(profile)base.pos.add(fromDisc.set(0,.049-(scale-.675)*.185,0).applyQuaternion(base.q));
       if(m==='foot'||m==='chain')key+='_'+state.mode;
       if(trunkTransition)phase=(amount+1)/2;
-      if(m==='tension_cat'||m==='tension_deadlift')phase=1-Math.abs(2*amount-1);
-      const samples=axialPoseKeys[key],end=samples.length/last-1;
+      if(m==='tension_cat')phase=1-Math.abs(2*amount-1);
+      const samples=bracedPull?null:axialPoseKeys[key],end=samples?samples.length/last-1:0;
       const frame=T.MathUtils.clamp(phase,0,1)*end,lo=Math.floor(frame),hi=Math.min(lo+1,end),mix=frame-lo;
       let angle=0;
       for(let i=1;i<=last;i++){
-        angle+=.002*T.MathUtils.lerp(samples[lo*last+i-1],samples[hi*last+i-1],mix);
+        if(samples)angle+=.002*T.MathUtils.lerp(samples[lo*last+i-1],samples[hi*last+i-1],mix);
         const v=axial[i];
-        v.q.copy(base.q).slerp(terminalFrame,i/last).multiply(stepQ.setFromAxisAngle(spineAxis,angle));
+        // The reference surfaces already contain the spinal curves. Carry the
+        // column with the pelvis throughout both braced deadlift examples.
+        if(bracedPull)v.q.copy(base.q);
+        else v.q.copy(base.q).slerp(terminalFrame,i/last).multiply(stepQ.setFromAxisAngle(spineAxis,angle));
         joinLevels(axial[i-1],v,i-1,scale);
       }
       if(!articulated){
@@ -1733,7 +1840,9 @@
         const v=neck[i];v.q.copy(lower.q).slerp(head.quaternion,(i+1)/8);
         const prev=i?neck[i-1]:lower,angle=prev.q.angleTo(v.q);
         if(angle>.098)v.q.slerp(prev.q,1-.098/angle);
-        joinLevels(prev,v,16+i);seatSurface(v);
+        joinLevels(prev,v,16+i);
+        if(profile&&i===0)v.pos.add(fromDisc.set(0,.013-(scale-.675)*.05,0).applyQuaternion(v.q));
+        seatSurface(v);
       }
       skull.position.copy(neck[6].pos).sub(head.position).applyQuaternion(workQ.copy(head.quaternion).invert());
     }
@@ -1747,10 +1856,10 @@
       }
       // Support calibration can run during pose construction. Start from the
       // reference surfaces so the previous lesson cannot alter its result.
-      for(const v of [...axial,...neck])if(v){v.surface.position.set(0,0,0);v.surface.quaternion.identity();}
+      for(const v of [...axial,...neck])if(v){v.surface.matrixAutoUpdate=true;v.surface.position.set(0,0,0);v.surface.quaternion.identity();}
       if(skull)skull.position.set(0,0,0);
       setJointPose(amount);
-      if(['tension_deadlift','tension_cat','deadlift_types'].includes(state.movement)){
+      if(state.movement==='tension_cat'){
         // Share the deepest hip angle with the lumbopelvic junction. Preserve
         // the two fitted hip centres, the planted legs and the hand supports.
         const axis=new T.Vector3(0,-1,0);
@@ -1990,8 +2099,7 @@
         distance=Math.max(verticalDistance,widthDistance);
       }
       if(m==='baby'){
-        const stage=state.babyStage||0;
-        frame(0,stage<2?.40:stage<5?.58:stage===5?.78:1.04,0,stage<5?3.65:4.35,3.55);
+        frame(0,.8,0,4.45,3.2);
       }else if(m==='chimp'){
         if(chain)frame(0,.11,0,3.62,4.28);
         else frame(0,1.69,.08,8.05,5.65);
@@ -2042,11 +2150,13 @@
       get pogoInContact(){return tensionDebug?.contact;},
       get rowPastTrunk(){return state.movement==='row'&&exerciseDebug.arms.every(arm=>arm.humeralSagittal<0);},
       debugCamera:()=>({yaw,pitch,distance,target:target.toArray()}),
-      update(next){const previous=state.movement,side=state.side,mode=state.mode,stage=state.babyStage;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||stage!==state.babyStage||(side!==state.side&&state.movement==='foot')){focus();if(!isDevelopment()){applyPose(0);rebuildGhost();}}applyPose();render();},
-      setView(name){if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=isDevelopment()?(state.movement==='baby'&&state.babyStage===5?-.42:-1.12):tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='baby'?(state.babyStage<2?.51:.23):state.movement==='chimp'?.14:state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
-      resetCamera(){yaw=0;pitch=.04;focus();render();},resize,
+      update(next){
+        if((next.movement&&next.movement!==state.movement)||(next.mode&&next.mode!==state.mode))closeHelmet();
+        const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();if(!isDevelopment()){applyPose(0);rebuildGhost();}}applyPose();render();},
+      setView(name){closeHelmet();if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=isDevelopment()?(state.movement==='baby'?.90:-1.12):tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='baby'?.27:state.movement==='chimp'?.14:state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
+      resetCamera(){closeHelmet();yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
-        if(disposed)return;disposed=true;fitShoulderGirdle?.dispose();drag=null;ro.disconnect();
+        if(disposed)return;disposed=true;cancelAnimationFrame(helmetFrame);helmetButton.removeEventListener('click',toggleHelmet);fitShoulderGirdle?.dispose();drag=null;ro.disconnect();
         clearCanvasEvents();
         const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,...tensionSpineMaterials.values(),steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
         for(const activeScene of [scene,developmentModel?.scene].filter(Boolean))activeScene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});

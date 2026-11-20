@@ -11,8 +11,21 @@
     ['Standing with support', 'Both hands hold the rail while the legs straighten. The feet stay on the mat as the pelvis rises.'],
     ['First independent steps', 'The arms stay raised for balance. Watch the weight shift toward one foot so the other foot can lift and step forward.']
   ];
+  const durations=[2.8,3.1,2.6,3.3,3.6,2.8,3.1,4.2];
+  const transitions=[.55,1.25,1.1,1.5,2.0,2.4,2.1,0];
+  const duration=durations.reduce((sum,value,i)=>sum+value+transitions[i],0);
+  function babyTime(amount){
+    let seconds=Math.max(0,Math.min(1,amount))*duration;
+    for(let i=0;i<durations.length-1;i++){
+      if(seconds<durations[i])return {stage:i,phase:seconds/durations[i],blend:0};
+      seconds-=durations[i];
+      if(seconds<transitions[i])return {stage:i,phase:1,blend:seconds/transitions[i]};
+      seconds-=transitions[i];
+    }
+    return {stage:7,phase:Math.min(1,seconds/durations[7]),blend:0};
+  }
   const lessons = {
-    baby: { title:'Baby Motor Development', source:'The eight examples illustrate changes in balance, support and coordination. Babies develop on overlapping timelines and can use different movement strategies or skip crawling.',
+    baby: { title:'Baby Motor Development', source:'This continuous illustration follows changes in balance, support and coordination. Babies develop on overlapping timelines and can use different movement strategies or skip crawling.',
       link:['WHO motor development milestones','https://www.who.int/toolkits/child-growth-standards/standards/motor-development-milestones'] },
     chimp: { title:'Human and Chimpanzee Locomotion', source:'These schematic models compare a human walking on two feet with a chimpanzee walking on its knuckles and feet. Both species also use other movement patterns.',
       link:['Comparative pelvic anatomy','https://pmc.ncbi.nlm.nih.gov/articles/PMC4305164/'] }
@@ -42,7 +55,7 @@
     }
     // Intersect two circles in the limb plane. Keep the segment lengths fixed
     // at every frame, even at full extension or when a target is out of reach.
-    function solve(a,goal,l1,l2,bend,minHeight=-Infinity) {
+    function solve(a,goal,l1,l2,bend) {
       const axis=goal.clone().sub(a), raw=axis.length();axis.normalize();
       const d=Math.max(Math.abs(l1-l2)+.0001,Math.min(l1+l2-.0001,raw));
       const tangent=bend.clone().addScaledVector(axis,-bend.dot(axis));
@@ -50,20 +63,13 @@
       const along=(l1*l1-l2*l2+d*d)/(2*d);
       const center=a.clone().addScaledVector(axis,along), radius=Math.sqrt(Math.max(0,l1*l1-along*along));
       const mid=center.clone().addScaledVector(tangent.normalize(),radius);
-      if(mid.y<minHeight){
-        const vertical=up.clone().addScaledVector(axis,-axis.y).normalize();
-        const lateral=axis.clone().cross(vertical);
-        const height=T.MathUtils.clamp((minHeight-center.y)/(radius*vertical.y),-1,1);
-        mid.copy(center).addScaledVector(vertical,radius*height)
-          .addScaledVector(lateral,Math.sign(lateral.dot(tangent)||1)*radius*Math.sqrt(1-height*height));
-      }
       return [mid,a.clone().addScaledVector(axis,d)];
     }
     pad.userData.groundSurface=true;
     const disk=new T.CylinderGeometry(1,1,.018,56);
     function floor(parent,rx,rz) {const m=mesh(parent,disk,pad);m.scale.set(rx,1,rz);m.position.y=-.012;return m;}
     const nursery=group(scene), baby=group(nursery), body=group(baby);
-    floor(nursery,1.65,2.04);
+    floor(nursery,1.63,2.80);
     oval(body,suit,0,.37,0,.325,.54,.265);
     oval(body,trim,0,.803,0,.171,.077,.151);
     const head=group(baby);
@@ -84,8 +90,9 @@
       arc(head,mouth,[vec(s*.078,.20,.289),vec(s*.108,.210,.280),vec(s*.14,.202,.268)],.006);
     }
     const rail=group(nursery);
-    rod(rail,railMat,vec(-.75,1.27,.38),vec(.75,1.27,.38),.042);
-    for(const s of [-1,1])rod(rail,railMat,vec(s*.72,0,.38),vec(s*.72,1.27,.38),.039);
+    railMat.transparent=true;
+    rod(rail,railMat,vec(.64,1.09,.09),vec(.64,1.09,1.29),.042);
+    for(const z of [.09,1.29])rod(rail,railMat,vec(.64,0,z),vec(.64,1.09,z),.039);
     const babyLimbs=[];
     for(const s of [-1,1]) for(const arm of [false,true]){
       const limb={s,arm,upper:mesh(baby,sphere,skin),lower:mesh(baby,sphere,skin),joint:mesh(baby,sphere,skin),end:mesh(baby,sphere,skin)};
@@ -106,66 +113,156 @@
       const [z,y]=plant(t,step,lift);
       return [step*(Math.floor(t)-t+.25)+z+step*.5,y];
     }
-    function poseBaby(stage,t){
-      const phase=TAU*t, wave=Math.sin(phase), ease=(1-Math.cos(Math.PI*t))*.5;
-      let y,z,lean,headLean,twist=0,side=0,roll=0;
+    // Each sample supplies joint targets in the same world frame. Interpolate
+    // the targets first, then solve the fixed length limbs once for the display.
+    const qx=a=>new T.Quaternion().setFromAxisAngle(vec(1,0,0),a);
+    const qy=a=>new T.Quaternion().setFromAxisAngle(up,a);
+    const qz=a=>new T.Quaternion().setFromAxisAngle(vec(0,0,1),a);
+    const ease=t=>t*t*(3-2*t);
+    function babySample(stage,u){
+      const t=ease(u),phase=TAU*t,wave=Math.sin(phase);
+      let y,z,lean,headLean,yaw=0,side=0,tilt=0,roll=0,headRoll=0;
       switch(stage){
-        case 0: case 1:y=.28;z=.30;lean=-Math.PI/2;headLean=lean;roll=stage===1?Math.PI*ease:0;break;
-        case 2:y=.245;z=-.38;lean=1.42-.52*ease;headLean=.60-.48*ease;break;
-        case 3:y=.25;z=-.48+.46*t;lean=1.43;headLean=.42;twist=.09*wave;break;
-        case 4:y=.63;z=-.59+.60*t;lean=1.39;headLean=.40;twist=.055*wave;break;
-        case 5:y=.285;z=-.12;lean=.10;headLean=.07;side=.13*ease;twist=.38*ease;break;
-        case 6:y=.62+.27*ease;z=-.12;lean=.20-.13*ease;headLean=.02;break;
-        default:y=.866+.024*Math.cos(2*phase);z=-.37+.66*t;lean=.14;headLean=.035;side=.07*wave;
-      }
-      body.position.set(side,y,z);body.rotation.set(lean,twist,stage===5?-.15*ease:0,'YXZ');
-      const fromBody=(x,h,d)=>vec(x,h,d).applyQuaternion(body.quaternion).add(body.position);
-      head.position.copy(fromBody(0,.84,0));head.rotation.set(headLean,twist,stage===1?-.7*ease:0,'YXZ');
-      rail.visible=stage===6;
-      for(const l of babyLimbs){
-        const {s,arm}=l, w=wave*s, start=fromBody(s*(arm?.27:.202),arm?.64:.03,0);
-        let goal, bend=vec(s*.15,.05,arm?-1:1);
-        if(stage<2){
-          goal=arm?vec(s*(stage===1?.38-.25*ease*s:.39),.42+.20*(1+w)/2-.21*(stage===1?ease:0),z-.52-.19*w-(stage===1?.34*ease:0)):vec(s*.23,.35+.13*w,z+.58+.13*w);
-          bend=arm?vec(s*.85,-.6,.1):vec(s*.17,1,0);
-        }else if(stage===2){
-          goal=arm?vec(s*.34,.062,.32):vec(s*.24,.079,-1.09);
-          bend=arm?vec(s*.5,0,-1):vec(s*.3,-1,.2);
-        }else if(stage===3){
-          const [dz,dy]=stride(t+(s>0?0:.5)+(arm?0:.5),.46,.075);
-          goal=arm?vec(s*.37,.062+dy,z+.95+dz):vec(s*(.32+.065*w),.075,z-.61+dz);
-          bend=arm?vec(s*.55,-1,-.3):vec(s*1.1,-1,.4);
-        }else if(stage===4 && !arm){
-          const [dz,dy]=stride(t+(s>0?0:.5)+.5,.60,.10);
-          const knee=vec(s*.22,.112+dy,z+.02+dz), ankle=knee.clone().add(vec(s*.017,.005,-.44));
-          drawBabyLimb(l,start,knee,ankle,.06,true);continue;
-        }else if(stage===4 || stage===7){
-          const [dz,dy]=stride(t+(s>0?0:.5)+(arm?0:.5),stage===4?.60:.66,stage===4?.13:.14);
-          goal=stage===4?vec(s*.32,.062+dy,z+.65+dz):arm?vec(s*.55,1.54+.04*w,z+.23+.075*w):vec(s*.22,.074+dy,z+dz);
-        }else if(stage===5){
-          goal=arm?(s===1?vec(.48+.42*ease, .45+.47*ease,z+.22):vec(-.41,.19,z+.13)):vec(s*.49,.084,z+.56);
-          if(!arm)bend=vec(s*.65,-.75,.4);
-        }else{
-          goal=arm?vec(s*.30,1.27,.38):vec(s*.22,.074,-.11);
+        case 0:case 1:
+          roll=stage===0?Math.PI:Math.PI*(1-t);
+          headRoll=stage===0?roll:Math.PI*(1-ease(Math.min(1,t*1.23)));
+          y=.287+.040*Math.sin(roll);z=-.49;lean=Math.PI/2;
+          headLean=stage===0?1.54:1.54-.47*t;
+          side=.19*Math.sin(roll);break;
+        case 2:y=.262;z=-.49;lean=1.43-.53*t;headLean=.59-.45*t;break;
+        case 3:y=.265;z=-.49+.44*t;lean=1.42;headLean=.42;yaw=.055*wave;break;
+        case 4:{
+          z=-.05+.56*t;lean=1.30;headLean=.36;
+          const stance=t%1<.5?t:t+.5;
+          const [dz]=stride(stance,.56,.095);
+          const kneeOffset=dz;
+          y=.112+Math.sqrt(.464**2-.018**2-kneeOffset**2)-.03*Math.cos(lean);
+          break;
         }
-        const [mid,end]=solve(start,goal,arm?.378:.464,arm?.344:.431,bend,stage>=2?(arm?.097:.132):-Infinity);
-        drawBabyLimb(l,start,mid,end,stage<2?-1:0,stage===2||stage===3);
+        case 5:y=.28;z=.48;lean=.12;headLean=.05;side=.08*t;yaw=.44+.32*t;tilt=-.07*t;break;
+        case 6:
+          y=.41+.45*t;z=.51;side=.19;lean=.32-.22*t;
+          headLean=.09;yaw=Math.PI/2;break;
+        default:
+          y=.85+.018*Math.cos(phase*4);z=.58+.85*t;
+          lean=.11;headLean=.03;side=.12+.055*Math.sin(phase*2);
       }
-      baby.rotation.z=roll;baby.position.y=0;
-      if(stage<=1){
-        const bounds=new T.Box3().setFromObject(baby,true);
-        baby.position.y=-bounds.min.y+.006;
+      const orientation=qy(yaw).multiply(qx(lean)).multiply(qy(roll)).multiply(qz(tilt));
+      const headOrientation=qy(yaw).multiply(qx(headLean)).multiply(qy(headRoll));
+      const hip=vec(side,y,z), limbs=[];
+      for(const {s,arm} of babyLimbs){
+        let goal,pole=vec(s*.20,.04,arm?-1:1),foot=0,footYaw=yaw;
+        if(stage<2){
+          // Carry the folded limbs round the long axis, letting the leading
+          // hand reach for the mat ahead of the shoulder as the trunk turns.
+          const k=stage===0?wave*s:0;
+          const supine=arm?vec(-s*.37,.42+.10*k,z+.44+.13*k):vec(-s*.24,.42+.09*k,z-.56-.12*k);
+          const angle=roll-Math.PI, axis=qz(angle);
+          goal=supine.clone().sub(vec(0,.287,z)).applyQuaternion(axis).add(hip);
+          pole=(arm?vec(-s*.85,-.3,-.35):vec(-s*.22,1,.1)).applyQuaternion(axis);
+          if(stage===1){
+            const settle=ease(t);
+            const prone=arm?vec(s*.34,.065,z+.68):vec(s*.25,.079,z-.67);
+            goal.lerp(prone,settle);
+            pole.lerp(arm?vec(s*.65,-.22,-.5):vec(s*.7,-.5,.3),settle);
+          }
+          footYaw=Math.PI;foot=stage===0?-.8:-.8*(1-t);
+        }else if(stage===2||stage===3){
+          const [dz,dy]=stage===3?stride(t+(s>0?0:.5)+(arm?0:.5),.44,.08):[0,0];
+          goal=arm?vec(s*.34,.063+dy,z+(stage===2?.69:.90)+dz):vec(s*(.26+.045*s*wave),.077,z-.65+dz);
+          pole=arm?vec(s*.62,-.15,-.8):vec(s*.82,-.65,.25);footYaw=Math.PI;
+        }else if(stage===4){
+          const [dz,dy]=stride(t+(s>0?0:.5)+(arm?0:.5),.56,arm?.12:.095);
+          // On hands and knees the knee is the stance contact. Supply it
+          // independently of the ankle and construct the calf from that joint.
+          goal=arm?vec(s*.32,.063+dy,z+.64+dz):vec(s*.22,.112+dy,z+.03*Math.sin(lean)+dz);
+          pole=arm?vec(s*.32,.02,-1):vec(s*.10,-.10,-1);
+          footYaw=Math.PI;
+        }else if(stage===5){
+          goal=arm?(s===1?vec(.38*t+.36,.40+.39*t,.33):vec(-.33,.12,.15)):vec(s*.50,.076,.58);
+          goal.applyQuaternion(qy(yaw)).add(vec(side,0,z));
+          if(!arm)pole.set(s*.85,-.63,.20).applyQuaternion(qy(yaw));
+        }else if(stage===6){
+          goal=arm?vec(.64,1.09,z-s*.27):vec(.21,.074,z-s*.21);
+          pole=vec(arm?-.7:1,.04,s*.14);
+        }else{
+          const [dz,dy]=stride(2*t+(s>0?0:.5),.425,.118);
+          goal=arm?vec(side+s*.50,1.56+.035*s*wave,z+.17):vec(.12+s*.215,.074+dy,z+dz);
+        }
+        limbs.push({goal,pole,foot:qy(footYaw).multiply(qx(foot))});
       }
+      return {hip,orientation,headOrientation,limbs,stage};
     }
-    function drawBabyLimb(l,start,mid,end,footPitch,prone=false){
+    function blendDirection(a,b,t){
+      const turn=new T.Quaternion().setFromUnitVectors(a.clone().normalize(),b.clone().normalize());
+      return a.clone().normalize().applyQuaternion(new T.Quaternion().slerp(turn,t));
+    }
+    function restAboveFloor(root,end,length,height,side){
+      if(end.y>=height)return;
+      const horizontal=end.clone().sub(root);horizontal.y=0;
+      if(horizontal.lengthSq()<1e-8)horizontal.set(side,0,.12);
+      const dy=T.MathUtils.clamp(height-root.y,-length,length);
+      end.copy(root).add(horizontal.setLength(Math.sqrt(Math.max(0,length*length-dy*dy))));end.y+=dy;
+    }
+    const babyBounds=new T.Box3();
+    function poseBaby(amount){
+      const time=babyTime(amount),first=babySample(time.stage,time.phase);
+      const k=ease(time.blend),next=k?babySample(time.stage+1,0):first;
+      // Show the rail as the baby reaches for it and fade it after release.
+      railMat.opacity=time.stage===5?k:time.stage===6?1-k:0;
+      rail.visible=railMat.opacity>0;
+      railMat.depthWrite=railMat.opacity===1;
+      body.position.copy(first.hip).lerp(next.hip,k);
+      body.quaternion.copy(first.orientation).slerp(next.orientation,k);
+      head.position.copy(vec(0,.84,0).applyQuaternion(body.quaternion)).add(body.position);
+      head.quaternion.copy(first.headOrientation).slerp(next.headOrientation,k);
+      for(let i=0;i<babyLimbs.length;i++){
+        const l=babyLimbs[i],a=first.limbs[i],b=next.limbs[i],arm=l.arm;
+        const start=vec(l.s*(arm?.27:.202),arm?.64:.03,0).applyQuaternion(body.quaternion).add(body.position);
+        const lengths=arm?[.378,.344]:[.464,.431];
+        function joints(pose,target){
+          const root=vec(l.s*(arm?.27:.202),arm?.64:.03,0).applyQuaternion(pose.orientation).add(pose.hip);
+          if(!arm&&pose.stage===4){
+            const knee=target.goal.clone().sub(root).setLength(lengths[0]).add(root);
+            return [root,knee,knee.clone().add(vec(0,.026,-.431).setLength(lengths[1]))];
+          }
+          const goal=target.goal.clone();goal.y=Math.max(arm?.063:.076,goal.y);
+          const pole=target.pole.clone();
+          if(pose.stage===1&&!arm)pole.set(pole.x,.48,pole.z+.10);
+          const [mid,end]=solve(root,goal,...lengths,pole);
+          restAboveFloor(root,mid,lengths[0],arm?.10:.145,l.s);
+          const delta=end.clone().sub(mid);
+          end.copy(mid).add(delta.setLength(lengths[1]));
+          restAboveFloor(mid,end,lengths[1],arm?.065:.078,l.s);
+          return [root,mid,end];
+        }
+        const [rootA,midA,endA]=joints(first,a);
+        let mid=midA,end=endA;
+        if(k){
+          const [rootB,midB,endB]=joints(next,b);
+          const upper=blendDirection(midA.clone().sub(rootA),midB.clone().sub(rootB),k);
+          const lower=blendDirection(endA.clone().sub(midA),endB.clone().sub(midB),k);
+          mid=start.clone().addScaledVector(upper,lengths[0]);
+          restAboveFloor(start,mid,lengths[0],arm?.10:.145,l.s);
+          end=mid.clone().addScaledVector(lower,lengths[1]);
+          restAboveFloor(mid,end,lengths[1],arm?.065:.078,l.s);
+        }
+        drawBabyLimb(l,start,mid,end,a.foot.clone().slerp(b.foot,k));
+      }
+      // The contact can migrate from head to side, pelvis, knees or feet.
+      // Seat the actual skin surface on the mat throughout the roll and transfers.
+      baby.position.y=0;
+      baby.position.y=.001-babyBounds.setFromObject(baby,true).min.y;
+    }
+    function drawBabyLimb(l,start,mid,end,orientation){
       const r=l.arm?.095:.130;
       span(l.upper,start,mid,r);span(l.lower,mid,end,r*.84);
       l.joint.position.copy(mid);l.joint.scale.setScalar(r*.82);
       span(l.cuff,start,start.clone().lerp(mid,l.arm?.37:.48),r*1.07);
       l.end.position.copy(end);
-      l.end.rotation.set(l.arm?0:footPitch,!l.arm&&prone?Math.PI:0,0);
+      l.end.quaternion.copy(orientation);
       l.end.scale.set(l.arm?.082:.091,l.arm?.060:.072,l.arm?.098:.145);
-      l.end.position.z+=l.arm?.025:prone?-.047:.047;
+      l.end.position.add(vec(0,0,l.arm?.025:.047).applyQuaternion(orientation));
       l.tip.position.copy(l.end.position);l.tip.quaternion.copy(l.end.quaternion);
     }
     const comparison=group(scene);
@@ -247,6 +344,8 @@
         const end=group(leftRight);
         if(arm){
           oval(end,ivory,0,0,0,.069,.063,.058);
+          rod(end,ivory,vec(-s*.046,-.012,.017),vec(-s*.092,-.071,.070),.016);
+          rod(end,ivory,vec(-s*.092,-.071,.070),vec(-s*.084,-.105,.088),.011);
           for(let j=0;j<4;j++){
             const x=(j-1.5)*.031, curled=ape?.063:.005;
             rod(end,ivory,vec(x,0,0),vec(x*1.12,-.105,curled),.013);
@@ -255,7 +354,7 @@
         }else{
           oval(end,ivory,0,-.013,.040,.080,.066,.131);
           for(let j=0;j<5;j++){
-            const x=(j-2)*.038,w=(2-j*s)/4;
+            const x=(j-2)*.038,w=(2-(j-2)*s)/4;
             rod(end,ivory,vec(x*.64,-.025,.07),vec(x*1.20+(ape&&w===1?-s*.087:0),-.047,.235+.072*w),.018);
           }
         }
@@ -263,7 +362,7 @@
       }
       return {ape,root,figure,trunk,neck,pelvisNode,close,basePad,limbs,chest};
     }
-    const species=[skeleton(false),skeleton(true)];
+    const species=[];
     function poseSpecies(r,t,detail){
       const {ape,figure,trunk,neck,pelvisNode,close}=r;
       figure.visible=!detail;r.basePad.visible=!detail;close.visible=detail;
@@ -301,10 +400,18 @@
       }
     }
     return {scene,
+      babyCenter(){
+        const centre=head.position.clone().lerp(body.position,.57);
+        centre.y=(babyBounds.min.y+babyBounds.max.y)/2+.08;
+        return centre.add(baby.position);
+      },
       pose(state,t){
         nursery.visible=state.movement==='baby';comparison.visible=!nursery.visible;
-        if(nursery.visible)poseBaby(state.babyStage||0,t);
-        else for(const r of species)poseSpecies(r,t,state.mode==='chain');
+        if(nursery.visible)poseBaby(t);
+        else{
+          if(!species.length)species.push(skeleton(false),skeleton(true));
+          for(const r of species)poseSpecies(r,t,state.mode==='chain');
+        }
       },
       layout(yaw,detail){
         const spacing=detail?.94:1.28;
@@ -316,5 +423,5 @@
       }
     };
   }
-  window.azDevelopmentLessons={lessons,stages,create};
+  window.azDevelopmentLessons={lessons,stages,babyTime,duration,create};
 })();

@@ -117,7 +117,7 @@ function createJohnnyHelmet(T) {
     material.userData.helmetFinish=true;
     return material;
   };
-  const ruby=metal('Candy apple red',0x9e1927,.47,.26);
+  const ruby=metal('Candy apple red',0x9e1927,.47,.26);ruby.side=T.DoubleSide;
   const red=metal('Crimson lacquer',0xbc2832,.46,.26);
   const deepRed=metal('Oxblood edges',0x621a21,.42,.32);
   const gold=metal('Brushed champagne gold',0xe9b961,.55,.33);
@@ -127,10 +127,15 @@ function createJohnnyHelmet(T) {
   const lens=new T.MeshBasicMaterial({name:'Ice blue lens edge',color:0x80dcef,toneMapped:false});
   const emitter=new T.MeshBasicMaterial({name:'White eye emitters',color:0xf0ffff,toneMapped:false});
 
+  const lift=new T.Group(),faceplate=new T.Group();
+  lift.name='Faceplate hinge';faceplate.name='Hinged faceplate';helmet.add(lift);lift.add(faceplate);
+  const pivot=new T.Vector3(0,.37,.035);
+  lift.position.copy(pivot);faceplate.position.copy(pivot).negate();
+  let assembly=helmet;
   function mesh(name,geometry,material){
     const part=new T.Mesh(geometry,material);
     part.name=name;
-    helmet.add(part);
+    assembly.add(part);
     return part;
   }
   // Width and front/rear depths follow the skull envelope. The neck sits
@@ -178,7 +183,21 @@ function createJohnnyHelmet(T) {
     return mesh(name,geometry,material);
   }
   const bottom=sections[0][0],top=sections.at(-1)[0];
-  surface('Crimson helmet shell',ruby,72,48,(u,v)=>shellPoint(2*Math.PI*u,lerp(bottom,top,v)));
+  // Two complementary skins meet exactly with the mechanism shut. The
+  // forward skin follows the gold armor, leaving a real aperture when raised.
+  function aperture(y){
+    const lower=T.MathUtils.smoothstep(y,bottom,-.18);
+    const upper=1-T.MathUtils.smoothstep(y,.35,.515);
+    return 1.15*lower*upper;
+  }
+  surface('Crimson helmet shell',ruby,72,48,(u,v)=>{
+    const y=lerp(bottom,top,v),a=aperture(y);return shellPoint(lerp(a,2*Math.PI-a,u),y);
+  });
+  assembly=faceplate;
+  surface('Faceplate lining',deepRed,30,48,(u,v)=>{
+    const y=lerp(bottom,top,v),a=aperture(y);return shellPoint(lerp(-a,a,u),y);
+  }).material.side=T.DoubleSide;
+  assembly=helmet;
   for(const [y,sign] of [[bottom,-1],[top,1]]){
     const rim=Array.from({length:72},(_,i)=>shellPoint(i*Math.PI/36,y));
     const center=rim.reduce((v,p)=>v.add(p),new T.Vector3()).divideScalar(rim.length);
@@ -230,6 +249,7 @@ function createJohnnyHelmet(T) {
       return p;
     });
   }
+  assembly=faceplate;
   facePanel('Raised forehead and brow',[browBottom,browBevel,browMiddle,browTop],gold);
   facePanel('Faceted cheek and bridge',[mouthEdge,cheekMid,cheekRidge,cheekTop],gold);
   facePanel('Lower gold jaw',[jawBase,jawTop],warmGold);
@@ -272,6 +292,7 @@ function createJohnnyHelmet(T) {
     optic('Luminous eye slit',emitter,.004,.002);
   }
 
+  assembly=helmet;
   // The temple shells, mandible rails and rear leaves wrap around the head.
   // A narrow graphite reveal exposes the join between adjacent armor plates.
   function armorBand(name,mat,start,end,lo,hi,raise){
@@ -307,6 +328,26 @@ function createJohnnyHelmet(T) {
   ]){
     armorBand(name,mat,rad(130),rad(230),u=>y1+.033*Math.sin(Math.PI*u),u=>y2+.030*Math.sin(Math.PI*u),.009);
   }
+  const bone=new T.MeshStandardMaterial({color:0xe4d8c0,vertexColors:true,roughness:.84,side:T.DoubleSide});
+  const inner=mesh('Skull inside helmet',window.azDevelopmentSkull(T),bone);
+  inner.position.set(0,.079,.005);inner.scale.set(1.17,1.14,1.04);inner.visible=false;
+  const links=[-1,1].map(side=>{
+    const bar=mesh('Faceplate lift arm',new T.CylinderGeometry(.018,.018,1,12),titanium);
+    bar.visible=false;
+    return {bar,base:new T.Vector3(side*.275,.255,-.022),socket:new T.Vector3(side*.233,.295,.206)};
+  });
+  helmet.userData.setOpening=progress=>{
+    const t=progress*progress*(3-2*progress);
+    lift.rotation.x=-1.98*t;
+    lift.position.copy(pivot);lift.position.y+=.065*t;lift.position.z+=.072*Math.sin(Math.PI*t)-.24*t;
+    for(const {bar,base,socket} of links){
+      const end=socket.clone().sub(pivot).applyQuaternion(lift.quaternion).add(lift.position);
+      const delta=end.clone().sub(base);bar.position.copy(base).lerp(end,.5);
+      bar.scale.y=delta.length();bar.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());
+      bar.visible=progress>.01;
+    }
+    inner.visible=progress>.001;
+  };
   return helmet;
 }
 

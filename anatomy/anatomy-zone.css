@@ -30,6 +30,7 @@
 #lz-anatomy-zone .azc-com-panel>p{font-size:11px;line-height:1.5;min-height:34px;margin:0 13px 7px;color:var(--azc-muted)}
 #lz-anatomy-zone .azc-com-stage{position:relative;width:100%;height:430px;touch-action:none;background:linear-gradient(#eaf1f9,#f3f7fc)}
 #lz-anatomy-zone .azc-com-stage canvas{display:block;width:100%;height:100%}
+#lz-anatomy-zone .azc-target-label{position:absolute;transform:translateX(-50%);white-space:nowrap;font:500 10px/1.4 system-ui,sans-serif;color:#345478;background:#f1f6faed;padding:0 4px;border-radius:3px}
 #lz-anatomy-zone .azc-com-legend{display:flex;align-items:center;gap:7px;padding:3px 22px 12px;font-size:11px;color:var(--azc-muted)}
 #lz-anatomy-zone .azc-com-legend>span{width:8px;height:8px;border-radius:50%;background:#315bc1;flex-shrink:0}
 #lz-anatomy-zone .azc-com-error{grid-column:1/-1;padding:16px;color:var(--azc-ink)}

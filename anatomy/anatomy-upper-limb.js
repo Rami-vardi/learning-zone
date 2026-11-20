@@ -343,7 +343,7 @@ window.azAttachUpperSkeleton = function(parts) {
       } else if (movement==='dips') {
         across.set(0,0,side);
       } else if (movement==='csafety') {
-        across.set(0,side*.10,-side*.25).applyQuaternion(torso.quaternion).normalize();
+        across.copy(exercise.contactAxis).multiplyScalar(-side);
         up.set(0,-.9,.42).applyQuaternion(torso.quaternion);
       } else if (movement==='bench') {
         up.set(0,-1,.07);

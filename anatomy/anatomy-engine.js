@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  window.createAnatomyViewer=function(container,initial={}){
+  window.createAnatomyViewer=function(container,initial={},controls={}){
     const T=window.THREE;
     if(!T)throw Error('The 3D anatomy library could not load. Open Anatomy Zone again to retry.');
     let state=Object.assign({movement:'hike',amount:0.35,mode:'local',side:'right',labels:false,ghost:false},initial);
@@ -273,9 +273,17 @@
     const seat=new T.Group();equipment.add(seat);box(seat,[1.72,.15,1.0],[0,1.65,-.08],seatMat);for(const side of [-1,1])between(seat,[side*.65,1.57,-.15],[side*.65,.05,-.15],.045,.045,steel);
     const pressChair=new T.Group();equipment.add(pressChair);box(pressChair,[1.72,.15,1.30],[0,1.65,-.23],studyPadMat);for(const side of [-1,1])between(pressChair,[side*.65,1.57,-.15],[side*.65,.05,-.15],.045,.045,steel);
     const pressBackrest=new T.Group();pressChair.add(pressBackrest);box(pressBackrest,[1.60,3.10,.16],[0,0,0],studyPadMat);for(const side of [-1,1])between(pressBackrest,[side*.57,-1.45,-.13],[side*.57,1.35,-.13],.034,.034,steel);pressBackrest.rotation.x=-12*Math.PI/180;pressBackrest.position.set(0,3.25,-.90);
-    const footrest=box(equipment,[1.7,.12,.9],[0,.52,1.42],seatMat);
+    const seatedFloor=box(equipment,[2.25,.08,2.05],[0,.04,1.38],new T.MeshStandardMaterial({color:0xc0cddc,roughness:.9}));
+    const footrest=box(equipment,[1.90,.50,1.05],[0,.33,1.61],seatMat);
     const rowHandle=new T.Group();equipment.add(rowHandle);between(rowHandle,[-1.15,0,0],[1.15,0,0],.035,.035,steel);
     const cable=mesh(new T.CylinderGeometry(.011,.011,1,8),steel,equipment);
+    const rowAnchor=new T.Vector3(0,3.87,3.6);
+    const rowUpright=new T.Group();equipment.add(rowUpright);
+    box(rowUpright,[.28,3.99,.14],[0,2.045,3.75],steel);
+    box(rowUpright,[.80,.08,.66],[0,.08,3.75],seatMat);
+    const cableGuide=mesh(new T.CylinderGeometry(.105,.105,.12,20),seatMat,rowUpright);
+    cableGuide.rotation.x=Math.PI/2;
+    cableGuide.position.copy(rowAnchor);cableGuide.position.z+=.055;
     const pullBar=new T.Group();equipment.add(pullBar);between(pullBar,[-1.62,0,0],[1.62,0,0],.038,.038,steel);pullBar.position.set(0,8.16,.12);
     const pullGrip=side=>pullBar.position.clone().add(new T.Vector3(side*1.20,0,0));
     const dipBars=new T.Group();equipment.add(dipBars);for(const side of [-1,1]){between(dipBars,[side*1.1,3.9,-.85],[side*1.1,3.9,.90],.045,.045,steel);between(dipBars,[side*1.1,.08,-.75],[side*1.1,3.9,-.75],.045,.045,steel);between(dipBars,[side*1.1,.08,-1.10],[side*1.1,.08,.75],.045,.045,steel);}
@@ -582,7 +590,7 @@
       if(m==='press'||m==='row'){
         hipY=2.24;hipZ=m==='press'?(b?.343:.052):-.08;pelvisPitch=b?-.28:.095;basePitch=b?0:.04;lumbar=b?.10:-.025;thoracic=b?.08:.015;rearShift=b?-.18:0;expansion=b?.16:.015;
         pro=m==='row'?(b?.86:.45)*(1-phase)+(b?.16:-.08*phase):b?.36+.10*phase:.035;
-        feetY=b?.67:.19;feetZ=1.40;seat.visible=true;footrest.visible=b;
+        feetY=b?.67:.19;feetZ=1.40;seat.visible=true;seatedFloor.visible=true;footrest.visible=b;
       }
       if(m==='press'){basePitch=b?-.29:-.18;seat.visible=false;pressChair.visible=true;}
       if(m==='dips'){
@@ -729,7 +737,8 @@
       }
       if(m==='row'){
         gripCentre=new T.Vector3().fromArray(armChecks[0].grip).add(new T.Vector3().fromArray(armChecks[1].grip)).multiplyScalar(.5);rowHandle.position.copy(gripCentre);rowHandle.visible=true;
-        const anchor=new T.Vector3(0,3.87,3.6),d=anchor.clone().sub(gripCentre);cable.position.copy(anchor).add(gripCentre).multiplyScalar(.5);cable.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.clone().normalize());cable.scale.y=d.length();cable.visible=true;
+        rowUpright.visible=true;
+        const d=rowAnchor.clone().sub(gripCentre);cable.position.copy(rowAnchor).add(gripCentre).multiplyScalar(.5);cable.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.clone().normalize());cable.scale.y=d.length();cable.visible=true;
       }
       for(const key in regionMaterials)regionMaterials[key].color.setHex(key==='context'?palettes.context:palettes.ivory);
       if(m==='press')for(const s of scapulae)studyMaterial(s.node,studyScapMat);
@@ -804,6 +813,7 @@
         yaw-=(e.clientX-drag.x)*.008;
         pitch=Math.min(.7,Math.max(-.45,pitch+(e.clientY-drag.y)*.006));
         drag={x:e.clientX,y:e.clientY};
+        controls.onOrbit?.(yaw,pitch);
         render();
       });
       const end=()=>{drag=null;canvas.style.cursor='grab';};
@@ -811,7 +821,8 @@
       onCanvas('pointercancel',end);
       onCanvas('wheel',e=>{
         e.preventDefault();
-        zoomCamera(e.deltaY>0?1.06:1/1.06);
+        const factor=e.deltaY>0?1.06:1/1.06;
+        if(controls.onZoom)controls.onZoom(factor);else zoomCamera(factor);
       },{passive:false});
     }
     function zoomCamera(factor){distance=Math.max(1.3,Math.min(50,distance*factor));render();}
@@ -992,8 +1003,24 @@
     const costalMargin=ribs[16].getObjectByName('Costal cartilage 9 (right)');
     const rightBlade=scapulae[0].node.children[0];
     rightBlade.geometry.computeBoundingSphere();
+    const fixedTargetLabel=document.createElement('span');
+    fixedTargetLabel.className='azc-target-label';
+    fixedTargetLabel.textContent='Fixed balance target';
+    labelLayer.appendChild(fixedTargetLabel);
     function render(){if(disposed)return;cameraUpdate();
-      if(renderer)renderer.render(scene,camera);else fallbackDraw();Object.values(labelNodes).forEach(el=>el.style.display='none');if(!state.labels)return;
+      if(renderer)renderer.render(scene,camera);else fallbackDraw();
+      fixedTargetLabel.hidden=!previewEquipment.visible;
+      if(previewEquipment.visible){
+        const base=balanceLine.localToWorld(new T.Vector3(0,-.5,0)).project(camera);
+        const x=(base.x*.5+.5)*width,y=(.5-base.y*.5)*height;
+        fixedTargetLabel.hidden=Math.abs(base.z)>1||x<0||x>width||y<0||y>height-24;
+        if(!fixedTargetLabel.hidden){
+          const half=fixedTargetLabel.offsetWidth/2;
+          fixedTargetLabel.style.left=Math.max(half,Math.min(width-half,x))+'px';
+          fixedTargetLabel.style.top=(y+4)+'px';
+        }
+      }
+      Object.values(labelNodes).forEach(el=>el.style.display='none');if(!state.labels)return;
       const movement=state.movement;
       if(movement==='lunge'&&exerciseDebug){label('Pelvis',landmarks[2].getWorldPosition(new T.Vector3()));const f=exerciseDebug.legs.find(l=>l.side===-1),b=exerciseDebug.legs.find(l=>l.side===1);label('Right front',new T.Vector3(...f.ankle));label('Left rear',new T.Vector3(...b.ankle));return;}
       if(exerciseIds.has(movement)){label('Pelvis',landmarks[2].getWorldPosition(new T.Vector3()));label('Shoulder',exArms[0].upper.getWorldPosition(new T.Vector3()));if(['pullup','dips'].includes(movement)&&exerciseDebug){const grip=exerciseDebug.arms[0].grip;label('Fixed grip',new T.Vector3(...grip));}else label('Ribcage',ribPoint());return;}
@@ -1025,17 +1052,28 @@
     const previewMetal=new T.MeshStandardMaterial({color:0x8ca3b9,roughness:.45,metalness:.45});
     const previewFoam=new T.MeshStandardMaterial({color:0x1d3046,roughness:.92});
     const goblet=new T.Group();previewEquipment.add(goblet);between(goblet,[0,-.28,0],[0,.28,0],.065,.065,previewSteel);for(const y of[-.28,.28]){const g=mesh(new T.CylinderGeometry(.23,.23,.16,6),previewSteel,goblet);g.position.y=y;}
-    const straight=new T.Group();previewEquipment.add(straight);between(straight,[-1.6,0,0],[1.6,0,0],comparisonBarRadius,comparisonBarRadius,previewSteel);for(const x of[-1.55,1.55]){const p=mesh(new T.CylinderGeometry(.27,.27,.12,20),previewSteel,straight);p.rotation.z=Math.PI/2;p.position.x=x;}
-    const safety=new T.Group(), safetyPlateCenter=new T.Vector3();previewEquipment.add(safety);between(safety,[-1.10,0,-.12],[1.10,0,-.12],.055,.055,previewMetal);
-    for(const x of[-.62,0,.62]){const pad=mesh(new T.CylinderGeometry(.13,.13,x===0?.37:.53,18),previewFoam,safety);pad.rotation.z=Math.PI/2;pad.position.set(x,0,-.12);}
+    const straight=new T.Group();previewEquipment.add(straight);between(straight,[-1.95,0,0],[1.95,0,0],comparisonBarRadius,comparisonBarRadius,previewSteel);for(const x of[-1.88,1.88]){const p=mesh(new T.CylinderGeometry(.27,.27,.12,20),previewSteel,straight);p.rotation.z=Math.PI/2;p.position.x=x;}
+    const safety=new T.Group(), safetyPlateCenter=new T.Vector3();
+    previewEquipment.add(safety);
+    const handleBend=new T.Vector3(.56,-.02,.76);
+    const handleEnd=new T.Vector3(.56,-.38,1.18);
+    const safetyGrip=handleBend.clone().lerp(handleEnd,.78);
+    const sleeveStart=handleBend.clone().lerp(handleEnd,.59);
+    between(safety,[-1.10,0,0],[1.10,0,0],.055,.055,previewMetal);
+    between(safety,[-.20,0,0],[.20,0,0],.12,.12,previewFoam);
     for(const side of[-1,1]){
-      between(safety,[side*1.10,0,-.12],[side*1.30,-.12,-.12],.055,.055,previewMetal);
-      between(safety,[side*1.30,-.12,-.12],[side*1.49,-.42,.38],.055,.055,previewMetal);
-      between(safety,[side*1.30,-.42,.38],[side*1.75,-.42,.38],.055,.055,previewMetal);
-      const plate=mesh(new T.CylinderGeometry(.30,.30,.15,24),previewSteel,safety);plate.rotation.z=Math.PI/2;plate.position.set(side*1.49,-.42,.38);
+      // The yoke runs behind the neck and over each shoulder before the grips turn down.
+      const x=side*handleBend.x;
+      between(safety,[x,0,0],[x,handleBend.y,handleBend.z],.045,.045,previewMetal);
+      between(safety,[x,0,.10],[x,-.014,.55],.105,.105,previewFoam);
+      between(safety,[x,handleBend.y,handleBend.z],[x,handleEnd.y,handleEnd.z],.042,.042,previewMetal);
+      between(safety,[x,sleeveStart.y,sleeveStart.z],[x,handleEnd.y,handleEnd.z],.050,.050,previewFoam);
+      between(safety,[side*1.10,0,0],[side*1.30,-.12,0],.055,.055,previewMetal);
+      between(safety,[side*1.30,-.12,0],[side*1.49,-.42,.50],.055,.055,previewMetal);
+      between(safety,[side*1.30,-.42,.50],[side*1.75,-.42,.50],.055,.055,previewMetal);
+      const plate=mesh(new T.CylinderGeometry(.30,.30,.15,24),previewSteel,safety);
+      plate.rotation.z=Math.PI/2;plate.position.set(side*1.49,-.42,.50);
       safetyPlateCenter.addScaledVector(plate.position,.5);
-      between(safety,[side*.56,0,-.12],[side*.56,-.40,.84],.042,.042,previewMetal);
-      between(safety,[side*.56,-.30,.59],[side*.56,-.40,.84],.050,.050,previewFoam);
     }
     const wedges=[];{const shape=new T.Shape();shape.moveTo(-.26,0);shape.lineTo(-.26,.20);shape.lineTo(.72,0);shape.closePath();const geometry=new T.ExtrudeGeometry(shape,{depth:2.24,bevelEnabled:false});const wedge=mesh(geometry,previewSteel,previewEquipment);wedge.rotation.y=-Math.PI/2;wedge.position.set(1.12,.08,0);wedges.push(wedge);}
     const balanceLine=mesh(new T.CylinderGeometry(.019,.019,1,8),new T.MeshBasicMaterial({color:0x466c99,toneMapped:false,transparent:true,opacity:.9,depthTest:false,depthWrite:false}),previewEquipment);
@@ -1080,7 +1118,7 @@
       const apparatus=heel?straight:safetyBar?safety:goblet;
       const apparatusOffset=heel
         ? squatBarSeat(comparisonBarRadius).add(V(0,squatSupportLevel.y-3.3,squatSupportLevel.z)).applyQuaternion(rotation)
-        : safetyBar?offset(0,2.35,0):offset(0,1.95,.65);
+        : safetyBar?offset(0,2.49,-.58):offset(0,1.95,.78);
       const loadOffset=apparatusOffset.clone();
       if(safetyBar)loadOffset.add(safetyPlateCenter.clone().applyQuaternion(rotation));
 
@@ -1097,7 +1135,9 @@
       exerciseArms.visible=true;
       for(const arm of exArms){
         const s=arm.side, shoulder=offset(s*1.04,2.25,.02);
-        const grip=heel?apparatusOffset.clone().add(V(s*1.25,0,0)):safetyBar?offset(s*.56,2.00,.715):offset(s*.185,2.15,.65);
+        const gripOffset=heel?V(s*1.25,0,0):safetyBar?V(s*safetyGrip.x,safetyGrip.y,safetyGrip.z):V(s*.185,.20,0);
+        const grip=gripOffset.applyQuaternion(rotation).add(apparatusOffset);
+        if(safetyBar)arm.contactAxis=handleEnd.clone().sub(handleBend).applyQuaternion(rotation).normalize();
         const wrist=grip.clone().add(V(0,-.13,0));
         const elbow=twoJoint(shoulder,wrist,1.08,.98,V(s*.25,-1,-.25));
         poseSegment(arm.clavicle,offset(0,2.4,.3),shoulder);
@@ -1605,7 +1645,7 @@
       else if(exerciseIds.has(m)){
         const y=m==='pullup'?4.68:m==='dips'?3.7:m==='press'?3.3:3.1;
         const depth=m==='pullup'?15.5:m==='dips'?13.4:m==='press'?13.2:m==='row'?13.7:12.4;
-        frame(0,y,m==='row'?1.1:.1,depth,m==='press'?5.4:4.7);
+        frame(0,y,m==='row'?1.50:.1,depth,m==='row'?5.8:m==='press'?5.4:4.7);
       }else if(m==='ribshift')frame(0,4.55,.06,5.6,2.15);
       else if(m==='ribs'||m==='scapula')frame(0,5.0,.10,4.2,m==='scapula'?2.85:2.1);
       else if(chain)frame(0,3.34,.05,12.4,3.0);
@@ -1635,6 +1675,8 @@
     return {
       debugPoseSnapshot:capturePose,
       zoomCamera,
+      setOrbit(newYaw,newPitch){yaw=newYaw;pitch=newPitch;render();},
+      get rowPastTrunk(){return state.movement==='row'&&exerciseDebug.arms.every(arm=>arm.humeralSagittal<0);},
       debugCamera:()=>({yaw,pitch,distance,target:target.toArray()}),
       update(next){const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();applyPose(0);rebuildGhost();}applyPose();render();},
       setView(name){if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},

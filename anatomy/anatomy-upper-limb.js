@@ -221,9 +221,9 @@ window.azAttachUpperSkeleton = function(parts) {
   sternum.updateMatrix();
   const sternumRestInverse=sternum.matrix.clone().invert();
   function setClaviclePivot(side,movement){
-    // In the pullup and scapular lessons, register the medial articular end
+    // For these shoulder lessons, register the medial articular end
     // against the upper lateral manubrium throughout the shoulder excursion.
-    if(movement==='pullup'||movement==='scapula')start.set(side*.118,.791,.197);
+    if(movement==='pullup'||movement==='scapula'||movement==='press'||movement==='bench')start.set(side*.118,.791,.197);
     else start.set(side*.0708,.7408,.11408);
     sternum.updateMatrix();
     start.applyMatrix4(sternumRestInverse).applyMatrix4(sternum.matrix);
@@ -496,6 +496,10 @@ window.azAttachUpperSkeleton = function(parts) {
       arm.clavicle.position.copy(start);
       arm.clavicle.scale.y = clavicleLength;
       arm.clavicle.quaternion.setFromUnitVectors(down, end.normalize());
+      if(movement==='bench'){
+        // Axial rotation clears the upper ribs while preserving both endpoints.
+        arm.clavicle.quaternion.multiply(rotation.setFromAxisAngle(axisY,arm.side*.30));
+      }
       if(exerciseArms.visible&&(movement==='press'||movement==='pullup')){
         // Elevation includes clavicular posterior rotation about its long
         // axis. Keep both articular endpoints fixed as the lateral end rolls.

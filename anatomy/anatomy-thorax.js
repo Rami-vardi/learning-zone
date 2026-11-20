@@ -170,7 +170,8 @@ window.azAttachThorax = function(three, ribs, sternum){
     }
   }
   const rotation = new three.Euler(), pivotAfter = new three.Vector3();
-  fitCostalCartilage.moveRibs = amount => {
+  const opening=new three.Quaternion(), movedPivot=new three.Vector3();
+  function rotateRibs(amount,fromRest) {
     for (const {group, origin, pivot, level, side} of ribJoints) {
       const lower = (level - 1) / 9;
       const floating = level > 10;
@@ -182,10 +183,14 @@ window.azAttachThorax = function(three, ribs, sternum){
         side * amount * (floating ? .087 : .008 + .022 * lower),
         side * amount * (floating ? .033 : .026 + .081 * lower)
       );
-      group.quaternion.setFromEuler(rotation);
-      group.position.copy(origin).add(pivot).sub(pivotAfter.copy(pivot).applyQuaternion(group.quaternion));
+      if(fromRest){group.position.copy(origin);group.quaternion.identity();}
+      movedPivot.copy(pivot).applyQuaternion(group.quaternion).add(group.position);
+      group.quaternion.multiply(opening.setFromEuler(rotation));
+      group.position.copy(movedPivot).sub(pivotAfter.copy(pivot).applyQuaternion(group.quaternion));
     }
-  };
+  }
+  fitCostalCartilage.moveRibs=amount=>rotateRibs(amount,true);
+  fitCostalCartilage.expandPosedRibs=amount=>rotateRibs(amount,false);
   return fitCostalCartilage;
 };
 })();

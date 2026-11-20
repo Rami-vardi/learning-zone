@@ -50,3 +50,9 @@
 
 #lz-anatomy-tension .tf-scale-note{margin:10px 0 4px;font-size:12px;color:#445b73}
 #lz-anatomy-tension .tf-dot.tf-flight{background:#a6bccb}
+
+#lz-anatomy-zone .azc-model-label{position:absolute;z-index:1;white-space:nowrap;font:500 11px/1.2 system-ui,sans-serif;color:#38506b;background:#f8fbfff2;border:1px solid #afc1d3;border-radius:5px;padding:3px 6px}
+#lz-anatomy-zone .azc-label-line{position:absolute;height:0;border-top:1px solid #697f96;transform-origin:left center}
+#lz-anatomy-zone .azc-front-mark{border-color:#527aba;color:#285391}
+#lz-anatomy-zone .azc-rear-mark{border-color:#ac7950;color:#79522f}
+#lz-anatomy-zone .azc-far-mark{border-style:dashed}

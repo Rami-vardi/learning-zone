@@ -36,10 +36,10 @@
     const up = vec(0,1,0);
     const group = parent => {const g=new T.Group();parent.add(g);return g;};
     const mat = color => new T.MeshStandardMaterial({color,roughness:.82});
-    const skin=mat(0xf2bd95), suit=mat(0x232833), lapel=mat(0x353d49);
+    const skin=mat(0xffcbae), suit=mat(0x252931), lapel=mat(0x383d46);
     const white=mat(0xfffaf1), tie=mat(0x15171e), shoe=mat(0x29252a);
-    const brow=mat(0xa46934), hair=mat(0xdca84e), iris=mat(0x547d73);
-    const pupil=mat(0x27252a), lip=mat(0xa65e53), ear=mat(0xda9377);
+    const brow=mat(0xbd9474);
+    const ear=mat(0xe9a68f);
     const ivory=mat(0xd9cebb), blue=mat(0x608caf), rust=mat(0xb07852);
     const pad=mat(0xdce6eb), railMat=mat(0x73949d);
     const sphere=new T.SphereGeometry(1,16,12), cylinder=new T.CylinderGeometry(1,1,1,12);
@@ -73,13 +73,67 @@
     function floor(parent,rx,rz) {const m=mesh(parent,disk,pad);m.scale.set(rx,1,rz);m.position.y=-.012;return m;}
     const nursery=group(scene), baby=group(nursery), body=group(baby);
     floor(nursery,1.63,2.80);
-    const jacket=oval(body,suit,0,.37,0,.325,.54,.265);
-    const seat=oval(body,suit,0,.006,-.022,.269,.294,.245);
+    const coatProfile=[
+      [-.018,.302,.240],[.006,.321,.253],[.070,.324,.260],[.20,.320,.263],
+      [.37,.312,.266],[.54,.311,.248],[.665,.317,.205],[.730,.296,.176],
+      [.780,.214,.133],[.793,.135,.101]
+    ];
+    function tailoredForm(profile){
+      const rings=28,positions=[],indices=[];
+      for(let i=0;i<profile.length;i++){
+        const [y,w,d]=profile[i];
+        for(let j=0;j<rings;j++){
+          const a=2*Math.PI*j/rings;
+          positions.push(w*Math.sin(a),y,d*Math.cos(a));
+          if(i+1<profile.length){
+            const k=i*rings+j,n=i*rings+(j+1)%rings;
+            indices.push(k,n,k+rings,n,n+rings,k+rings);
+          }
+        }
+      }
+      const last=(profile.length-1)*rings;
+      for(let j=1;j<rings-1;j++)indices.push(0,j+1,j,last,last+j,last+j+1);
+      const g=new T.BufferGeometry();
+      g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();
+      return g;
+    }
+    const jacket=mesh(body,tailoredForm(coatProfile),suit);
+    for(const side of [-1,1]){
+      arc(body,lapel,[vec(side*.19,.23,.210),vec(side*.23,.247,.178),vec(side*.262,.257,.141)],.006);
+    }
+    arc(body,lapel,[vec(0,.020,-.244),vec(0,.095,-.253),vec(0,.165,-.258)],.0035);
+    // The sleeves and trouser hems overlap their joints even as the limbs bend.
+    const sleeve=tailoredForm([[-.53,.62,.66],[-.49,.95,.96],[-.27,1.05,1.07],[.22,1.12,1.16],[.44,1.02,1.04],[.54,.60,.63]]);
+    const sleeveFore=tailoredForm([[-.53,.48,.50],[-.48,.96,.96],[.12,1.08,1.08],[.43,1.03,1.03],[.55,.65,.65]]);
+    const trouserThigh=tailoredForm([[-.56,.65,.72],[-.49,1.03,1.02],[-.25,1.21,1.14],[.17,1.23,1.22],[.44,1.01,1.05],[.56,.65,.68]]);
+    const trouserHem=tailoredForm([[-.54,.79,.85],[-.49,1.08,1.05],[-.32,1.00,1.02],[.17,1.12,1.12],[.33,1.00,1.01],[.42,.91,.91],[.445,.85,.86]]);
+    const seat=oval(body,suit,0,-.007,-.022,.282,.313,.249);
+    function coatFront(x,y){
+      const j=coatProfile.findIndex(section=>section[0]>=y);
+      const a=coatProfile[Math.max(0,j===-1?coatProfile.length-1:j-1)],b=coatProfile[j===-1?coatProfile.length-1:j];
+      const t=a===b?0:T.MathUtils.clamp((y-a[0])/(b[0]-a[0]),0,1);
+      const w=T.MathUtils.lerp(a[1],b[1],t),d=T.MathUtils.lerp(a[2],b[2],t);
+      return d*Math.sqrt(Math.max(0,1-(x/w)**2));
+    }
     function clothPanel(points,material){
+      const positions=[],subdivisions=5;
+      function vertex(a,b,c,u,v){
+        const w=1-u-v,x=w*a[0]+u*b[0]+v*c[0],y=w*a[1]+u*b[1]+v*c[1];
+        const z=w*a[2]+u*b[2]+v*c[2],offset=material===tie?.014:material===lapel?.009:.004;
+        positions.push(x,y,Math.max(z,coatFront(x,y))+offset);
+      }
+      for(let i=1;i<points.length-1;i++){
+        const triangle=[points[0],points[i],points[i+1]];
+        for(let j=0;j<subdivisions;j++)for(let k=0;k<subdivisions-j;k++){
+          const u=j/subdivisions,v=k/subdivisions,h=1/subdivisions;
+          vertex(...triangle,u,v);vertex(...triangle,u+h,v);vertex(...triangle,u,v+h);
+          if(j+k<subdivisions-1){
+            vertex(...triangle,u+h,v);vertex(...triangle,u+h,v+h);vertex(...triangle,u,v+h);
+          }
+        }
+      }
       const geometry=new T.BufferGeometry();
-      geometry.setAttribute('position',new T.Float32BufferAttribute(points.flat(),3));
-      geometry.setIndex(Array.from({length:points.length-2},(_,i)=>[0,i+1,i+2]).flat());
-      geometry.computeVertexNormals();
+      geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.computeVertexNormals();
       material.side=T.DoubleSide;
       return mesh(body,geometry,material);
     }
@@ -95,53 +149,176 @@
     clothPanel([[-.015,.692,.234],[.023,.692,.234],[.048,.552,.263],[.006,.494,.278],[-.035,.546,.264]],tie);
     for(const y of [.397,.292])oval(body,lapel,.012,y,.264,.017,.017,.008);
     const TAU=2*Math.PI;
-    const head=group(baby),headMesh=new T.SphereGeometry(1,40,28);
-    head.scale.setScalar(1.12);
-    const vertices=headMesh.attributes.position;
+    const head=group(baby);
+    head.scale.setScalar(1.27);
+    const chinY=-.22, crownY=.70, faceMid=(chinY+crownY)/2, faceHeight=crownY-faceMid;
+    const bell=(v,width)=>Math.exp(-((v/width)**2));
+    function headSection(y){
+      const t=(y-faceMid)/faceHeight, circle=Math.sqrt(Math.max(0,1-Math.abs(t)**(t<0?3.15:2.23)));
+      const lower=1-T.MathUtils.smoothstep(t,-.89,.19);
+      return {width:circle*(.450+.012*lower+.009*bell(t+.45,.32)),
+        depth:circle*(.368-.022*lower),center:-.014+.040*lower};
+    }
+    function facialRelief(x,y){
+      const a=Math.abs(x);
+      return .027*bell(a-.217,.122)*bell(y-.012,.086)
+        -.024*bell(a-.170,.120)*bell(y-.130,.062)
+        +.025*bell(x,.057)*bell(y-.103,.092)
+        +.050*Math.exp(-((x/.071)**4+((y-.037)/.042)**2))
+        +.013*bell(a-.055,.024)*bell(y-.032,.026)
+        +.020*bell(x,.133)*bell(y+.043,.054)
+        +.012*bell(x,.105)*bell(y+.145,.058);
+    }
+    function frontAt(x,y){
+      const {width,depth,center}=headSection(y);
+      const cosine=Math.sqrt(Math.max(0,1-(x/Math.max(.0001,width))**2));
+      return center+depth*cosine+facialRelief(x,y)*cosine;
+    }
+    const headMesh=new T.SphereGeometry(1,72,54);
+    const vertices=headMesh.attributes.position,colors=[];
+    const baseSkin=new T.Color(0xffcbae),flush=new T.Color(0xe89c82);
     for(let i=0;i<vertices.count;i++){
-      const x=vertices.getX(i),y=vertices.getY(i),z=vertices.getZ(i);
-      const chin=1-T.MathUtils.smoothstep(y,-.9,.02);
-      const cheek=Math.exp(-((Math.abs(x)-.52)**2+(y+.29)**2)*8);
-      vertices.setXYZ(i,.420*x*(1-.10*chin),.184+.414*y,(z<0?.295:.347)*z+.044*chin+.030*cheek*Math.max(0,z));
+      const nx=vertices.getX(i),ny=vertices.getY(i),nz=vertices.getZ(i);
+      const radial=Math.hypot(nx,nz),y=faceMid+ny*faceHeight;
+      const {width,depth,center}=headSection(y);
+      // Concentrate angular samples around the nose, eyelids and philtrum.
+      const phi=Math.atan2(nx,nz),angle=phi-.55*Math.sin(phi);
+      const x=radial>1e-5?width*Math.sin(angle):0,cosine=radial>1e-5?Math.cos(angle):0;
+      const z=center+depth*cosine+facialRelief(x,y)*Math.max(0,cosine);
+      vertices.setXYZ(i,x,y,z);
+      const blush=.55*bell(Math.abs(x)-.231,.100)*bell(y-.007,.071)+.34*bell(x,.066)*bell(y-.055,.045);
+      colors.push(...baseSkin.clone().lerp(flush,blush*Math.max(0,cosine)).toArray());
     }
-    headMesh.computeVertexNormals();
-    const faceMesh=mesh(head,headMesh,skin);
-    oval(head,skin,0,.122,.343,.061,.052,.057);
-    // A raised brow and a crooked smile read even at mobile playback size.
-    arc(head,lip,[vec(-.106,.068,.328),vec(-.049,.047,.340),vec(.035,.055,.345),vec(.102,.084,.330)],.010);
-    const eyes=[];
-    for(const side of [-1,1]){
-      oval(head,skin,side*.385,.157,-.004,.063,.080,.041);
-      oval(head,ear,side*.425,.158,.012,.016,.045,.025);
-      const eye=group(head);
-      eye.position.set(side*.154,.196,.323);eye.rotation.set(0,side*.32,side*.06);eyes.push(eye);
-      oval(eye,white,0,0,0,.099,.072,.038);
-      oval(eye,iris,-side*.009,.001,.029,.056,.056,.016);
-      oval(eye,pupil,-side*.009,.001,.040,.031,.035,.011);
-      oval(eye,white,-.014,.018,.049,.010,.010,.004);
-      arc(eye,brow,[vec(-side*.072,.047,.012),vec(0,.067,.019),vec(side*.073,.038,.012)],.007);
-      const lift=side===1?.045:0;
-      arc(head,brow,[vec(side*.065,.264+lift,.334),vec(side*.143,.291+lift,.306),vec(side*.221,.286+lift,.267)],.014);
+    headMesh.setAttribute('color',new T.Float32BufferAttribute(colors,3));headMesh.computeVertexNormals();
+    // Average duplicated normals where the spherical parameterization closes.
+    const normals=headMesh.attributes.normal;
+    for(let row=0;row<=54;row++){
+      const a=row*73,b=a+72;
+      const n=vec(0,0,0).fromBufferAttribute(normals,a).add(vec(0,0,0).fromBufferAttribute(normals,b)).normalize();
+      for(const i of [a,b])normals.setXYZ(i,n.x,n.y,n.z);
     }
-    // Taper each swept lock into the crown instead of ending it in a ball.
-    function forelock(points,width){
-      const curve=new T.CatmullRomCurve3(points),steps=14,rings=9;
-      const frames=curve.computeFrenetFrames(steps,false),positions=[],indices=[];
-      for(let i=0;i<=steps;i++){
-        const u=i/steps,c=curve.getPointAt(u),r=width*(.04+.96*Math.sin(Math.PI*u)**.65);
-        for(let j=0;j<rings;j++){
-          const theta=TAU*j/rings;
-          positions.push(...c.clone().addScaledVector(frames.normals[i],r*.56*Math.cos(theta))
-            .addScaledVector(frames.binormals[i],r*Math.sin(theta)).toArray());
-          if(i<steps){const a=i*rings+j,b=i*rings+(j+1)%rings;indices.push(a,b,a+rings,b,b+rings,a+rings);}
+    const complexion=mat(0xffffff);complexion.vertexColors=true;
+    const faceMesh=mesh(head,headMesh,complexion);
+    // A surface patch follows the curvature of the skull, eye or lips.
+    function patch(parent,material,columns,rows,point){
+      const positions=[],indices=[];
+      for(let j=0;j<=rows;j++)for(let i=0;i<=columns;i++){
+        positions.push(...point(i/columns,j/rows));
+        if(i<columns&&j<rows){
+          const a=j*(columns+1)+i,b=a+columns+1;
+          indices.push(a,a+1,b,a+1,b+1,b);
         }
       }
-      const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
-      hair.side=T.DoubleSide;mesh(head,geo,hair);
+      const g=new T.BufferGeometry();
+      g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();
+      material.side=T.DoubleSide;return mesh(parent,g,material);
     }
-    for(let i=0;i<4;i++){
-      const x=i*.022;
-      forelock([vec(-.19+x,.524,.078),vec(-.10+x,.575+i*.005,.118),vec(.027+x,.608+i*.003,.105),vec(.117+x,.586,.020)],.024-i*.0015);
+    function faceStrip(parent,material,path,width,relief){
+      return patch(parent,material,28,4,(t,v)=>{
+        const [x,y]=path(t),s=Math.sin(Math.PI*t),q=v*2-1;
+        const h=y+q*width*(.02+.98*s**.58);
+        return [x,h,frontAt(x,h)+.0015+relief*s*(1-q*q)];
+      });
+    }
+    const lash=mat(0x805646),rim=mat(0x405950),iris=mat(0x608576),pupil=mat(0x172421);
+    const crease=mat(0x9e6252),lip=mat(0xe6a085);
+    const eyes=[];
+    for(const side of [-1,1]){
+      const raised=side===1, cx=side*.170,cy=raised?.128:.123;
+      const eye=group(head);eye.position.y=cy;eyes.push(eye);
+      const halfWidth=.128;
+      function eyeLimits(x){
+        const u=T.MathUtils.clamp((x-cx)/halfWidth,-1,1);
+        const arc=Math.sqrt(Math.max(0,1-u*u));
+        const tilt=side*u*(raised?.010:.021);
+        return [cy+tilt-.061*arc,cy+tilt+(raised?.029:.015)*arc];
+      }
+      function eyeSurface(x,y){
+        const [lo,hi]=eyeLimits(x),u=(x-cx)/halfWidth;
+        const v=(2*y-lo-hi)/Math.max(.0001,hi-lo);
+        return frontAt(x,y)+.006+.015*Math.max(0,(1-u*u)*(1-v*v));
+      }
+      patch(eye,white,22,8,(t,v)=>{
+        const x=cx+halfWidth*(2*t-1),[lo,hi]=eyeLimits(x),y=lo+(hi-lo)*v;
+        return [x,y-cy,eyeSurface(x,y)];
+      });
+      // Clip the iris and pupil at the almond-shaped opening so the lids cover them.
+      function eyeDisc(material,centerX,centerY,rx,ry,lift){
+        patch(eye,material,22,7,(t,v)=>{
+          const u=2*t-1,x=centerX+rx*u,dy=ry*Math.sqrt(Math.max(0,1-u*u));
+          const [lo,hi]=eyeLimits(x);
+          const y=T.MathUtils.lerp(T.MathUtils.clamp(centerY-dy,lo,hi),T.MathUtils.clamp(centerY+dy,lo,hi),v);
+          return [x,y-cy,eyeSurface(x,y)+lift];
+        });
+      }
+      const gaze=cx-side*.012;
+      eyeDisc(rim,gaze,cy+.003,.059,.065,.0015);
+      eyeDisc(iris,gaze,cy+.003,.052,.060,.0030);
+      eyeDisc(pupil,gaze,cy+.003,.031,.040,.0045);
+      eyeDisc(white,gaze-.014,cy+.014,.011,.012,.006);
+      // The fleshy upper lid carries the brow down toward the inner corner.
+      patch(head,skin,26,6,(t,v)=>{
+        const x=cx+halfWidth*(2*t-1),hi=eyeLimits(x)[1],arch=Math.sin(Math.PI*t);
+        const h=hi+v*(.028+.034*arch);
+        return [x,h,frontAt(x,h)+(.007+.014*Math.sin(Math.PI*v))*arch*(1-v)];
+      });
+      for(const upper of [false,true]){
+        patch(eye,upper?lash:lip,24,3,(t,v)=>{
+          const x=cx+halfWidth*(2*t-1),[lo,hi]=eyeLimits(x);
+          const edge=upper?hi:lo,band=(upper?.011:.006)*Math.sin(Math.PI*t);
+          const y=edge+(upper?1:-1)*v*band;
+          return [x,y-cy,frontAt(x,y)+.008+.003*Math.sin(Math.PI*v)];
+        });
+      }
+      faceStrip(head,brow,t=>{
+        const x=side*T.MathUtils.lerp(.062,.282,t);
+        const y=(raised?.197:.170)+(raised?.020:.034)*t+(raised?.036:.016)*Math.sin(Math.PI*t);
+        return [x,y];
+      },raised?.009:.011,.006);
+      const nostrilX=side*.042,nostrilY=.016;
+      const nostril=oval(head,crease,nostrilX,nostrilY,frontAt(nostrilX,nostrilY)+.001,.012,.0035,.002);
+      nostril.rotation.z=side*.20;
+      const shell=oval(head,skin,side*.404,.115,-.006,.072,.094,.053);
+      shell.rotation.z=-side*.20;
+      const inner=oval(head,ear,side*.453,.117,.014,.023,.055,.034);
+      inner.rotation.z=-side*.20;
+      oval(head,skin,side*.467,.106,.026,.012,.025,.018);
+    }
+    const smile=t=>[-.079+.172*t,-.061-.014*Math.sin(Math.PI*t)+.022*t**3];
+    faceStrip(head,lip,t=>{const [x,y]=smile(t);return [x,y-.009*Math.sin(Math.PI*t)];},.012,.010);
+    faceStrip(head,crease,smile,.0058,.004);
+    faceStrip(head,lip,t=>[.089+.018*t,-.042+.012*t],.003,.002);
+    // Very fine blond hair covers the occiput and crown. Its low part and
+    // widow's peak continue around the temple, so no viewing angle has a seam.
+    const gold=new T.Color(0xd7a877),rootBlond=new T.Color(0xc09972);
+    function hairline(angle){
+      const a=Math.atan2(Math.sin(angle),Math.cos(angle));
+      return .32+.282*Math.cos(a)+.038*Math.sin(a)
+        -.092*bell(a+.11,.245)-.190*bell(Math.abs(a)-1.42,.145);
+    }
+    function scalpPoint(angle,fraction,lift=0){
+      const edge=Math.asin((hairline(angle)-faceMid)/faceHeight);
+      const y=faceMid+faceHeight*Math.sin(T.MathUtils.lerp(edge,Math.PI/2,fraction));
+      const s=headSection(y);
+      return [(s.width+lift)*Math.sin(angle),y+lift*.62,s.center+(s.depth+lift)*Math.cos(angle)];
+    }
+    const scalpMaterial=mat(0xffffff);scalpMaterial.vertexColors=true;
+    const scalp=patch(head,scalpMaterial,100,20,(u,v)=>scalpPoint(TAU*u,v,.0028));
+    const scalpColors=[];
+    for(let j=0;j<=20;j++)for(let i=0;i<=100;i++){
+      const v=j/20,a=TAU*i/100,grain=.5+.5*Math.cos(36*a+9*v);
+      const tint=gold.clone().lerp(rootBlond,.19+.24*grain+.14*v);
+      scalpColors.push(...baseSkin.clone().lerp(tint,Math.min(1,.18+v*5)).toArray());
+    }
+    scalp.geometry.setAttribute('color',new T.Float32BufferAttribute(scalpColors,3));
+    const strand=mat(0xd9b28a);
+    for(let i=0;i<37;i++){
+      const angle=TAU*i/37,phase=.5+.5*Math.sin(17*angle),end=.68+.21*phase;
+      patch(head,strand,12,1,(t,v)=>{
+        const sweep=.36*t*(1-.50*Math.cos(angle)),f=.025+end*t;
+        const a=angle+sweep+(v-.5)*.010*Math.sin(Math.PI*t);
+        return scalpPoint(a,f,.0034);
+      });
     }
     const rail=group(nursery);
     railMat.transparent=true;
@@ -149,12 +326,16 @@
     for(const z of [.09,1.29])rod(rail,railMat,vec(.64,0,z),vec(.64,1.09,z),.039);
     const babyLimbs=[];
     for(const s of [-1,1]) for(const arm of [false,true]){
-      const limb={s,arm,upper:mesh(baby,sphere,suit),lower:mesh(baby,sphere,suit),joint:mesh(baby,sphere,suit),end:mesh(baby,sphere,arm?skin:shoe)};
+      const limb={s,arm,upper:mesh(baby,arm?sleeve:trouserThigh,suit),lower:mesh(baby,arm?sleeveFore:trouserHem,suit),joint:mesh(baby,sphere,suit),end:mesh(baby,sphere,arm?skin:shoe)};
       limb.cuff=mesh(baby,sphere,arm?white:lapel);
       limb.tip=group(baby);
       if(arm){
         oval(limb.tip,skin,-s*.062,0,.028,.037,.030,.050);
         for(let i=0;i<4;i++)oval(limb.tip,skin,(i-1.5)*.033,-.003,.073,.018,.026,.044-Math.abs(i-1)*.003);
+      }
+      if(!arm){
+        oval(limb.tip,shoe,0,-.032,.026,.104,.026,.166);
+        oval(limb.tip,lapel,0,.035,.053,.080,.026,.067);
       }
       babyLimbs.push(limb);
     }
@@ -277,7 +458,8 @@
       for(let i=0;i<attr.count;i+=steps)points.push(vec(attr.getX(i),attr.getY(i),attr.getZ(i)));
       probes.push({part,points});
     }
-    head.traverse(part=>{if(part.isMesh)sampleSurface(part,part===faceMesh?4:3);});
+    sampleSurface(faceMesh,5);
+    for(const part of head.children)if(part.geometry===sphere)sampleSurface(part,5);
     sampleSurface(jacket,2);sampleSurface(seat,2);
     for(const limb of babyLimbs){
       for(const part of [limb.upper,limb.lower,limb.joint,limb.end])sampleSurface(part,3);
@@ -299,7 +481,7 @@
     function updateBalance(){
       // Fixed illustrative mass shares sum to one, with each bilateral share
       // applied once per side. Segment centroids follow the current pose.
-      estimatedCOM.copy(head.localToWorld(vec(0,.184,0))).multiplyScalar(.22)
+      estimatedCOM.copy(head.localToWorld(vec(0,faceMid,0))).multiplyScalar(.22)
         .addScaledVector(body.localToWorld(vec(0,.36,0)),.42);
       for(const l of babyLimbs){
         estimatedCOM.addScaledVector(l.upper.getWorldPosition(scanPoint),l.arm?.031:.070)
@@ -335,7 +517,11 @@
       head.position.copy(vec(0,.84,0).applyQuaternion(body.quaternion)).add(body.position);
       // The occiput and the back share the mat in supine. The head leads the
       // roll and lifts clear of the face before the baby settles prone.
-      const headSupport=p=>p.stage===0?.058:p.stage===1?.058+.045*p.turn:p.stage===2?.103*(1-p.turn):0;
+      const headSupport=p=>{
+        if(p.stage===0)return .210;
+        if(p.stage===1)return .103+.107*(1-T.MathUtils.smoothstep(p.turn,.40,.78));
+        return p.stage===2?.103*(1-p.turn):0;
+      };
       head.position.y+=T.MathUtils.lerp(headSupport(first),headSupport(next),k);
       const seconds=amount*duration;
       const blink=[2.2,10.7,19.5,27.1,34.5].reduce((v,time)=>Math.max(v,Math.max(0,1-Math.abs(seconds-time)/.10)),0);
@@ -381,14 +567,14 @@
       baby.updateMatrixWorld(true);updateBalance();
     }
     function drawBabyLimb(l,start,mid,end,orientation){
-      const r=l.arm?.095:.130;
+      const r=l.arm?.103:.139;
       span(l.upper,start,mid,r);span(l.lower,mid,end,r*.84);
       l.joint.position.copy(mid);l.joint.scale.setScalar(r*.82);
       span(l.cuff,mid.clone().lerp(end,.80),end,r*.66);
       l.end.position.copy(end);
       l.end.quaternion.copy(orientation);
-      l.end.scale.set(l.arm?.082:.091,l.arm?.060:.072,l.arm?.098:.145);
-      l.end.position.add(vec(0,0,l.arm?.025:.047).applyQuaternion(orientation));
+      l.end.scale.set(l.arm?.082:.107,l.arm?.060:.072,l.arm?.098:.172);
+      l.end.position.add(vec(0,0,l.arm?.025:.072).applyQuaternion(orientation));
       l.tip.position.copy(l.end.position);l.tip.quaternion.copy(l.end.quaternion);
     }
     const comparison=group(scene);

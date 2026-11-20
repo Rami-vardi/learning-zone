@@ -56,3 +56,9 @@
 #lz-anatomy-zone .azc-front-mark{border-color:#527aba;color:#285391}
 #lz-anatomy-zone .azc-rear-mark{border-color:#ac7950;color:#79522f}
 #lz-anatomy-zone .azc-far-mark{border-style:dashed}
+
+#lz-anatomy-zone .azc-body-types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+#lz-anatomy-zone .azc-body-types[hidden],#lz-anatomy-zone.azc-tension-active .azc-body-types{display:none}
+#lz-anatomy-zone .azc-body-types button{font:inherit;font-size:12px;line-height:1.25;background:white;color:var(--azc-ink);border:1px solid var(--azc-line);border-radius:7px;padding:7px 10px;cursor:pointer}
+#lz-anatomy-zone .azc-body-types button[aria-pressed="true"]{background:#e4f0fd;color:#173e6c;border-color:#658ab5;font-weight:650}
+@media(max-width:650px){#lz-anatomy-zone .azc-body-types{grid-column:1/-1;width:100%}#lz-anatomy-zone .azc-body-types button{min-height:44px}}

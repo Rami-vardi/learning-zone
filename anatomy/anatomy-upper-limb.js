@@ -361,8 +361,8 @@ window.azAttachUpperSkeleton = function(parts) {
 
     // Hold the hand fixed while the radial head and distal ulnar head
     // define the axis about which the radius carries the carpus.
-    const upperLength=palm?1.08:upper.position.distanceTo(fore.position);
-    const foreLength=palm?.98:fore.position.distanceTo(hand.position);
+    const upperLength=movement==='deadlift_types'?1.08*exercise.lengthFactor:palm?1.08:upper.position.distanceTo(fore.position);
+    const foreLength=movement==='deadlift_types'?.98*exercise.lengthFactor:palm?.98:fore.position.distanceTo(hand.position);
     const pivot=vector(side*.065,-.053,.001);
     const spinAxis=vector(side*.115,.935,-.001).normalize();
     // Cupping the underside of the bell loads the open hand in extension.
@@ -379,7 +379,7 @@ window.azAttachUpperSkeleton = function(parts) {
     else if(cup) pole.set(side*.22,-1,.15).applyQuaternion(torso.quaternion);
     else if(palm) pole.set(side*(movement==='tension_cat'?.15:.60),0,-1);
     else if(movement==='dips') pole.set(side*.40,0,-.90);
-    else if(movement==='rdl'||movement==='tension_deadlift') pole.set(side*(movement==='rdl'?.15:.25),0,.20);
+    else if(movement==='rdl'||movement==='tension_deadlift'||movement==='deadlift_types') pole.set(side*(movement==='rdl'?.15:.25),0,.20);
     else if(movement==='bench') pole.set(side,-.5,.60);
     else if(movement==='tension_swing') pole.set(side,0,0);
     wristPoint.copy(heldCentre);

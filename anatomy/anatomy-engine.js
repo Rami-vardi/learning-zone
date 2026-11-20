@@ -240,7 +240,33 @@
       boneMaterial:boneM, contextMaterial:ctxM, scapulaMaterial:mat('scapula')
     });
     function box(parent,size,pos,material){const m=mesh(new T.BoxGeometry(...size),material,parent);m.position.set(...pos);return m;}
-    const barbell=new T.Group();equipment.add(barbell);between(barbell,[-1.6,0,0],[1.6,0,0],.035,.035,steel);
+    // The upper thoracic spinous process is a bony landmark beneath the
+    // modeled upper-back support. Both straight squat bars use the same seat.
+    const squatSupportLevel=spineGroups[spineGroups.length-2]; // T2
+    const squatSupport=new T.Vector3();
+    {
+      const point=new T.Vector3();
+      let posterior=Infinity;
+      squatSupportLevel.node.traverse(mesh=>{
+        if(!mesh.isMesh)return;
+        mesh.updateMatrix();
+        const vertices=mesh.geometry.attributes.position;
+        for(let i=0;i<vertices.count;i++){
+          point.fromBufferAttribute(vertices,i).applyMatrix4(mesh.matrix);
+          if(point.z<posterior){
+            posterior=point.z;
+            squatSupport.set(0,point.y,point.z);
+          }
+        }
+      });
+    }
+    function squatBarSeat(radius){
+      const seat=squatSupport.clone();
+      seat.z-=radius+.065; // Illustrative tissue cover, in model units.
+      return seat;
+    }
+    const squatBarRadius=.035, comparisonBarRadius=.04;
+    const barbell=new T.Group();equipment.add(barbell);between(barbell,[-1.6,0,0],[1.6,0,0],squatBarRadius,squatBarRadius,steel);
     for(const side of [-1,1]){const p=mesh(new T.CylinderGeometry(.26,.26,.12,24),steel,barbell);p.rotation.z=Math.PI/2;p.position.x=side*1.55;}
     const dumbbellHeads=new T.MeshStandardMaterial({color:0x304b65,roughness:.62,metalness:.12});
     const dumbbells=[];for(const side of [-1,1]){const g=new T.Group();equipment.add(g);between(g,[-.38,0,0],[.38,0,0],.043,.043,steel);for(const x of [-.32,.32]){const w=mesh(new T.CylinderGeometry(.205,.205,.18,6),dumbbellHeads,g);w.rotation.z=Math.PI/2;w.position.x=x;}dumbbells.push({side,node:g});}
@@ -565,7 +591,10 @@
         const S=turn([1.04,2.25,.02]),z=.30+(b?.52*smooth(.35,1,phase):0),dy=Math.sqrt(Math.max(.01,2.23*2.23-Math.pow(S.x-.65,2)-Math.pow(S.z-z,2)));
         gripCentre=new T.Vector3(0,S.y-dy,z);barbell.position.copy(gripCentre);barbell.visible=true;
       }
-      if(m==='squat'){gripCentre=turn([0,2.23,-.28]);barbell.position.copy(gripCentre);barbell.visible=true;}
+      if(m==='squat'){
+        gripCentre=squatSupportLevel.node.localToWorld(squatBarSeat(squatBarRadius));
+        barbell.position.copy(gripCentre);barbell.visible=true;
+      }
 
       const armChecks=[];
       for(const arm of exArms){
@@ -891,7 +920,7 @@
     const previewMetal=new T.MeshStandardMaterial({color:0x8ca3b9,roughness:.45,metalness:.45});
     const previewFoam=new T.MeshStandardMaterial({color:0x1d3046,roughness:.92});
     const goblet=new T.Group();previewEquipment.add(goblet);between(goblet,[0,-.28,0],[0,.28,0],.065,.065,previewSteel);for(const y of[-.28,.28]){const g=mesh(new T.CylinderGeometry(.23,.23,.16,6),previewSteel,goblet);g.position.y=y;}
-    const straight=new T.Group();previewEquipment.add(straight);between(straight,[-1.6,0,0],[1.6,0,0],.04,.04,previewSteel);for(const x of[-1.55,1.55]){const p=mesh(new T.CylinderGeometry(.27,.27,.12,20),previewSteel,straight);p.rotation.z=Math.PI/2;p.position.x=x;}
+    const straight=new T.Group();previewEquipment.add(straight);between(straight,[-1.6,0,0],[1.6,0,0],comparisonBarRadius,comparisonBarRadius,previewSteel);for(const x of[-1.55,1.55]){const p=mesh(new T.CylinderGeometry(.27,.27,.12,20),previewSteel,straight);p.rotation.z=Math.PI/2;p.position.x=x;}
     const safety=new T.Group(), safetyPlateCenter=new T.Vector3();previewEquipment.add(safety);between(safety,[-1.10,0,-.12],[1.10,0,-.12],.055,.055,previewMetal);
     for(const x of[-.62,0,.62]){const pad=mesh(new T.CylinderGeometry(.13,.13,x===0?.37:.53,18),previewFoam,safety);pad.rotation.z=Math.PI/2;pad.position.set(x,0,-.12);}
     for(const side of[-1,1]){
@@ -944,7 +973,9 @@
       const rotation=new T.Quaternion().setFromAxisAngle(V(1,0,0),pitch);
       const offset=(x,y,z)=>V(x,y,z).applyQuaternion(rotation);
       const apparatus=heel?straight:safetyBar?safety:goblet;
-      const apparatusOffset=heel?offset(0,2.35,-.30):safetyBar?offset(0,2.35,0):offset(0,1.95,.65);
+      const apparatusOffset=heel
+        ? squatBarSeat(comparisonBarRadius).add(V(0,squatSupportLevel.y-3.3,squatSupportLevel.z)).applyQuaternion(rotation)
+        : safetyBar?offset(0,2.35,0):offset(0,1.95,.65);
       const loadOffset=apparatusOffset.clone();
       if(safetyBar)loadOffset.add(safetyPlateCenter.clone().applyQuaternion(rotation));
 
@@ -961,7 +992,7 @@
       exerciseArms.visible=true;
       for(const arm of exArms){
         const s=arm.side, shoulder=offset(s*1.04,2.25,.02);
-        const grip=heel?offset(s*1.25,2.35,-.30):safetyBar?offset(s*.56,2.00,.715):offset(s*.185,2.15,.65);
+        const grip=heel?apparatusOffset.clone().add(V(s*1.25,0,0)):safetyBar?offset(s*.56,2.00,.715):offset(s*.185,2.15,.65);
         const wrist=grip.clone().add(V(0,-.13,0));
         const elbow=twoJoint(shoulder,wrist,1.08,.98,V(s*.25,-1,-.25));
         poseSegment(arm.clavicle,offset(0,2.4,.3),shoulder);

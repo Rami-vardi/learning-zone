@@ -72,7 +72,7 @@
     const disk=new T.CylinderGeometry(1,1,.018,56);
     function floor(parent,rx,rz) {const m=mesh(parent,disk,pad);m.scale.set(rx,1,rz);m.position.y=-.012;return m;}
     const nursery=group(scene), baby=group(nursery), body=group(baby);
-    floor(nursery,1.63,2.80);
+    const nurseryMat=floor(nursery,1.63,2.80);
     const coatProfile=[
       [-.018,.302,.240],[.006,.321,.253],[.070,.324,.260],[.20,.320,.263],
       [.37,.312,.266],[.54,.311,.248],[.665,.317,.205],[.730,.296,.176],
@@ -365,14 +365,15 @@
           headLean=stage===0?1.54:1.54-.87*t;
           side=.19*Math.sin(roll);break;
         case 2:y=.262;z=-.49;lean=1.43-.53*t;headLean=.59-.45*t;break;
-        case 3:y=.265;z=-.49+.44*t;lean=1.42;headLean=.42;yaw=.055*wave;break;
+        case 3:y=.249;z=-.49+.44*t;lean=1.42;headLean=.42;yaw=.055*wave;break;
         case 4:{
           z=-.05+.56*t;lean=1.30;headLean=.36;
           side=.055*Math.sin(phase);
           const stance=t%1<.5?t:t+.5;
           const [dz]=stride(stance,.56,.095);
-          const kneeOffset=dz;
-          y=.112+Math.sqrt(.464**2-.018**2-kneeOffset**2)-.03*Math.cos(lean);
+          const stanceSide=t%1<.5?-1:1;
+          const kneeWidth=stanceSide*(.27-.202)-side;
+          y=.114+Math.sqrt(.464**2-kneeWidth**2-dz**2)-.03*Math.cos(lean);
           break;
         }
         case 5:{
@@ -409,13 +410,13 @@
           footYaw=Math.PI;foot=stage===0?-.8:-.8*(1-t);
         }else if(stage===2||stage===3){
           const [dz,dy]=stage===3?stride(t+(s>0?0:.5)+(arm?0:.5),.44,.08):[0,0];
-          goal=arm?vec(s*.34,.063+dy,z+(stage===2?.69:.90)+dz):vec(s*(.26+.045*s*wave),.077,z-.65+dz);
+          goal=arm?vec(s*.34,.105+dy,z+(stage===2?.69:.90)+dz):vec(s*(.26+.045*s*wave),.120,z-.65+dz);
           pole=arm?vec(s*.62,-.15,-.8):vec(s*.82,-.65,.25);footYaw=Math.PI;
         }else if(stage===4){
           const [dz,dy]=stride(t+(s>0?0:.5)+(arm?0:.5),.56,arm?.12:.095);
           // On hands and knees the knee is the stance contact. Supply it
           // independently of the ankle and construct the calf from that joint.
-          goal=arm?vec(s*.32,.063+dy,z+.64+dz):vec(s*.22,.112+dy,z+.03*Math.sin(lean)+dz);
+          goal=arm?vec(s*.32,.063+dy,z+.64+dz):vec(s*.27,.114+.056*(dy/.095)**2,z+.03*Math.sin(lean)+dz);
           pole=arm?vec(s*.32,.02,-1):vec(s*.10,-.10,-1);
           footYaw=Math.PI;
         }else if(stage===5){
@@ -534,17 +535,22 @@
         function joints(pose,target){
           const root=vec(l.s*(arm?.27:.202),arm?.64:.03,0).applyQuaternion(pose.orientation).add(pose.hip);
           if(!arm&&pose.stage===4){
-            const knee=target.goal.clone().sub(root).setLength(lengths[0]).add(root);
+            // The stance knee stays planted. The opposite thigh swings out as
+            // its knee advances, keeping its length and the intended lift.
+            const knee=target.goal.clone(),dy=knee.y-root.y,dz=knee.z-root.z;
+            knee.x=root.x+l.s*Math.sqrt(Math.max(0,lengths[0]**2-dy*dy-dz*dz));
             return [root,knee,knee.clone().add(vec(0,.026,-.431).setLength(lengths[1]))];
           }
-          const goal=target.goal.clone();goal.y=Math.max(arm?.063:.076,goal.y);
+          const prone=pose.stage===2||pose.stage===3;
+          const wristHeight=prone?.105:.065, ankleHeight=prone?.120:.078;
+          const goal=target.goal.clone();goal.y=Math.max(arm?wristHeight:ankleHeight,goal.y);
           const pole=target.pole.clone();
           if(pose.stage===1&&!arm)pole.set(pole.x,.48,pole.z+.10);
           const [mid,end]=solve(root,goal,...lengths,pole);
           restAboveFloor(root,mid,lengths[0],arm?.10:.145,l.s);
           const delta=end.clone().sub(mid);
           end.copy(mid).add(delta.setLength(lengths[1]));
-          restAboveFloor(mid,end,lengths[1],arm?.065:.078,l.s);
+          restAboveFloor(mid,end,lengths[1],arm?wristHeight:ankleHeight,l.s);
           return [root,mid,end];
         }
         const [rootA,midA,endA]=joints(first,a);
@@ -558,7 +564,9 @@
           end=mid.clone().addScaledVector(lower,lengths[1]);
           restAboveFloor(mid,end,lengths[1],arm?.065:.078,l.s);
         }
-        drawBabyLimb(l,start,mid,end,a.foot.clone().slerp(b.foot,k));
+        const proneSupport=stage=>Number(stage===2||stage===3);
+        const palmDrop=arm?.045*T.MathUtils.lerp(proneSupport(first.stage),proneSupport(next.stage),k):0;
+        drawBabyLimb(l,start,mid,end,a.foot.clone().slerp(b.foot,k),palmDrop);
       }
       // The contact can migrate from head to side, pelvis, knees or feet.
       // Seat the actual skin surface on the mat throughout the roll and transfers.
@@ -566,7 +574,7 @@
       baby.position.y=.001-babyBounds.setFromObject(baby,true).min.y;
       baby.updateMatrixWorld(true);updateBalance();
     }
-    function drawBabyLimb(l,start,mid,end,orientation){
+    function drawBabyLimb(l,start,mid,end,orientation,palmDrop){
       const r=l.arm?.103:.139;
       span(l.upper,start,mid,r);span(l.lower,mid,end,r*.84);
       l.joint.position.copy(mid);l.joint.scale.setScalar(r*.82);
@@ -574,7 +582,7 @@
       l.end.position.copy(end);
       l.end.quaternion.copy(orientation);
       l.end.scale.set(l.arm?.082:.107,l.arm?.060:.072,l.arm?.098:.172);
-      l.end.position.add(vec(0,0,l.arm?.025:.072).applyQuaternion(orientation));
+      l.end.position.add(vec(0,-palmDrop,l.arm?.025+palmDrop:.072).applyQuaternion(orientation));
       l.tip.position.copy(l.end.position);l.tip.quaternion.copy(l.end.quaternion);
     }
     const comparison=group(scene);
@@ -712,9 +720,10 @@
       }
     }
     return {scene,balance,
+      showBabyMat(visible){nurseryMat.visible=visible;},
       babyCenter(){
         const centre=head.position.clone().lerp(body.position,.57);
-        centre.y=(babyBounds.min.y+babyBounds.max.y)/2+.04;
+        centre.y=(babyBounds.min.y+babyBounds.max.y)/2;
         centre.x=0;
         return centre.add(baby.position);
       },

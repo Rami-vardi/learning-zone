@@ -220,10 +220,12 @@ window.azAttachUpperSkeleton = function(parts) {
   const joints = [];
   sternum.updateMatrix();
   const sternumRestInverse=sternum.matrix.clone().invert();
+  const shortTorsoFraction=()=>T.MathUtils.clamp((.825-torso.scale.y)/.15,0,1);
   function setClaviclePivot(side,movement){
-    // For these shoulder lessons, register the medial articular end
-    // against the upper lateral manubrium throughout the shoulder excursion.
-    if(movement==='pullup'||movement==='scapula'||movement==='press'||movement==='bench')start.set(side*.118,.791,.197);
+    // Register the medial end against the upper lateral manubrium. The
+    // shorter rib cage needs a higher attachment in its scaled local frame.
+    if(movement==='deadlift_types')start.set(side*.118,.791+.029*shortTorsoFraction(),.197);
+    else if(['pullup','scapula','press','bench','dips','tension_pogo','tension_deadlift','cgoblet','cheels','csafety'].includes(movement))start.set(side*.118,.791,.197);
     else start.set(side*.0708,.7408,.11408);
     sternum.updateMatrix();
     start.applyMatrix4(sternumRestInverse).applyMatrix4(sternum.matrix);
@@ -480,6 +482,7 @@ window.azAttachUpperSkeleton = function(parts) {
         // glenoid at the corresponding shoulder while retaining blade rotation.
         if(!mobile||exercise.reachAdjustment>1e-10){
           torso.worldToLocal(exercise.upper.getWorldPosition(target));
+          if(movement==='deadlift_types')target.y+=.030*shortTorsoFraction();
           scapula.position.add(target.sub(joint));
           scapula.updateMatrix();
         }
@@ -502,6 +505,7 @@ window.azAttachUpperSkeleton = function(parts) {
       arm.clavicle.position.copy(start);
       arm.clavicle.scale.y = clavicleLength;
       arm.clavicle.quaternion.setFromUnitVectors(down, end.normalize());
+      if(movement==='deadlift_types')arm.clavicle.quaternion.multiply(rotation.setFromAxisAngle(axisY,arm.side*.40*shortTorsoFraction()));
       if(movement==='bench'){
         // Axial rotation clears the upper ribs while preserving both endpoints.
         arm.clavicle.quaternion.multiply(rotation.setFromAxisAngle(axisY,arm.side*.30));

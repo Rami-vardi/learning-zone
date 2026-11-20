@@ -35,11 +35,13 @@ html[data-lz-theme-ready] #lz-anatomy-tension :is(.tf-model,.tf-options){backgro
 html[data-lz-theme-ready] #lz-anatomy-tension :is(button,select){background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
 html[data-lz-theme-ready] #lz-anatomy-tension button[aria-pressed=true]{background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
 html[data-lz-theme-ready] #lz-anatomy-tension :is(.tf-degree,.tf-legend){background:var(--lz-soft);color:var(--lz-blue)}
-html[data-lz-theme-ready] #lz-anatomy-tension :is(.tf-subtitle,.tf-options p,summary,.tf-ends,.tf-motion label){color:var(--lz-sub)}
+html[data-lz-theme-ready] #lz-anatomy-tension :is(.tf-subtitle,.tf-options p,.tf-scale-note,summary,.tf-ends,.tf-motion label){color:var(--lz-sub)}
 /* Anatomy canvases retain the approved lighting; their caption remains readable over it. */
-html[data-lz-appearance=dark] #lz-anatomy-zone .azc-stage-area .azc-stage-title{color:#18304e}
-html[data-lz-appearance=dark] #lz-anatomy-zone .azc-stage-area .azc-stage-title :is(h2,span){color:#18304e}
-html[data-lz-appearance=dark] #lz-anatomy-zone .azc-stage-area.is-com .azc-stage-title :is(h2,span){color:var(--lz-ink)}
+html[data-lz-appearance=dark] #lz-anatomy-zone .azc-stage-area :is(#azc-title,#azc-focus,.azc-stage-caption,.azc-com-legend){color:#233e59}
+html[data-lz-theme-ready] #lz-anatomy-zone #azc-reset{background:var(--lz-paper);color:var(--lz-ink);border-color:var(--lz-line)}
+html[data-lz-appearance=dark] #student-learning-board .toolbar-signout{color:var(--lz-sub)}
+html[data-lz-appearance=dark] .lz-wb .wb-home-start{background:var(--lz-neutral);color:var(--lz-ink)}
+html[data-lz-appearance=dark] .lz-wb .wb-home-start :is(.wb-home-kicker,p){color:var(--lz-sub)}
 html[data-lz-theme-ready] .lz-wb{--wb-bg:var(--lz-paper);--wb-soft:var(--lz-neutral);--wb-line:var(--lz-line);--wb-ink:var(--lz-ink);--wb-muted:var(--lz-sub);--wb-blue:var(--lz-blue)}
 html[data-lz-theme-ready] .lz-wb :is(.wb-top,.wb-toolbar,.wb-cell-line,.wb-tabs,.wb-menu,.wb-boards,.wb-library,.wb-dialog){background:var(--lz-paper);color:var(--lz-ink)}
 html[data-lz-theme-ready] .lz-wb :is(.wb-top,.wb-toolbar,.wb-tabs,.wb-menu,.wb-dialog) :where(button,select,input:not([type=color])){background:var(--lz-paper);color:var(--lz-ink)}

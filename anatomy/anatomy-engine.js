@@ -10,6 +10,15 @@
   // lesson's spine. Seventeen evenly spaced poses share the same atlas disc
   // paths. Constant poses store one frame. Each signed byte is .002 radians.
   const axialPoseKeys=Object.fromEntries(Object.entries({
+    bench_a:'PgDn5wwXBvklLujnx8fH',
+    bench_b:'OfSkl5nN0Dg5NzI3DcfH',
+    pushup_a:'GuDg8gMNFx8jJSAR+9/E',
+    pushup_b:'be8DJiT++B88PDUT2MTEbO0CJiYC+yE8PDQP1MTEaun/JikH/yQ8PDEKzsTEauj+JioLAiU8PC4GysTEauf+JiwOBCY8OyoDyMTEauX9Ji0SByc7OicAxsTEaeP8Ji8VCig7OCT8xMTEaOH6JjEaDSo7NiH3xMTEZ9/5JzQdECw7NR3yxMTEZtz3JzYhEy48MxrtxMTEZtv2JzgkFjA8MhfpxMTEZdn1KDknGDE8MRXmxMTEZdf0KDspGjI8MBPjxMTEZNXzKD0sHTQ8LxHfxMTEY9TyKT4uHjU8Lw/dxMTEY9PxKT8vIDY8Lg7axMTEY9PxKUAwIDc8Lg3ZxMTE',
+    lunge_a:'AdzkAhslKywoIRL62sTEA9rjAhwnLS4pIRH418TEBtnhAh0oLzArIhH208TECdjhAx8qMTEsIhD0z8TEDdfgAyAsMjMtIxDyzMTEENbfAyEtNDQuIw/xycTEE9XfBCIuNTUvIw/vx8TEF9XeBCMvNjYvIw7uxcTEGtTeBCQwNzcwIw3sxMTEHtPdBSUyOTkxIwvoxMTEH8nYDDI2Ozs0JwjfxMTEGajJLlg6PDw5NP3NxMTEEpTBUW48PDw8OebGxMTEDZPBaW48PDw7OdbHxMTEDJLFbm48PDw7OdHFxMTEDJLNbm48PDw7OMvFxMTEDJLTbm48PDw7NsbExMTE',
+    lunge_b:'2+fsABAXHB0cGRED8NnE2+fsABAXHB0cGREE8NrE2ufsABAXGx0cGREE8drE2efsABAXGx0cGREE8drE2OfsABAXGx0cGREE8drE1+fsABAXGx0cGREE8drE1ubrABAXHB0cGREE8drE1ebrABAXHB4dGhIE8drE1OXrABEYHB4dGhIE8dnE0+Xq/xEYHB4dGhIE8dnE0uXq/xEYHR8dGhIE8dnE0eXq/xEYHR8dGhIE8dnE0OTq/xEYHR8eGhME8NnEz+Tq/xEYHR8eGxME8NjEzuTp/xEYHR8eGxME8NjEzePp/xEYHSAeGxME8NjEzOPp/xEZHiAeGxME8NfE',
+    tension_pushup:'bfADJiT99x88PDUT2cTEbO0CJiYB+iA8PDQQ1cTEaun/JikJACQ8PC8JzcTEaeX8Ji4SByc7Oif/x8TEZ9/5JzMdECw7NR7yxMTEZdn1KDkmGDE8MRXmxMTEZNXzKT0tHTU8LxDexMTEY9PxKT8wIDY8Lg7axMTEY9PxKUAwIDc8Lg3ZxMTEY9PxKT8wIDY8Lg7axMTEZNXzKT0tHTU8LxDexMTEZdn1KDkmGDE8MRXmxMTEZ9/5JzMdECw7NR7yxMTEaeX8Ji4SByc7Oif/x8TEaun/JikJACQ8PC8JzcTEbO0CJiYB+iA8PDQQ1cTEbfADJiT99x88PDUT2cTE',
+    tension_swing:'SqjJbW48PDw3K8TExMTES6TSbG48PDw5LMXExMTEQ5jgbW48PDw8LsfExMTELJ7ZV2I6Ozs5MdbLxcTEFMbbHDQuMzMvJv7nzsTE/eDnAhghJyglHhH84MfE9ePpAhYeIyQiHRL/58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQiHRL/58rE/eDnAhghJyglHhH84MfEFMbbHDQuMzMvJv7nzsTELJ7ZV2I6Ozs5MdbLxcTEQ5jgbW48PDw8LsfExMTES6TSbG48PDw5LMXExMTESqjJbW48PDw3K8TExMTE',
+    tension_pogo:'/e3w/AcLDhAREA0G/PDl/N7l/A8YHiEhHhYI9NzN/NXe/BUhKSwrJxsH7MvE/Nbe/BQgKCsqJhsI7c3F/OHn/A0VGx4dGxUI9uDR/e/y/QUKDQ4ODgsG/fPo/vP1/QMGCQoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw',
     rdl_a:'Jtzb7f8LFiAmKSQV/d/HJcvL7g0YJC0zMysN6s3EDKerHkUwNjk7OjLnzsTE5JOjYGw8PDw8OSzIxMTE0pK5bm48PDw7OCzFxMTEwJPWbm48PDw7OSvIxMTEsJTtbm48PDw8OyvIxMTEqZMAbm48PDw8PDXGxMTEp5IQbm48PDw8OzLHxMTEo5Ijbm48PDw8OSfHxMTEl5JAbm48PDw7OSTIxMTEnZJLbm48PDw7OSrGxMTEsZJFbm48PDw8OyLGxMTErZNWbm48PDw7Og3GxMTEs5NXbm48PDw7ORDGxMTExpJMbm48PDw8OQnExMTE15I6bm48PDw8OxHExMTE',
     rdl_b:'J93b7f8KFiAmKSQV/d/HKtDP7AcVIiwyMikP7c7EGbCxEjQrNDg6OCru0sXE9ZaeWGY7PDw8OCPKxcTE6pOsbm48PDw8OR7FxMTE6pO9bm48PDw8ORvGxMTE45Tcbm48PDw8NxDGxMTE05MIbm48PDw6NQTFxMTEvJU8bm48PDw6NQ7HxMTEppxmbm48PDw7NhrHxMTEsqhtbm48PDw7NyjHxMTExbxubm48PDw7NynIxMTE29Nubm48PDw7OCnFxMTE995ubm48PDw7OTLFxMTEC+lubm48PDw7NivHxMTEEf9ubm48PDw6NB3FxMTEEBtubm48PDw7OB3ExMTE',
     squat_a:'A5KTU248PDw8OCnExMTEApObZ248PDw8OSTFxMTECJOqbm48PDw7OSTFxMTEEJK0bm48PDw6NRbFxMTEG5O6bm48PDw7NgrGxMTEKJO/bm48PDw7OAnIxMTEL5PNbm48PDw7M//GxMTEOZPebm48PDw7NPvFxMTERZTlbm48PDw6NQHExMTEVJnjbm48PDw8Og3FxMTEU6bnbm48PDw7OAHFxMTESMrmbm48PDw6Nd/FxMTEQAbUbm48PDw6M9HFxMTEPCbTbm48PDw6LcnExMTEPjXbbm48PDw5JcfExMTEP0Dobm48PDw4GcfExMTEQEX6bm48PDw7EcbExMTE',
@@ -531,11 +540,8 @@
         backLift=benchBackLifts.get(b);
       }
       placeChest();const torsoAngle=angleAt(1.85);head.position.copy(turn([0,2.95,-.08]));head.rotation.set(angleAt(2.95),0,0);
-      let headContact;
       if(!push){
-        headContact=lowestSurfacePoint([head]);
-        head.position.y+=benchPadTop+.001-headContact.y;
-        headContact.y=benchPadTop;
+        head.position.y+=benchPadTop+.001-lowestSurfacePoint([head]).y;
       }
       placeSpine();spineGuide.visible=false;torso.visible=true;head.visible=true;pelvis.visible=true;arms.forEach(a=>a.node.visible=false);torso.children.forEach(o=>{if(o.isMesh&&o.material===ctxM)o.visible=false;});
       for(const s of scapulae){const level=1.95,theta=angleAt(level),offset=new T.Vector3(s.side*(.64+.16*pro),0,-.20+.25*pro).applyAxisAngle(new T.Vector3(1,0,0),theta);s.node.position.copy(torso.worldToLocal(centreAt(level).add(offset)));s.node.rotation.set(theta-torsoAngle,-s.side*(.20+.63*pro),0);s.node.visible=true;}
@@ -571,11 +577,7 @@
       for(const key in regionMaterials)regionMaterials[key].color.setHex(key==='context'?palettes.context:palettes.ivory);if(!push&&b){for(const s of scapulae)studyMaterial(s.node,studyBenchScapMat,50);for(const r of ribs)studyMaterial(r,studyRibMat);if(!sternum.userData.azOriginalMaterial)sternum.userData.azOriginalMaterial=sternum.material;sternum.material=studyRibMat;}landmarks.forEach(x=>x.visible=false);ghost.visible=false;model.updateMatrixWorld(true);
       let contacts;
       if(push)contacts={hands:armChecks.map(a=>a.grip),toes:legChecks.map(l=>l.footContact),floorHeight:.08};
-      else{
-        const back=lowestSurfacePoint(backSurfaces);
-        contacts={head:headContact.toArray(),upperBack:[back.x,benchPadTop,back.z],upperBackBone:back.toArray(),
-          butt:buttContact.toArray(),feet:legChecks.map(l=>l.footContact),padHeight:benchPadTop,floorHeight:.08};
-      }
+      else contacts={butt:buttContact.toArray(),feet:legChecks.map(l=>l.footContact),padHeight:benchPadTop,floorHeight:.08};
       exerciseDebug={movement:m,scenario:state.scenario||'a',phase,pelvisPitch,relativePelvisTilt:push?(b?-.28:0):(b?.30:0),protraction:pro,headPitch:angleAt(2.95),spine:[.25,.70,1.20,1.75,2.25,2.60].map(r=>centreAt(r).toArray()),legs:legChecks,arms:armChecks,bar:bar?bar.toArray():null,contacts,legDriveCue:!push&&b&&Boolean(state.ascending),support:{padOpacity:studyPadMat.opacity,ribOpacity:!push&&b?studyRibMat.opacity:1,scapulaeHighlighted:!push&&b}};
     }
     function poseLunge(phase){
@@ -1223,6 +1225,7 @@
       guide.hidden=state.movement!=='baby';
       if(isDevelopment()){
         const comparing=state.movement==='chimp';
+        if(!comparing)developmentModel.showBabyMat(camera.position.y>=0);
         const anchors=comparing?developmentModel.layout(yaw,state.mode==='chain'):[];
         if(renderer)renderer.render(developmentModel.scene,camera);else fallbackDraw(developmentModel.scene);
         if(!guide.hidden)drawBabyBalance();
@@ -1793,7 +1796,7 @@
       surface.quaternion.copy(workQ).multiply(q);
     }
     const terminalFrame=new T.Quaternion();
-    const articulatedLessons=new Set(['squat','rdl','row','dips','press','pullup','tension_cat','tension_deadlift','deadlift_types','cgoblet','cheels','csafety']);
+    const articulatedLessons=new Set(['bench','pushup','lunge','tension_pushup','tension_swing','tension_pogo','squat','rdl','row','dips','press','pullup','tension_cat','tension_deadlift','deadlift_types','cgoblet','cheels','csafety']);
     function pitchInFrame(frame,rotation){
       workQ.copy(frame).invert().multiply(rotation);
       return 2*Math.atan2(workQ.x,workQ.w);
@@ -1832,7 +1835,7 @@
       terminalFrame.copy(target.quaternion).multiply(stepQ.setFromAxisAngle(spineAxis,-targetPitch));
       const m=state.movement;
       let key=m,phase=amount;
-      if(['rdl','squat','row','press','dips','pullup'].includes(m))key+='_'+(state.scenario==='b'?'b':'a');
+      if(['bench','pushup','lunge','rdl','squat','row','press','dips','pullup'].includes(m))key+='_'+(state.scenario==='b'?'b':'a');
       const profile=m==='deadlift_types',bracedPull=profile||m==='tension_deadlift';
       // The pelvis and the cervical bones retain their original dimensions.
       // Seat the two ends of the scaled thoracolumbar column against them.
@@ -1905,6 +1908,12 @@
       if(state.movement!=='bench')fitCostalCartilage?.();
       if(exerciseArms.visible&&!previewDebug)fitShoulderGirdle?.fitHands(state.movement);
       fitShoulderGirdle?.(state.movement);
+      if(state.movement==='bench'&&exerciseDebug){
+        const back=lowestSurfacePoint(backSurfaces),occiput=lowestSurfacePoint([head]);
+        exerciseDebug.contacts.upperBackBone=back.toArray();
+        exerciseDebug.contacts.upperBack=[back.x,benchPadTop,back.z];
+        exerciseDebug.contacts.head=[occiput.x,benchPadTop,occiput.z];
+      }
       const armChecks=(tensionDebug||exerciseDebug)?.arms;
       if(armChecks&&fitShoulderGirdle&&exerciseArms.visible){
         for(const sample of armChecks){
@@ -2126,7 +2135,7 @@
         distance=Math.max(verticalDistance,widthDistance);
       }
       if(m==='baby'){
-        frame(0,.8,0,4.45,3.2);
+        frame(0,.8,0,4.95,3.2);
       }else if(m==='chimp'){
         if(chain)frame(0,.11,0,3.62,4.28);
         else frame(0,1.69,.08,8.05,5.65);

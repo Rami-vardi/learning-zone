@@ -974,13 +974,13 @@
     const projectedBuffers=new WeakMap();
     const ma=new T.Vector3(),mb=new T.Vector3(),mc=new T.Vector3(),normal=new T.Vector3();
     const ab=new T.Vector3(),ac=new T.Vector3(),point=new T.Vector3(),displayColor=new T.Color();
-    function fallbackDraw(){
+    function fallbackDraw(activeScene=scene){
       ctx.clearRect(0,0,width,height);
-      scene.updateMatrixWorld(true);
+      activeScene.updateMatrixWorld(true);
       camera.updateMatrixWorld(true);
       const triangles=[];
       const projection=new T.Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
-      scene.traverseVisible(mesh=>{
+      activeScene.traverseVisible(mesh=>{
         if(mesh===balanceLine||mesh===comDot)return;
         if(!mesh.isMesh||!mesh.material.visible||mesh.material.opacity<=0)return;
         const geometry=mesh.geometry,{position,color}=geometry.attributes,index=geometry.index;
@@ -1042,7 +1042,7 @@
           }
           triangles.push({ax,ay,bx,by,cx,cy,z:(az+bz+cz)/3,
             fill:`rgb(${Math.round(displayColor.r*255)},${Math.round(displayColor.g*255)},${Math.round(displayColor.b*255)})`,
-            opacity:material.opacity,order:material.depthTest===false?mesh.renderOrder:0});
+            opacity:material.opacity,order:material.userData.groundSurface?-1:material.depthTest===false?mesh.renderOrder:0});
         }
       });
       triangles.sort((a,b)=>a.order-b.order||b.z-a.z);
@@ -1056,9 +1056,9 @@
         ctx.globalAlpha=t.opacity;
         ctx.fill();
       }
-      if(ghost.visible)drawGhostOutline(projection);
+      if(activeScene===scene&&ghost.visible)drawGhostOutline(projection);
       ctx.globalAlpha=1;
-      if(previewEquipment.visible&&comDot.visible)drawBalanceGuide(projection);
+      if(activeScene===scene&&previewEquipment.visible&&comDot.visible)drawBalanceGuide(projection);
     }
     function drawBalanceGuide(projection){
       // Project the same guide as WebGL. A single canvas fill keeps the dot
@@ -1117,7 +1117,27 @@
     fixedTargetLabel.className='azc-target-label';
     fixedTargetLabel.textContent='Fixed balance target';
     labelLayer.appendChild(fixedTargetLabel);
+    let developmentModel;
+    const isDevelopment=()=>state.movement==='baby'||state.movement==='chimp';
+    const speciesTags=['Human','Chimpanzee'].map(name=>{
+      const tag=document.createElement('span');tag.className='azc-species-tag';tag.textContent=name;
+      tag.hidden=true;labelLayer.appendChild(tag);return tag;
+    });
     function render(){if(disposed)return;cameraUpdate();
+      if(isDevelopment()){
+        const comparing=state.movement==='chimp';
+        const anchors=comparing?developmentModel.layout(yaw,state.mode==='chain'):[];
+        if(renderer)renderer.render(developmentModel.scene,camera);else fallbackDraw(developmentModel.scene);
+        for(const {tag,line} of labelNodes.values()){tag.hidden=true;line.hidden=true;}
+        fixedTargetLabel.hidden=true;
+        speciesTags.forEach((tag,i)=>{
+          const p=comparing?screenPoint(anchors[i]):null;
+          tag.hidden=!p?.visible;
+          if(!tag.hidden){tag.style.left=p.x+'px';tag.style.top=p.y+'px';}
+        });
+        return;
+      }
+      for(const tag of speciesTags)tag.hidden=true;
       if(renderer)renderer.render(scene,camera);else fallbackDraw();
       fixedTargetLabel.hidden=!previewEquipment.visible;
       if(previewEquipment.visible){
@@ -1718,6 +1738,13 @@
       skull.position.copy(neck[6].pos).sub(head.position).applyQuaternion(workQ.copy(head.quaternion).invert());
     }
     function applyPose(amount=state.amount){
+      if(isDevelopment()){
+        if(!developmentModel){
+          developmentModel=window.azDevelopmentLessons.create(T,pelvis,legs,exArms);
+          for(const light of scene.children.filter(node=>node.isLight))developmentModel.scene.add(light.clone());
+        }
+        developmentModel.pose(state,amount);return;
+      }
       // Support calibration can run during pose construction. Start from the
       // reference surfaces so the previous lesson cannot alter its result.
       for(const v of [...axial,...neck])if(v){v.surface.position.set(0,0,0);v.surface.quaternion.identity();}
@@ -1953,7 +1980,7 @@
       }
       return {movement:state.movement,amount:state.amount,mode:state.mode,side:state.side,nodes,limb,tensionEmphasis:tensionDebug?.tensionEmphasis||0};
     }
-    applyPose(0);rebuildGhost();
+    if(!isDevelopment()){applyPose(0);rebuildGhost();}
     function focus(){
       const m=state.movement,chain=state.mode==='chain';
       // Reserve the full horizontal motion envelope when the viewport narrows.
@@ -1962,7 +1989,13 @@
         const widthDistance=horizontalSpan/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2))*camera.aspect);
         distance=Math.max(verticalDistance,widthDistance);
       }
-      if(m==='deadlift_types')frame(0,3.24,-.15,11.6,3.65);
+      if(m==='baby'){
+        const stage=state.babyStage||0;
+        frame(0,stage<2?.40:stage<5?.58:stage===5?.78:1.04,0,stage<5?3.65:4.35,3.55);
+      }else if(m==='chimp'){
+        if(chain)frame(0,.11,0,3.62,4.28);
+        else frame(0,1.69,.08,8.05,5.65);
+      }else if(m==='deadlift_types')frame(0,3.24,-.15,11.6,3.65);
       else if(tensionIds.has(m)){
         const horizontal=m==='tension_pushup'||m==='tension_cat';
         frame(0,horizontal?1.4:m==='tension_pogo'?3.5:3.15,m==='tension_swing'?.4:m==='tension_cat'?-.2:.2,
@@ -2009,14 +2042,14 @@
       get pogoInContact(){return tensionDebug?.contact;},
       get rowPastTrunk(){return state.movement==='row'&&exerciseDebug.arms.every(arm=>arm.humeralSagittal<0);},
       debugCamera:()=>({yaw,pitch,distance,target:target.toArray()}),
-      update(next){const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();applyPose(0);rebuildGhost();}applyPose();render();},
-      setView(name){if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
+      update(next){const previous=state.movement,side=state.side,mode=state.mode,stage=state.babyStage;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||stage!==state.babyStage||(side!==state.side&&state.movement==='foot')){focus();if(!isDevelopment()){applyPose(0);rebuildGhost();}}applyPose();render();},
+      setView(name){if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=isDevelopment()?(state.movement==='baby'&&state.babyStage===5?-.42:-1.12):tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='baby'?(state.babyStage<2?.51:.23):state.movement==='chimp'?.14:state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
       resetCamera(){yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
         if(disposed)return;disposed=true;fitShoulderGirdle?.dispose();drag=null;ro.disconnect();
         clearCanvasEvents();
         const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,...tensionSpineMaterials.values(),steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
-        scene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});
+        for(const activeScene of [scene,developmentModel?.scene].filter(Boolean))activeScene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});
         for(const geometry of geometries)geometry.dispose();
         for(const material of materials)material.dispose();
         if(renderer)releaseRenderer(renderer);

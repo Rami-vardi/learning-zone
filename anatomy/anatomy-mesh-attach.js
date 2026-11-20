@@ -1,9 +1,7 @@
 (() => {
 'use strict';
 
-window.azAttachAnatomyMeshes=function(parts){
-  const T=parts.THREE,assets=window.azRealMeshData.assets;
-  function geometry(asset,transform,mirror=false){
+  function decodeBone(T,asset,transform,mirror=false){
     const binary=atob(asset.data),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
     const buf=new DataView(bytes.buffer),positions=new Float32Array(asset.n*3),indices=new Uint16Array(asset.f*3);
     for(let i=0;i<asset.n;i++){
@@ -23,6 +21,11 @@ window.azAttachAnatomyMeshes=function(parts){
     geo.setAttribute('color', new T.BufferAttribute(colors, 3, true));
     return geo;
   }
+window.azDevelopmentSkull = T => decodeBone(T,window.azRealMeshData.assets.skull,
+  ([x,y,z])=>[x*.0028,(z-1524)*.0028,-(y+87)*.0028]);
+window.azAttachAnatomyMeshes=function(parts){
+  const T=parts.THREE,assets=window.azRealMeshData.assets;
+  const geometry=(asset,transform,mirror)=>decodeBone(T,asset,transform,mirror);
   function remove(parent,keep=[]){parent.children.slice().forEach(child=>{if(keep.includes(child))return;parent.remove(child);child.traverse(o=>{if(o.geometry)o.geometry.dispose();});});}
   function reliefMaterial(source) {
     const shaded = source.clone();

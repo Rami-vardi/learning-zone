@@ -110,7 +110,25 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   const anatomy=window.azCleanSceneData,exercises=window.azAppliedScenes;
   viewer=window.createAnatomyViewer(q('#azc-stage'));
   const state={movement:'lunge',amount:.45,mode:'chain',scenario:'a',frontHipHike:false,side:'right',labels:false,ghost:false,minimal:true};
-  state.bodyType='longLong';
+  state.bodyType='longLong';state.babyStage=0;
+  const {lessons,stages}=window.azDevelopmentLessons;
+  const development=()=>lessons[state.movement];
+  const movementGroup=document.createElement('optgroup');movementGroup.label='Development & Locomotion';
+  for(const [value,{title}] of Object.entries(lessons))movementGroup.append(new Option(title,value));
+  q('#azc-body-movement').append(movementGroup);
+  const stageField=document.createElement('label');stageField.className='azc-development-stage azc-movement';
+  stageField.append('Baby movement');stageField.hidden=true;
+  const stageSelect=document.createElement('select');stageSelect.id='azc-baby-stage';
+  stages.forEach(([name],i)=>stageSelect.append(new Option(name,i)));
+  stageField.append(stageSelect);q('.azc-loading-controls').after(stageField);
+  listen(stageSelect,'change',()=>{
+    pause();state.babyStage=Number(stageSelect.value);state.amount=0;direction=1;
+    render();const view=defaultView();q('#azc-camera').value=view;setCamera(view);
+  });
+  const sources=document.createElement('p'),sourceLink=document.createElement('a');
+  sourceLink.target='_blank';sourceLink.rel='noreferrer';sources.append(sourceLink);
+  const courseLinks=q('#azc-source-note').nextElementSibling;
+  q('#azc-source-note').after(sources);sources.hidden=true;
   const bodyTypes=document.createElement('div');
   bodyTypes.className='azc-body-types';bodyTypes.hidden=true;
   bodyTypes.setAttribute('role','group');bodyTypes.setAttribute('aria-label','Deadlift body type');
@@ -225,43 +243,49 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   function render(){
     if(destroyed||tensionActive)return;
     if(wholeChainOnly()){state.mode='chain';state.scenario='b';}
-    const ex=exercises[state.movement],d=ex||anatomy[state.movement],chain=state.mode==='chain',neutral=state.amount===0;
+    const special=development(),baby=state.movement==='baby',chimp=state.movement==='chimp';
+    const ex=exercises[state.movement],d=special||ex||anatomy[state.movement],chain=state.mode==='chain',neutral=state.amount===0;
     q('#azc-body-field').classList.toggle('is-active',!ex);q('#azc-exercise-field').classList.toggle('is-active',Boolean(ex));
-    q('#azc-range').min=ex?'0':'-100';q('#azc-range').value=String(Math.round(state.amount*100));
-    all('[data-azc-mode]').forEach((b,i)=>{b.setAttribute('aria-pressed',String(ex?state.scenario===(i?'b':'a'):b.dataset.azcMode===state.mode));b.textContent=ex?ex.labels[i]:i?(['hip','tilt'].includes(state.movement)?'Whole Body':'Chain'):'Local';});
-    q('.azc-mode').setAttribute('aria-label',ex?'Setup comparison':'Movement mode');
-    q('.azc-mode').hidden=wholeChainOnly();
-    q('.azc-loading-controls').hidden=wholeChainOnly();
+    q('#azc-range').min=ex||special?'0':'-100';q('#azc-range').value=String(Math.round(state.amount*100));
+    all('[data-azc-mode]').forEach((b,i)=>{b.setAttribute('aria-pressed',String(ex?state.scenario===(i?'b':'a'):b.dataset.azcMode===state.mode));b.textContent=chimp?(i?'Pelvis':'Walking'):ex?ex.labels[i]:i?(['hip','tilt'].includes(state.movement)?'Whole Body':'Chain'):'Local';});
+    q('.azc-mode').setAttribute('aria-label',chimp?'Comparison view':ex?'Setup comparison':'Movement mode');
+    q('.azc-mode').hidden=wholeChainOnly()||baby;
+    q('.azc-loading-controls').hidden=wholeChainOnly()||baby;
+    stageField.hidden=!baby;stageSelect.value=state.babyStage;
+    sources.hidden=!special;courseLinks.hidden=Boolean(special);
+    if(special){sourceLink.textContent=special.link[0];sourceLink.href=special.link[1];}
     bodyTypes.hidden=state.movement!=='deadlift_types';
     for(const button of bodyTypes.children)button.setAttribute('aria-pressed',String(button.dataset.bodyType===state.bodyType));
     const canHike=state.movement==='lunge'&&state.scenario==='a';q('#azc-front-hike').hidden=!canHike;q('#azc-front-hike').setAttribute('aria-pressed',String(canHike&&state.frontHipHike));
-    q('#azc-ghost').parentNode.hidden=Boolean(ex);q('#azc-labels').parentNode.hidden=comparison();
+    q('#azc-ghost').parentNode.hidden=Boolean(ex||special);q('#azc-labels').parentNode.hidden=comparison()||Boolean(special);
     q('#azc-stage').hidden=comparison();q('#azc-com-grid').hidden=!comparison();q('#azc-com-legend').hidden=!comparison();q('#azc-com-source-links').hidden=!comparison();q('.azc-stage-area').classList.toggle('is-com',comparison());
-    const label=state.movement==='ribs'?d.title:ex?ex.title:neutral?'Neutral Position':state.amount>0?d.positive:d.negative;
+    const label=special?d.title:state.movement==='ribs'?d.title:ex?ex.title:neutral?'Neutral Position':state.amount>0?d.positive:d.negative;
     text('#azc-title',label);
     const lower=!ex&&['hike','hip','foot'].includes(state.movement);
-    text('#azc-focus',state.movement==='deadlift_types'?window.azDeadliftBuilds[state.bodyType].label:state.movement==='lunge'?(state.scenario==='a'?'Right Front Leg Loading'+(state.frontHipHike?' · More Hip Hike':''):'Left Rear Leg Loading'):ex?ex.labels[state.scenario==='a'?0:1]:lower?(state.side==='right'?'Right side':'Left side'):state.movement==='chain'?'Pelvis, ribcage and scapula':'');
-    q('#azc-focus').hidden=comparison()||!ex&&!lower&&state.movement!=='chain';q('#azc-side-field').hidden=!lower;
-    text('#azc-negative',ex?ex.ends[0]:short[state.movement][0]);text('#azc-positive',ex?ex.ends[1]:short[state.movement][1]);
+    text('#azc-focus',baby?stages[state.babyStage][0]:chimp?(chain?'Pelvic shape':'Walking cycle'):state.movement==='deadlift_types'?window.azDeadliftBuilds[state.bodyType].label:state.movement==='lunge'?(state.scenario==='a'?'Right Front Leg Loading'+(state.frontHipHike?' · More Hip Hike':''):'Left Rear Leg Loading'):ex?ex.labels[state.scenario==='a'?0:1]:lower?(state.side==='right'?'Right side':'Left side'):state.movement==='chain'?'Pelvis, ribcage and scapula':'');
+    q('#azc-focus').hidden=comparison()||!special&&!ex&&!lower&&state.movement!=='chain';q('#azc-side-field').hidden=!lower;
+    text('#azc-negative',special?(chimp&&chain?'Front view':'Start'):ex?ex.ends[0]:short[state.movement][0]);text('#azc-positive',special?(chimp&&chain?'Turned view':'Finish'):ex?ex.ends[1]:short[state.movement][1]);
     syncViewers();
     if(state.movement==='ribs'){
       const width=viewer.ribWidth;
       if(previousRibWidth!==null&&Math.abs(width-previousRibWidth)>1e-9)ribDirection=Math.sign(width-previousRibWidth);
       previousRibWidth=width;
     }else previousRibWidth=null;
-    const explanation=detail();
-    text('#azc-explanation',explanation);text('#azc-source-text',d.source);text('#azc-source-note',d.note);
-    text('#azc-mode-hint',state.movement==='ribs'?'Ribs and sternum shown':state.movement==='rdl'?'Teal arrows show intended foot pressure':ex?(wholeChainOnly()?'Teaching example':'Illustrative comparison'):state.movement==='tilt'&&chain?'Whole body reference':state.movement==='hip'&&chain?'Whole body reference':state.movement==='foot'&&chain?'Loaded-leg example':chain?'Chain teaching preset':'Local view');
+    const explanation=baby?stages[state.babyStage][1]:chimp?(chain?
+      'Compare the highlighted iliac blades. The human blades are shorter and curve around the sides of the body. The chimpanzee blades are taller and narrower. Turn the models to see the difference.':
+      'Follow the points of contact. The human alternates support between the feet while the arms swing. The chimpanzee also bears weight through the knuckles, with a more inclined trunk and longer forelimbs.'):detail();
+    text('#azc-explanation',explanation);text('#azc-source-text',d.source);text('#azc-source-note',chimp?'The chimpanzee skeleton is an illustrative reconstruction. The pelvis comparison shows relative shape at a common display scale.':baby?'Select a movement to explore it. Play or drag the slider to follow an individual example.':d.note);
+    text('#azc-mode-hint',baby?'Developmental example':chimp?(chain?'Comparative anatomy':'Locomotion comparison'):state.movement==='ribs'?'Ribs and sternum shown':state.movement==='rdl'?'Teal arrows show intended foot pressure':ex?(wholeChainOnly()?'Teaching example':'Illustrative comparison'):state.movement==='tilt'&&chain?'Whole body reference':state.movement==='hip'&&chain?'Whole body reference':state.movement==='foot'&&chain?'Loaded-leg example':chain?'Chain teaching preset':'Local view');
     q('#azc-stage').setAttribute('aria-label','Interactive schematic anatomy. '+label+'. '+explanation+' Drag to rotate and scroll to zoom.');
     root.anatomyExerciseState={...state,playing,section:'movement'};
   }
-  function pause(value=false){playing=value;cancelAnimationFrame(frame);last=0;q('#azc-play').innerHTML='<i data-lucide="'+(value?'pause':'play')+'" aria-hidden="true"></i><span>'+(value?'Pause':'Play')+'</span>';q('#azc-play').setAttribute('aria-pressed',String(value));icons();if(playing){if(state.amount>.97)direction=-1;else if(state.amount<(applied()?.03:-.97))direction=1;frame=requestAnimationFrame(tick);}if(state.movement==='ribs'&&!tensionActive){ribDirection=direction;text('#azc-explanation',detail());q('#azc-stage').setAttribute('aria-label','Interactive schematic anatomy. '+detail()+' Drag to rotate and scroll to zoom.');}root.anatomyExerciseState={...state,playing};}
-  function tick(now){if(!playing||destroyed)return;const software=comparison()?comparisonViewers.some(item=>item.viewer.isFallback):viewer?.isFallback;if(software&&last&&now-last<(comparison()?110:65)){frame=requestAnimationFrame(tick);return;}const dt=last?Math.min((now-last)/1000,software||comparison()?.25:.06):0;last=now;state.amount+=direction*dt*(applied()?.20:.28);const minimum=applied()?0:-1;if(state.amount>=1){state.amount=1;direction=-1;}else if(state.amount<=minimum){state.amount=minimum;direction=1;}render();frame=requestAnimationFrame(tick);}
-  function setAmount(value){direction=value<state.amount?-1:1;pause();state.amount=Math.max(applied()?0:-1,Math.min(1,value));render();}
-  function defaultView(){if(applied())return exercises[state.movement].view;return ['tilt','ribshift'].includes(state.movement)?'side':state.movement==='scapula'?'back':state.movement==='hip'?'oblique':state.movement==='foot'?(state.mode==='chain'?'front':'oblique'):'front';}
-  function selectMovement(value){if(value==='tension'){openTension();return;}if(!anatomy[value]&&!exercises[value])return;leaveTension();pause();direction=1;state.frontHipHike=false;state.movement=value;state.amount=comparison()?1:value==='deadlift_types'?0:applied()?.12:0;if(!applied())state.mode=value==='chain'?'chain':'local';if(applied()){state.mode='chain';state.scenario=wholeChainOnly()||['pullup','dips'].includes(state.movement)?'b':'a';state.ghost=false;q('#azc-ghost').checked=false;}q('#azc-body-movement').value=applied()?'':value;q('#azc-exercise').value=applied()?value:'';const view=defaultView();q('#azc-camera').value=view;render();setCamera(view);}
+  function pause(value=false){playing=value;cancelAnimationFrame(frame);last=0;q('#azc-play').innerHTML='<i data-lucide="'+(value?'pause':'play')+'" aria-hidden="true"></i><span>'+(value?'Pause':'Play')+'</span>';q('#azc-play').setAttribute('aria-pressed',String(value));icons();if(playing){if(development()){if(state.amount>=1)state.amount=0;direction=1;render();}else if(state.amount>.97)direction=-1;else if(state.amount<(applied()?.03:-.97))direction=1;frame=requestAnimationFrame(tick);}if(state.movement==='ribs'&&!tensionActive){ribDirection=direction;text('#azc-explanation',detail());q('#azc-stage').setAttribute('aria-label','Interactive schematic anatomy. '+detail()+' Drag to rotate and scroll to zoom.');}root.anatomyExerciseState={...state,playing};}
+  function tick(now){if(!playing||destroyed)return;const software=comparison()?comparisonViewers.some(item=>item.viewer.isFallback):viewer?.isFallback;if(software&&last&&now-last<(comparison()?110:65)){frame=requestAnimationFrame(tick);return;}const dt=last?Math.min((now-last)/1000,software||comparison()?.25:.06):0;last=now;if(development()){state.amount=Math.min(1,state.amount+dt*.25);if(state.amount===1)pause();render();if(playing)frame=requestAnimationFrame(tick);return;}state.amount+=direction*dt*(applied()?.20:.28);const minimum=applied()?0:-1;if(state.amount>=1){state.amount=1;direction=-1;}else if(state.amount<=minimum){state.amount=minimum;direction=1;}render();frame=requestAnimationFrame(tick);}
+  function setAmount(value){direction=value<state.amount?-1:1;pause();state.amount=Math.max(applied()||development()?0:-1,Math.min(1,value));render();}
+  function defaultView(){if(development())return state.movement==='chimp'&&state.mode==='chain'?'front':'oblique';if(applied())return exercises[state.movement].view;return ['tilt','ribshift'].includes(state.movement)?'side':state.movement==='scapula'?'back':state.movement==='hip'?'oblique':state.movement==='foot'?(state.mode==='chain'?'front':'oblique'):'front';}
+  function selectMovement(value){if(value==='tension'){openTension();return;}if(!anatomy[value]&&!exercises[value]&&!lessons[value])return;leaveTension();pause();direction=1;state.frontHipHike=false;state.movement=value;if(value==='baby')state.babyStage=0;state.amount=comparison()?1:value==='deadlift_types'?0:applied()?.12:0;if(!applied())state.mode=value==='chain'?'chain':'local';if(applied()){state.mode='chain';state.scenario=wholeChainOnly()||['pullup','dips'].includes(state.movement)?'b':'a';state.ghost=false;q('#azc-ghost').checked=false;}q('#azc-body-movement').value=applied()?'':value;q('#azc-exercise').value=applied()?value:'';const view=defaultView();q('#azc-camera').value=view;render();setCamera(view);}
   listen(q('#azc-body-movement'),'change',e=>selectMovement(e.target.value));listen(q('#azc-exercise'),'change',e=>selectMovement(e.target.value));
-  all('[data-azc-mode]').forEach(b=>listen(b,'click',()=>{if(wholeChainOnly())return;if(applied()){const next=b.dataset.azcMode==='local'?'a':'b';if(next!==state.scenario)state.frontHipHike=false;state.scenario=next;state.mode='chain';}else state.mode=b.dataset.azcMode;render();if(state.movement==='foot'){const view=defaultView();q('#azc-camera').value=view;setCamera(view);}}));
+  all('[data-azc-mode]').forEach(b=>listen(b,'click',()=>{if(wholeChainOnly())return;if(state.movement==='chimp'){pause();state.amount=0;state.mode=b.dataset.azcMode;render();const view=defaultView();q('#azc-camera').value=view;setCamera(view);return;}if(applied()){const next=b.dataset.azcMode==='local'?'a':'b';if(next!==state.scenario)state.frontHipHike=false;state.scenario=next;state.mode='chain';}else state.mode=b.dataset.azcMode;render();if(state.movement==='foot'){const view=defaultView();q('#azc-camera').value=view;setCamera(view);}}));
   listen(q('#azc-front-hike'),'click',()=>{if(state.movement!=='lunge'||state.scenario!=='a')return;state.frontHipHike=!state.frontHipHike;render();});
   listen(q('#azc-side'),'change',e=>{state.side=e.target.value;render();if(['foot','hip'].includes(state.movement)&&q('#azc-camera').value==='oblique')setCamera('oblique');});
   listen(q('#azc-range'),'input',e=>setAmount(Number(e.target.value)/100));

@@ -1,7 +1,7 @@
 /* Learning Zone Anatomy, lazy local asset entry. */
 (function(){
   'use strict';
-  const VERSION='20261120-axial-knee-tracking';
+  const VERSION='20261120-development-locomotion';
   if(window.LZAnatomy?.version===VERSION)return;
   const source=document.currentScript?.src||new URL('anatomy-zone.js',document.baseURI).href;
   const base=new URL('./anatomy/',source);
@@ -32,7 +32,7 @@
       loadScript('anatomy-meshes.js'),loadScript('anatomy-mesh-attach.js'),
       loadScript('anatomy-thorax.js'),
       loadScript('anatomy-upper-limb.js'),
-      loadScript('anatomy-engine.js'),loadScript('anatomy-tension.js'),loadScript('anatomy-runtime.js')
+      loadScript('anatomy-development.js'),loadScript('anatomy-engine.js'),loadScript('anatomy-tension.js'),loadScript('anatomy-runtime.js')
     ]))]).catch(error=>{dependencies=null;throw error;});
     return dependencies;
   }

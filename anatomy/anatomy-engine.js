@@ -431,7 +431,7 @@
       model.updateMatrixWorld(true);const armChecks=[];
       const shoulders=exArms.map(({side})=>{
         const desired=shoulderPoint(turn,side,0,pro*.30);
-        return push||!fitShoulderGirdle?desired:torso.localToWorld(fitShoulderGirdle.socketOnCage(side,desired));
+        return push||!fitShoulderGirdle?desired:torso.localToWorld(fitShoulderGirdle.socketOnCage(side,desired,m));
       });
       let bar=null;
       if(!push){
@@ -597,7 +597,7 @@
         if(m==='pullup'){s.node.rotation.z=s.side*(.08+.48*(1-phase));s.node.position.y+=.10*(1-phase);}
       }
       if((m==='press'||m==='pullup')&&fitShoulderGirdle?.socketOnCage){
-        for(const arm of exArms)sockets.set(arm.side,fitShoulderGirdle.socketOnCage(arm.side,shoulderAt(arm.side)));
+        for(const arm of exArms)sockets.set(arm.side,fitShoulderGirdle.socketOnCage(arm.side,shoulderAt(arm.side),m));
         if(m==='pullup'){
           const vectors=explicitPullVectors(1),offset=pullGrip(1)
             .addScaledVector(vectors.upper,-1.08).addScaledVector(vectors.fore,-1.11).sub(shoulderAt(1));

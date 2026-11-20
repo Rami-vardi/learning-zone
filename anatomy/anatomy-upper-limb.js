@@ -219,6 +219,15 @@ window.azAttachUpperSkeleton = function(parts) {
   }
   const joints = [];
   sternum.updateMatrix();
+  const sternumRestInverse=sternum.matrix.clone().invert();
+  function setClaviclePivot(side,movement){
+    // In the pullup and scapular lessons, register the medial articular end
+    // against the upper lateral manubrium throughout the shoulder excursion.
+    if(movement==='pullup'||movement==='scapula')start.set(side*.118,.791,.197);
+    else start.set(side*.0708,.7408,.11408);
+    sternum.updateMatrix();
+    start.applyMatrix4(sternumRestInverse).applyMatrix4(sternum.matrix);
+  }
   for (const arm of arms) {
     const side = arm.side;
     const shoulder = vector(side * 1.04, .83, .02);
@@ -233,7 +242,6 @@ window.azAttachUpperSkeleton = function(parts) {
     // Landmark frames come from the same atlas assembly as the surfaces.
     const headCentre = shoulder.clone().applyMatrix4(toScapula);
     const acromion = vector(side * .9279, .9719, -.0312).applyMatrix4(toScapula);
-    const sternoclavicular = vector(side * .0708, .7408, .11408).applyMatrix4(sternum.matrix.clone().invert());
 
     arm.clavicle.geometry.dispose();
     arm.clavicle.geometry = geometry('clavicle', side);
@@ -251,7 +259,7 @@ window.azAttachUpperSkeleton = function(parts) {
     add(exercise.fore, 'radius', parts.boneMaterial, side);
     add(exercise.fore, 'ulna', parts.boneMaterial, side);
     const exerciseHand = add(exercise.hand, 'handGrip', parts.boneMaterial, side);
-    joints.push({arm, exercise, exerciseHand, scapula, headCentre, acromion, sternoclavicular,
+    joints.push({arm, exercise, exerciseHand, scapula, headCentre, acromion,
       chest:chestSurface(side), bladePoints:bladeContactPoints(blade.geometry,scapula,side)});
   }
   for (const leg of legs) {
@@ -454,7 +462,7 @@ window.azAttachUpperSkeleton = function(parts) {
 
   }
   const fit = function(movement) {
-    for (const {arm, exercise, exerciseHand, scapula, headCentre, acromion, sternoclavicular, chest, bladePoints} of joints) {
+    for (const {arm, exercise, exerciseHand, scapula, headCentre, acromion, chest, bladePoints} of joints) {
       scapula.updateMatrix();
       joint.copy(headCentre).applyMatrix4(scapula.matrix);
       const mobile=movement==='press'||movement==='pullup'||movement==='bench';
@@ -471,15 +479,18 @@ window.azAttachUpperSkeleton = function(parts) {
         }
       }
       arm.clavicle.visible = exerciseArms.visible || scapula.visible || arm.node.visible;
-      sternum.updateMatrix();
-      start.copy(sternoclavicular).applyMatrix4(sternum.matrix);
+      setClaviclePivot(arm.side,movement);
       if(exerciseArms.visible&&!mobile)alignClavicle(scapula,headCentre,acromion);
       else if(!exerciseArms.visible){
         end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
         scapula.position.addScaledVector(end,clavicleLength/end.length()-1);
         scapula.updateMatrix();
       }
-      if(!mobile&&scapula.visible&&torso.visible)seatBlade(scapula,headCentre,acromion,chest,bladePoints,exerciseArms.visible?.044:.058,movement==='tension_cat'?2.4:0);
+      if(!mobile&&scapula.visible&&torso.visible){
+        // Allow the blade to wrap around the lateral ribs at full protraction.
+        const clearance=movement==='scapula'?.075:exerciseArms.visible?.044:.058;
+        seatBlade(scapula,headCentre,acromion,chest,bladePoints,clearance,movement==='tension_cat'?2.4:0);
+      }
       if (!exerciseArms.visible) arm.node.position.copy(joint.copy(headCentre).applyMatrix4(scapula.matrix));
       end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
       arm.clavicle.position.copy(start);
@@ -499,9 +510,9 @@ window.azAttachUpperSkeleton = function(parts) {
   // For presses and pull-ups the arm follows the rotating glenoid. Keep the
   // acromion at the end of the clavicle and fit the inner blade about that
   // point before the elbow, hand and apparatus solve their contacts.
-  fit.socketOnCage=(side,desired)=>{
-    const {scapula,headCentre,acromion,sternoclavicular,chest,bladePoints}=joints.find(j=>j.arm.side===side);
-    sternum.updateMatrix();start.copy(sternoclavicular).applyMatrix4(sternum.matrix);
+  fit.socketOnCage=(side,desired,movement)=>{
+    const {scapula,headCentre,acromion,chest,bladePoints}=joints.find(j=>j.arm.side===side);
+    setClaviclePivot(side,movement);
     scapula.updateMatrix();joint.copy(headCentre).applyMatrix4(scapula.matrix);
     scapula.position.add(torso.worldToLocal(desired.clone()).sub(joint));scapula.updateMatrix();
     end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);

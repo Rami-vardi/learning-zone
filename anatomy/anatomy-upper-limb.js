@@ -277,7 +277,8 @@ window.azAttachUpperSkeleton = function(parts) {
       positions.setX(i,positions.getX(i)+leg.side*.018*distal);
     }
     fibula.geometry.computeVertexNormals();
-    fibula.position.set(leg.side*.029, 0, -.009);
+    fibula.position.set(leg.side*.032, 0, -.010);
+    leg.fibulaRest=fibula.position.clone();
     fibula.quaternion.identity();
     fibula.name = 'BodyParts3D fibula';
   }
@@ -323,6 +324,7 @@ window.azAttachUpperSkeleton = function(parts) {
     radius.quaternion.identity();radius.position.set(0,0,0);
     exercise.fittedContact=null;
     exercise.carpalPivot=null;
+    exercise.reachAdjustment=0;
     if (!contact) return;
     const palm=floorHands.has(movement), cup=movement==='cgoblet';
     if (palm) {
@@ -361,8 +363,8 @@ window.azAttachUpperSkeleton = function(parts) {
 
     // Hold the hand fixed while the radial head and distal ulnar head
     // define the axis about which the radius carries the carpus.
-    const upperLength=movement==='deadlift_types'?1.08*exercise.lengthFactor:palm?1.08:upper.position.distanceTo(fore.position);
-    const foreLength=movement==='deadlift_types'?.98*exercise.lengthFactor:palm?.98:fore.position.distanceTo(hand.position);
+    const upperLength=1.08*(exercise.lengthFactor||1);
+    const foreLength=.98*(exercise.lengthFactor||1);
     const pivot=vector(side*.065,-.053,.001);
     const spinAxis=vector(side*.115,.935,-.001).normalize();
     // Cupping the underside of the bell loads the open hand in extension.
@@ -385,12 +387,15 @@ window.azAttachUpperSkeleton = function(parts) {
     wristPoint.copy(heldCentre);
     const bend=new T.Vector3(),thumb=new T.Vector3(),offset=new T.Vector3();
     const distalLength=foreLength+pivotDepth;
-    for(let iteration=0;iteration<4;iteration++){
+    const shoulderRest=upper.position.clone();
+    for(let iteration=0;iteration<5;iteration++){
+      upper.position.copy(shoulderRest);
       armReach.subVectors(wristPoint,upper.position);
-      const distance=armReach.length();
-      armReach.divideScalar(distance);
-      const extension=Math.max(1,distance/(upperLength+distalLength-.0001));
-      const humeral=upperLength*extension,distal=distalLength*extension;
+      const span=armReach.length();
+      armReach.divideScalar(span);
+      const humeral=upperLength,distal=distalLength;
+      const distance=Math.min(span,humeral+distal-.0001);
+      upper.position.addScaledVector(armReach,span-distance);
       const along=(humeral*humeral-distal*distal+distance*distance)/(2*distance);
       bend.copy(pole).addScaledVector(armReach,-pole.dot(armReach)).normalize();
       fore.position.copy(upper.position).addScaledVector(armReach,along)
@@ -402,12 +407,13 @@ window.azAttachUpperSkeleton = function(parts) {
       const turn=Math.min(2.42,Math.acos(T.MathUtils.clamp(radiusDirection.dot(thumb),-1,1)));
       radius.quaternion.setFromAxisAngle(spinAxis,-side*turn);
       radius.position.copy(pivot).sub(offset.copy(pivot).applyQuaternion(radius.quaternion));
-      if(iteration<3){
+      if(iteration<4){
         offset.copy(localCentre).applyQuaternion(radius.quaternion).add(radius.position).sub(neutralEnd);
         offset.y*=fore.scale.y;
         wristPoint.copy(heldCentre).sub(offset.applyQuaternion(fore.quaternion));
       }
     }
+    exercise.reachAdjustment=upper.position.distanceToSquared(shoulderRest);
     exercise.carpalOffset=exercise.carpalOffset||new T.Vector3();
     exercise.carpalOffset.copy(wristPoint).sub(hand.position);
     exercise.carpalPivot=true;
@@ -472,7 +478,7 @@ window.azAttachUpperSkeleton = function(parts) {
         orientElbow(exercise.upper, exercise.fore, wrist,Boolean(exercise.contact));
         // The exercise solver fixes the hands on their apparatus. Seat the
         // glenoid at the corresponding shoulder while retaining blade rotation.
-        if(!mobile){
+        if(!mobile||exercise.reachAdjustment>1e-10){
           torso.worldToLocal(exercise.upper.getWorldPosition(target));
           scapula.position.add(target.sub(joint));
           scapula.updateMatrix();
@@ -480,7 +486,7 @@ window.azAttachUpperSkeleton = function(parts) {
       }
       arm.clavicle.visible = exerciseArms.visible || scapula.visible || arm.node.visible;
       setClaviclePivot(arm.side,movement);
-      if(exerciseArms.visible&&!mobile)alignClavicle(scapula,headCentre,acromion);
+      if(exerciseArms.visible&&(!mobile||exercise.reachAdjustment>1e-10))alignClavicle(scapula,headCentre,acromion);
       else if(!exerciseArms.visible){
         end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
         scapula.position.addScaledVector(end,clavicleLength/end.length()-1);

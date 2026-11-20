@@ -63,7 +63,7 @@ window.azAttachAnatomyMeshes=function(parts){
       point[1] += .117 * distal;
       point[2] -= .030 * distal;
       // Leave room for the joint surfaces as the rig bends and rotates.
-      point[1] -= .022 * (1-T.MathUtils.smoothstep(depth, .225, .72));
+      point[1] -= .027 * (1-T.MathUtils.smoothstep(depth, .225, .72));
       return point;
     });
     remove(leg.femur);
@@ -78,11 +78,26 @@ window.azAttachAnatomyMeshes=function(parts){
     pivot.add(patella);
     leg.femur.add(femur, pivot);
     const ankle = new T.Vector3();
+    const tibiaRest=new T.Vector3();
+    const hingeAxis=new T.Vector3(1,0,0);
     leg.fitPatella = () => {
       leg.foot.getWorldPosition(ankle);
       leg.femur.worldToLocal(ankle).sub(knee);
       const flexion = T.MathUtils.clamp(Math.atan2(-ankle.z, -ankle.y) + Math.atan2(.04, 1.31), 0, 2.75);
-      pivot.rotation.x = flexion * .64;
+      const loaded=Math.sin(Math.min(Math.PI/2,flexion*.65));
+      // The proximal tibia travels anteriorly relative to the condyles.
+      // Rotate the rigid shank bones about the fitted ankle, keeping it seated.
+      const glide=.030*loaded*loaded;
+      const anklePivot=leg.foot.position;
+      for(const bone of [tibia,leg.fibula]){
+        bone.quaternion.setFromAxisAngle(hingeAxis,glide);
+        const rest=bone===tibia?tibiaRest:(leg.fibulaRest||tibiaRest);
+        bone.position.copy(rest).sub(anklePivot).applyQuaternion(bone.quaternion).add(anklePivot);
+      }
+      // Small lateral excursion peaks in mid flexion and decreases at depth.
+      const tracking=Math.sin(Math.min(Math.PI,flexion*1.18));
+      pivot.position.copy(knee);pivot.position.x+=leg.side*.009*tracking;
+      pivot.rotation.set(.62*flexion+.028*Math.sin(1.5*flexion),leg.side*.055*tracking,leg.side*.018*loaded,'XYZ');
     };
     leg.shin.add(tibia);
   }

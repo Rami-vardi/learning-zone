@@ -6,6 +6,37 @@
     shortLong:{label:'Short torso, long arms',torso:.90,arm:1.09},
     shortShort:{label:'Short torso, short arms',torso:.90,arm:.91}
   };
+  // Relative sagittal turns from L5 upward, fitted to the two ends of each
+  // lesson's spine. Seventeen evenly spaced poses share the same atlas disc
+  // paths. Constant poses store one frame. Each signed byte is .002 radians.
+  const axialPoseKeys=Object.fromEntries(Object.entries({
+    rdl_a:'Jtzb7f8LFiAmKSQV/d/HJcvL7g0YJC0zMysN6s3EDKerHkUwNjk7OjLnzsTE5JOjYGw8PDw8OSzIxMTE0pK5bm48PDw7OCzFxMTEwJPWbm48PDw7OSvIxMTEsJTtbm48PDw8OyvIxMTEqZMAbm48PDw8PDXGxMTEp5IQbm48PDw8OzLHxMTEo5Ijbm48PDw8OSfHxMTEl5JAbm48PDw7OSTIxMTEnZJLbm48PDw7OSrGxMTEsZJFbm48PDw8OyLGxMTErZNWbm48PDw7Og3GxMTEs5NXbm48PDw7ORDGxMTExpJMbm48PDw8OQnExMTE15I6bm48PDw8OxHExMTE',
+    rdl_b:'J93b7f8KFiAmKSQV/d/HKtDP7AcVIiwyMikP7c7EGbCxEjQrNDg6OCru0sXE9ZaeWGY7PDw8OCPKxcTE6pOsbm48PDw8OR7FxMTE6pO9bm48PDw8ORvGxMTE45Tcbm48PDw8NxDGxMTE05MIbm48PDw6NQTFxMTEvJU8bm48PDw6NQ7HxMTEppxmbm48PDw7NhrHxMTEsqhtbm48PDw7NyjHxMTExbxubm48PDw7NynIxMTE29Nubm48PDw7OCnFxMTE995ubm48PDw7OTLFxMTEC+lubm48PDw7NivHxMTEEf9ubm48PDw6NB3FxMTEEBtubm48PDw7OB3ExMTE',
+    squat_a:'A5KTU248PDw8OCnExMTEApObZ248PDw8OSTFxMTECJOqbm48PDw7OSTFxMTEEJK0bm48PDw6NRbFxMTEG5O6bm48PDw7NgrGxMTEKJO/bm48PDw7OAnIxMTEL5PNbm48PDw7M//GxMTEOZPebm48PDw7NPvFxMTERZTlbm48PDw6NQHExMTEVJnjbm48PDw8Og3FxMTEU6bnbm48PDw7OAHFxMTESMrmbm48PDw6Nd/FxMTEQAbUbm48PDw6M9HFxMTEPCbTbm48PDw6LcnExMTEPjXbbm48PDw5JcfExMTEP0Dobm48PDw4GcfExMTEQEX6bm48PDw7EcbExMTE',
+    squat_b:'W5KSkpUIPDw8PDw83MTEUJKSkpckPDw8PDw80MTERJKSkpc5PDw8PDw6yMTEQJKSkpQ8PDw8PDwzxcTEQpKSkpI7PDw8PDwuxMTESJKSkpI7PDw8PDwtxMTEUZKSkpQ7PDw8PDwvxcTEWJKSkpw8PDw8PDwxx8TEWZKSkrQ8PDw8PDwxyMTEW5KSk9Q8PDw8PDwyxsTEN5KSnhM8PDw8PDoTxMTEDZKT31w8PDw8OjbixMTEA5KrR248PDw5MSLJxMTEKbvbX208PDw4LgXExMTEWisARWQ8ODMxMADMxMTEa2hDUmA6MCIWFvvZx8fYbm5rams7NzAO69fNxscJ',
+    row_a:'FOni5/H5BRIbHR0XCffi',
+    row_b:'bRj+HPb4CBw5PDcqGcTE',
+    press_a:'kxAR9uTi4+bq6/YMLDky',
+    press_b:'ISUpG9vQzs/b9Tc4OyMq',
+    dips_a:'KNnY7AANGSMqLCYV+9nEKdjX7AAOGiQrLSYV+dfEKtfW7AEPGyYsLicV+NTEK9bV6wEQHScuLycU9tHELdXV6wIQHigvMCgU9c/ELtTU6wIRHykwMSgU9M3EL9TT6wMSICoxMikT88rEMNLS6wMTISwyMykT8cjEMdHR6wQUIi0zNCoT8MXEMtDQ6wUVJC81NSoS7cTEM87O6gYXJjE3NioQ6cTENc3N6gYYJzM4NyoO5sTENszM6gcZKTQ6OCoN48TEN8vL6ggaKjU6OCoM4cTEOcrL6ggaKjY7OSoL38TEOsnK6ggbLDc8OSoK3cTEO8jJ6QkcLTg8OioK3MTE',
+    dips_b:'3pOWXGw8PDw8OuvGxMTEAaSoIEk5PDw6NAjax8TEGb7E9RsvNzc0Lhn30sTEH8vR8g8jLC8vLR8G48XEI9TY9AwaIygrLyUQ8MrEJdjd9QsTHCQrMSoX99DEJ9zg9woOFyErNTAc/NTEKuDk+AoJEh4rODQiAtnELeTo+gkDDBoqOjkoCODEMOjs/An+CBcqOzstDuXEMuvv/gr6BBYsPDw0E+nENO3xAAv3AhYvPDw5GezENu7yAQz0ARcyPDw7JevEOe7yAg7zABk3PDs4MevEPevvBBP0Ah47PDs0K/rEQefrBRf0BSM8PDw0JAfEROfrBhnzBCM8PDw6Mv7E',
+    pullup_a:'JeDe7v0IExwiJSIVAOXJ',
+    pullup_b:'vJKSU248PDw6LMTExMTEwZKSTG48PDw6LsTExMTE0JKSQ248PDw6MMbExMTE2pKSPm48PDw8Os7GxMTE3ZKTMm48PDw8OdHGxMTE5pKSF248PDw8NczExMTE6ZKSBm48PDw8NMvExMTE65KS/248PDw8Nc3ExMTE75KS+G48PDw8Nc7ExMTE9JKS9m48PDw8NtHFxMTE+ZKS9m48PDw8N9TGxMTE+ZKS7m48PDw8NdDExMTE+JKS5248PDw8NdDFxMTEAJKS4G48PDw8ONvIxMTECJKS2G48PDw8O+XJxMTEDJKSzW48PDw8OuXHxMTEDJKSw248PDw8N9/FxMTE',
+    cheels:'+fP1/gYJCwwMDAkE/PPp+fP1AAgKDA0NDQoE+/Hm+vL2AQoMDhAPDgsE+u7i+/L2Aw0NEBEREAwE+eve+/L3BRAPEhMSEQwE+Ona/PP3BhIQExUUEg0E9+bX/fP4CBUSFRYVEw4E9eTT/fT5ChgTFhcWFA4D9OLQ/vT6DBoVGBkXFQ4D89/N//X7Dh0WGRoYFQ8C8t7K//b9EB8XGhsZFg8C8dzIAPf+EiEYGxwaFg4B79rGAfgAFCQZHB0aFg4B7tjEA/oCFyYaHR0bFg4A7dbEBPsEGSkbHh4bFg3/69TEBf0FGyscHh4bFg3+6tLEB/4HHS0cHx4bFgz96dHE',
+    cgoblet:'+fP1/gYJCwwMDAkE/PPq+fP1/wcJDA0NDAoE/PLn+vL1AAkLDQ8ODgoE++/k+vL2AgsMDxAQDwsE+u3g+/L2Aw4NEBIREAwE+evd+/L2BRAPEhMSEQwE+Ona/PP3BhIQExQTEg0E9+fX/PP4BxQRFBUUEg0E9uXV/fP4CRYSFRYVEw4E9ePS/fT5ChgTFhgWFA4D9OHP/vT6DBoVGBkXFQ4D8+DN/vX7DhwWGRoYFQ8D8t7L//X8Dx4WGhoZFg8C8d3JAPb9ESAXGhsZFg8C8NvHAPf/EiIYGxwaFg4B79rGAfgAFCMZHBwaFg4B79nEAvkBFSUZHB0aFg4B7tjE',
+    csafety:'+fP1/gYJCwwMDAkE/PPp+vP1AAgKDA4NDQoE+/Hm+vL2AQsMDhAPDgsE+u7i+/L2Aw4NEBIREAwE+evd+/L3BRAPEhMTEQ0E+OjZ/PP3BxMRFBUUEg0E9ubW/fP4CRYSFRYVEw4E9ePS/fT5CxkUFxgXFA4D9OHP/vT7DRsVGBkYFQ4D8t/L//X8Dx4WGhoZFg8C8d3JAPf+ESAYGxsZFg8C8NvHAfj/FCMZHBwaFg4B79nFAvkBFiUaHR0aFg4A7dfEA/sDGCgbHh4bFg7/7NXEBfwFGiocHh4bFg3+6tPEBv4HHS0cHx4bFgz96dHECP8IHi8dHx8bFgz86NDE',
+    tension_cat:'bhySktE8PDw7KMnExMTEbg2Skto8PDw6HsfExMTEbvmYmv40NDU0FczIx8TEbQTBxAEHBwoNAOfh2MnEaw/o6e3m5ejs8vbz6tjHYwb08Ozm5eXn6+7v7ujaQQkC+PDq5+bl5ujr8PX4ChMPAfXv6+jn5uju9gIP0hoWB/v28u/u7vD2/wwarRkWDQYDAP79/P0ABQwTpBgbFQ8NCwkIBgYHCg0RqRkjGxQRDgwKCQgKDhQZrhspHxYSDwwKCQkMEhkgshwtIRcTDw0LCQoNFBwksx0uIhgTDw0KCQoOFB0mtB0vIhgTDw0KCQoOFR4mtB0vIhgTDw0KCQoOFR4m',
+    tension_deadlift:'a2sjICsqJyAVCPbdxMTEamYRHCssKiQZC/fbxMTEa0v6FCgtLikfEv3fxMTEaBPsCiMrLy0lGgfqyMTER+bkAhslKisnHw/318rGEejs/g0UGBkYFQ4C8eHX+vH0/gYJDA0NDAoE/PLo+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq+fL1/gUICwwMCwkE/fPq',
+    deadlift_types_longLong:'bmAXGhsYFRAKBPzw4dDHaysBDRYYGBYSDQT35tPGUP75BQ4RExMRDgj+8eHTH/7+AgQFBQUFBAL/+/fyBQQDAf/+/v39/f7/AAMFAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQH',
+    deadlift_types_longShort:'bm5sZ14i7d748N3JycoPbmlKQDMRAvn89Ojf2dTrbT8PFRkXFhMOCAD05NPHWQf6BhATFRQSDgj97t3OJ/39AgYHBwcHBQP/+vPtBwMDAf///v7+/v7/AAIEAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQHAgQEAf79/fz8/P3/AQQH',
+    deadlift_types_shortLong:'LJP1bm48PDw8Oc3FxMTECpfPYGc6Ozs7NenKxsTE87fKIzosMTMyLA3q2crE69Pb+xQdJSgoJBoH79PE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE',
+    deadlift_types_shortShort:'VUEDQ208PDws88XExMTETOzqWG48PDw4FsrExMTEIJ/iaGw8PDw7M9rGxMTE+qzQPkoyNjc2Mv/f0MfE7c7YAxohKCsqJxkC6dDE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE6Nbe+RAbIiYmIxsK8tXE',
+    tilt:'CwUKGSMVFxcVEw0E9+jZzQkDCBYgFBYWFRMOBfjq288HAAUSHBIUFRQSDgX67N7SBP0CDhgQExQTEQ4G++7h1gH7/wsUDxESEhENBv3w5Nr/+fwHEA0PERAQDQf+8+fe/ff6BAwLDQ8PDgwH//Xr4/r1+AEICQsNDQ0LBgD47+j49Pb+BAcJCgsLCQYB+/Tv9vP1+/8EBgcICAgGAv359fTy9Pj7AgMEBQYGBQMB/vzy8vP19/8AAQIDAwQEBAQD8PPz8/P8/f3+/wACBQcKDO709fHv+fn5+vv9AAULERbs9vfw6vb09PT19/0FDxki6fj57+fz8O/v8PP6BBIhLeX5++7k8e3r6+zv9wQVJjY=',
+    foot_local:'+uXo/hAVGBgUDQLv1g==',
+    foot_chain:'/jEvBOXg3d3j6fsePAUtKgTn39vc4+v9HTwLKiYE6N7a2+Ps/hw8EiYhA+re2dvj7gEcOhwhGQPs3djb5PEFHDUmHBIC7tzW2uX0CRwyLBgNAu/c1trl9gscMCsWDALx3tjc5vYJGDEnFgwD8uDa3ub1BxUzKxYMAvHe2Nzm9gkYMSwYDQLv3Nba5fYLHDAmHBIC7tzW2uX0CRwyHCEZA+zd2Nvk8QUcNRImIQPq3tnb4+4BHDoLKiYE6N7a3OPs/hw8BC4qBOff3Nzj6/wdPP0yMATl4N3d4+n6Hjw=',
+    chain_local:'yfcOA+rl2tjh8RI6PNL+D//n5Nzb5PIONTzfAwz55OXg4ej0Cyw86AUI9ubp5uju9gYeOusEBvfq7+7v8/kDFS/x/wD48ff29/r9Aw0b9vf4+fr/AAECAwQFBvnu8PsECgwMCwgD+u754+f/ERYZGBQNAO7W88LKITgpKyomCefayOKasV1lOTo6Ne7Jx8TNks5ubjw8PDbZxMTEspIGbm48PDw54sTExJ+SN25uPDw7Od7ExMSVklhubjw8OjPRxMTEkpZlbm48PDovz8TExJKdZG5uPDw0IMnExMQ=',
+    chain_chain:'BpKSlG48PDw8LsTExPaSkrxuPDw8PDDExMTSkpIAbjw8PDsmxcTEvJKSLG48PDw6D8XExLqSkkpuPDw8N//FxMTOpaY8UzM0NC0E1c7F783PBx0gJCQeEPfjyfjd4PoPGR0cFxAC68765Oj+EBUYGBQNAu/V/OvvAhESFBQQCwHy3P/x9QUSDxERDgoB9OIC9voIEw0PDwwIAfbmBPv+CxUMDQ0LBwH36Qf/Aw4XCwwLCQcC+e0JAwYRGQoLCggGAvrvDAcKFBsJCgkIBgL78Q4KDRYcCAkIBwUC/PM=',
+  }).map(([key,packed])=>[key,Int8Array.from(atob(packed),c=>c.charCodeAt(0))]));
   window.createAnatomyViewer=function(container,initial={},controls={}){
     const T=window.THREE;
     if(!T)throw Error('The 3D anatomy library could not load. Open Anatomy Zone again to retry.');
@@ -615,8 +646,8 @@
       }
       if(m==='squat'){
         hipY=3.25-(b?2.20:2.25)*phase;hipZ=-.10-(b?.55:.46)*phase;basePitch=b?.24+.18*phase:.12+.35*phase;
-        pelvisPitch=b?.30-.61*late:.045-.11*phase;
-        lumbar=b?-.30+.64*smooth(.60,1,phase):-.025;
+        pelvisPitch=b?.30-.45*late:.045-.11*phase;
+        lumbar=b?-.30+.50*smooth(.60,1,phase):-.025;
         thoracic=b?-.02+.15*smooth(.71,1,phase):0;
         floor.visible=true;floor.scale.set(1.65,1.20,1);floorRing.visible=false;
       }
@@ -735,7 +766,9 @@
         gripCentre=new T.Vector3(0,S.y-dy,z);barbell.position.copy(gripCentre);barbell.visible=true;
       }
       if(m==='squat'){
-        gripCentre=squatSupportLevel.node.localToWorld(squatBarSeat(squatBarRadius));
+        fitAxialPose(phase);
+        const support=axial[15]?.surface||squatSupportLevel.node;
+        gripCentre=support.localToWorld(squatBarSeat(squatBarRadius));
         barbell.position.copy(gripCentre);barbell.visible=true;
       }
 
@@ -1537,8 +1570,175 @@
       model.updateMatrixWorld(true);tensionDebug={movement:m,phase:p,pelvisPitch,spine:[0,.5,1,1.5,2,2.5,2.95].map(r=>centreAt(r).toArray()),legs:legChecks,arms:armChecks,contacts:cat?{knees:legChecks.map(l=>l.knee),palms:armChecks.map(a=>a.grip),floor:.08}:{feet:legChecks.map(l=>l.ankle),floor:.08},bell:gripCentre?.toArray(),phaseLabel:cat?(flex>0?'Round':'Extend'):p<.30?'Backswing':p<.70?'Hip Drive':'Float',segmentalMotion:cat};
     }
 
+    // The atlas stores each vertebra relative to a separate animation guide.
+    // Join the rendered bones at disc centres in the reference skeleton, so
+    // rotating two adjacent guides cannot push one articular surface through the other.
+    const lumbarRegistration=[.052,.051,.048,.024,.006];
+    const axial=spineGroups.map(({node,y,z},i)=>{
+      const surface=node.children.find(o=>o.name.startsWith('BodyParts3D '));
+      if(!surface)return null;
+      surface.geometry.computeBoundingBox();
+      const box=surface.geometry.boundingBox,origin=new T.Vector3(0,y,z+(lumbarRegistration[i]||0));
+      const centre=box.getCenter(new T.Vector3()).add(origin);
+      centre.z=origin.z+box.max.z-.055;
+      return {node,surface,origin,centre,pos:new T.Vector3(),q:new T.Quaternion()};
+    });
+    const neck=Array.from({length:7},(_,i)=>{
+      const surface=head.getObjectByName('BodyParts3D C'+(7-i));
+      if(!surface)return null;
+      surface.geometry.computeBoundingBox();
+      const box=surface.geometry.boundingBox,origin=new T.Vector3(0,6.25,-.08);
+      const centre=box.getCenter(new T.Vector3()).add(origin);
+      centre.z=origin.z+box.max.z-.045;
+      return {node:head,surface,origin,centre,pos:new T.Vector3(),q:new T.Quaternion()};
+    });
+    const skull=head.getObjectByName('Johnny Iron Man helmet');
+    // Sagittal corrections sampled from the opposing atlas surfaces at
+    // 0.025-radian intervals, in order from L5/L4 through C2/C1.
+    const discClearance=[
+      [[0.049,0],[0.043,0],[0.034,0],[0.028,0],[0.019,0],[0.01,0],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.061,-0.042],[0.061,-0.03],[0.058,0],[0.049,0],[0.04,0],[0.031,-0.006],[0.025,0],[0.016,0],[0.007,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.049,-0.012],[0.04,-0.012],[0.031,-0.012],[0.025,-0.006],[0.016,-0.006],[0.01,-0.003],[0.001,-0.003],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.028,-0.012],[0.022,-0.009],[0.019,-0.009],[0.01,-0.006],[0.004,-0.003],[0.001,-0.003],[0.001,-0.003],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,-0.003],[0.001,-0.003],[0.001,-0.003],[0.001,-0.006],[0.001,-0.006]],
+      [[0.007,-0.003],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.025,-0.006],[0.019,-0.006],[0.013,-0.006],[0.01,-0.003],[0.004,-0.003],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.013,-0.006],[0.01,-0.006],[0.007,-0.003],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,-0.003],[0.001,-0.003],[0.001,-0.006]],
+      [[0.01,-0.006],[0.007,-0.003],[0.004,-0.003],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.007,-0.009],[0.01,-0.003],[0.004,-0.003],[0.004,0],[0.001,0],[0.001,0],[0.001,-0.003],[0.001,-0.003],[0.001,-0.003],[0.001,-0.006],[0.001,-0.006]],
+      [[0.013,-0.006],[0.01,-0.003],[0.007,0],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.007,-0.003],[0.001,-0.003],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.004,0],[0.001,-0.003]],
+      [[0.01,-0.009],[0.007,-0.006],[0.004,-0.003],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.004,0.003],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.01,0],[0.007,0],[0.007,0],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.013,-0.006],[0.01,-0.003],[0.007,0],[0.004,0],[0.004,0],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.013,0],[0.01,0],[0.007,0],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.013,0],[0.007,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.013,0],[0.007,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.016,-0.006],[0.01,-0.006],[0.007,0],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.022,0],[0.016,-0.003],[0.01,-0.003],[0.007,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.007,-0.003],[0.004,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+      [[0.001,0.003],[0.001,0.003],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0],[0.001,0]],
+    ];
+    const disc=new T.Vector3(),fromDisc=new T.Vector3(),workQ=new T.Quaternion();
+    const spineAxis=new T.Vector3(1,0,0);
+    const referenceQ=new T.Quaternion(),stepQ=new T.Quaternion();
+    function joinLevels(from,to,index,scale=1){
+      disc.copy(from.centre).lerp(to.centre,.5);
+      fromDisc.subVectors(disc,from.origin);fromDisc.y*=scale;
+      to.pos.copy(fromDisc.applyQuaternion(from.q)).add(from.pos);
+      fromDisc.subVectors(to.origin,disc);fromDisc.y*=scale;
+      to.pos.add(fromDisc.applyQuaternion(to.q));
+      const rel=referenceQ.copy(from.q).invert().multiply(to.q);
+      const angle=2*Math.atan2(rel.x,rel.w);
+      const row=discClearance[index],end=row.length-1;
+      const sample=T.MathUtils.clamp(angle/.025+end/2,0,end);
+      const lo=Math.floor(sample),hi=Math.min(end,lo+1),t=sample-lo;
+      const a=row[lo],b=row[hi];
+      fromDisc.set(0,T.MathUtils.lerp(a[0],b[0],t),T.MathUtils.lerp(a[1],b[1],t));
+      to.pos.add(fromDisc.applyQuaternion(from.q));
+    }
+    function seatSurface(level){
+      const {node,surface,pos,q}=level;
+      workQ.copy(node.quaternion).invert();
+      surface.position.copy(pos).sub(node.position).applyQuaternion(workQ).divide(node.scale);
+      surface.quaternion.copy(workQ).multiply(q);
+    }
+    const terminalFrame=new T.Quaternion();
+    const articulatedLessons=new Set(['squat','rdl','row','dips','press','pullup','tension_cat','tension_deadlift','deadlift_types','cgoblet','cheels','csafety']);
+    function pitchInFrame(frame,rotation){
+      workQ.copy(frame).invert().multiply(rotation);
+      return 2*Math.atan2(workQ.x,workQ.w);
+    }
+    const ribDelta=new T.Matrix4(),actualFrame=new T.Matrix4(),guideInverse=new T.Matrix4(),fromGuide=new T.Matrix4();
+    function carryRibsWithVertebrae(){
+      torso.updateMatrix();
+      const toChest=guideInverse.copy(torso.matrix).invert();
+      for(let i=0;i<ribs.length;i++){
+        const level=axial[16-Math.floor(i/2)],rib=ribs[i];
+        level.node.updateMatrix();level.surface.updateMatrix();rib.updateMatrix();
+        actualFrame.multiplyMatrices(level.node.matrix,level.surface.matrix);
+        ribDelta.copy(toChest).multiply(actualFrame)
+          .multiply(fromGuide.copy(level.node.matrix).invert()).multiply(torso.matrix).multiply(rib.matrix);
+        ribDelta.decompose(rib.position,rib.quaternion,rib.scale);
+      }
+    }
+    function fitAxialPose(amount){
+      if(!axial.every(Boolean)||state.movement==='foot'&&state.mode==='local')return;
+      const scale=torso.scale.y,base=axial[0],articulated=articulatedLessons.has(state.movement);
+      const trunkTransition=['foot','tilt','chain'].includes(state.movement);
+      const last=articulated?15:state.movement==='tilt'?16:13;
+      const target=axial[last].node;
+      base.q.copy(pelvis.quaternion);
+      base.pos.copy(base.origin).sub(fromDisc.set(0,3.3,0)).applyQuaternion(base.q).add(pelvis.position);
+      if(!articulated&&!trunkTransition){
+        seatSurface(base);
+        for(let i=1;i<5;i++){
+          const v=axial[i];v.q.copy(v.node.quaternion);
+          v.pos.copy(v.node.position).add(fromDisc.set(0,0,lumbarRegistration[i]).applyQuaternion(v.q));
+          seatSurface(v);
+        }
+        return;
+      }
+      const targetPitch=pitchInFrame(base.q,target.quaternion);
+      terminalFrame.copy(target.quaternion).multiply(stepQ.setFromAxisAngle(spineAxis,-targetPitch));
+      const m=state.movement;
+      let key=m,phase=amount;
+      if(['rdl','squat','row','press','dips','pullup'].includes(m))key+='_'+(state.scenario==='b'?'b':'a');
+      if(m==='deadlift_types')key+='_'+(deadliftBuilds[state.bodyType]?state.bodyType:'longLong');
+      if(m==='foot'||m==='chain')key+='_'+state.mode;
+      if(trunkTransition)phase=(amount+1)/2;
+      if(m==='tension_cat'||m==='tension_deadlift')phase=1-Math.abs(2*amount-1);
+      const samples=axialPoseKeys[key],end=samples.length/last-1;
+      const frame=T.MathUtils.clamp(phase,0,1)*end,lo=Math.floor(frame),hi=Math.min(lo+1,end),mix=frame-lo;
+      let angle=0;
+      for(let i=1;i<=last;i++){
+        angle+=.002*T.MathUtils.lerp(samples[lo*last+i-1],samples[hi*last+i-1],mix);
+        const v=axial[i];
+        v.q.copy(base.q).slerp(terminalFrame,i/last).multiply(stepQ.setFromAxisAngle(spineAxis,angle));
+        joinLevels(axial[i-1],v,i-1,scale);
+      }
+      if(!articulated){
+        for(let i=0;i<last;i++)seatSurface(axial[i]);
+        return;
+      }
+      const top=axial[16];top.q.copy(top.node.quaternion);
+      const diff=axial[15].q.angleTo(top.q);if(diff>.098)top.q.slerp(axial[15].q,1-.098/diff);
+      joinLevels(axial[15],top,15,scale);
+      for(const level of axial)seatSurface(level);
+      if(['rdl','squat','row','dips','tension_deadlift','deadlift_types','tension_cat'].includes(state.movement))carryRibsWithVertebrae();
+      if(!skull||!neck.every(Boolean))return;
+      const lower=axial[16];
+      for(let i=0;i<neck.length;i++){
+        const v=neck[i];v.q.copy(lower.q).slerp(head.quaternion,(i+1)/8);
+        const prev=i?neck[i-1]:lower,angle=prev.q.angleTo(v.q);
+        if(angle>.098)v.q.slerp(prev.q,1-.098/angle);
+        joinLevels(prev,v,16+i);seatSurface(v);
+      }
+      skull.position.copy(neck[6].pos).sub(head.position).applyQuaternion(workQ.copy(head.quaternion).invert());
+    }
     function applyPose(amount=state.amount){
+      // Support calibration can run during pose construction. Start from the
+      // reference surfaces so the previous lesson cannot alter its result.
+      for(const v of [...axial,...neck])if(v){v.surface.position.set(0,0,0);v.surface.quaternion.identity();}
+      if(skull)skull.position.set(0,0,0);
       setJointPose(amount);
+      if(['tension_deadlift','tension_cat','deadlift_types'].includes(state.movement)){
+        // Share the deepest hip angle with the lumbopelvic junction. Preserve
+        // the two fitted hip centres, the planted legs and the hand supports.
+        const axis=new T.Vector3(0,-1,0);
+        const thigh=new T.Vector3(legs[0].side*.10,-1.63,0).normalize()
+          .applyQuaternion(legs[0].femur.quaternion).applyQuaternion(pelvis.quaternion.clone().invert());
+        const extra=Math.max(0,axis.angleTo(thigh)-1.94);
+        if(extra){
+          const pivot=new T.Vector3(0,-.17,.005);
+          pelvis.position.add(pivot.clone().applyQuaternion(pelvis.quaternion));
+          pelvis.rotateX(-extra);
+          pelvis.position.sub(pivot.applyQuaternion(pelvis.quaternion));
+          if(tensionDebug)tensionDebug.pelvisPitch=pelvis.rotation.x;
+        }
+      }
+      if(state.movement!=='squat')fitAxialPose(amount);
       if(state.movement!=='bench')fitCostalCartilage?.();
       if(exerciseArms.visible&&!previewDebug)fitShoulderGirdle?.fitHands(state.movement);
       fitShoulderGirdle?.(state.movement);
@@ -1694,7 +1894,7 @@
           l.poseFootArch(selected?a:0);
         }
       }
-      if(m==='foot'&&chain)blendLumbar();
+      if(m==='foot'&&chain||m==='tilt'||m==='chain'&&!chain)blendLumbar();
       if(m==='foot'){
         floor.visible=true;floor.scale.set(chain?1.15:.42,chain?.65:.55,1);floor.position.x=chain?0:selectedSide*.61;floor.position.z=.23;
         model.updateMatrixWorld(true);

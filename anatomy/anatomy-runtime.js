@@ -20,8 +20,8 @@ window.azAppliedScenes={
  squat:{
   title:'Back Squat',labels:['Reference','Extension Bias'],ends:['Setup','Full Squat'],view:'side',
   captions:{a:['Begin from the reference pelvis and trunk position.','The hips, knees, ankles and trunk share the descent.','The hips descend below knee level while the feet stay planted.'],b:['Anterior pelvic tilt and a lumbar arch are visible at setup.','The extended starting shape changes as the squat gets deeper.','Near the bottom of the full squat, the pelvis tucks into PPT and the lumbar arch reduces.']},
-  source:'Jamie Smith course slides 14 and 59. Slide 59 presents butt wink as proximal reorientation and illustrates a pelvic tuck away from anterior tilt near the bottom. Updated course deck: slides 15 and 43.',
-  note:'This preset uses a slightly wider stance and modest toe-out to show full squat depth, while keeping the extended setup and later posterior pelvic tilt clear. The sources do not establish that more starting extension always causes a fixed amount or timing of butt wink. Depth also depends on the task, stance, anatomy and available movement options.'
+  source:'Jamie Smith course slides 14 and 59. Slide 59 presents butt wink as proximal reorientation and illustrates a pelvic tuck away from anterior tilt near the bottom. Updated course deck: slides 15 and 43. Knee tracking references: Does the femur roll-back with flexion? (PMID 15330038) and In vivo patellar tracking (PMID 18327809).',
+  note:'This preset uses a slightly wider stance and modest toe-out to show full squat depth, while keeping the extended setup and later posterior pelvic tilt clear. The sources do not establish that more starting extension always causes a fixed amount or timing of butt wink. Depth also depends on the task, stance, anatomy and available movement options. Watch the shin glide relative to the femur and the kneecap shift and tilt through flexion. These joint paths are illustrative.'
  },
  press:{
   title:'Seated Dumbbell Press',labels:['Feet on Floor','Feet on Raised Support'],ends:['Rack','Overhead'],view:'oblique',

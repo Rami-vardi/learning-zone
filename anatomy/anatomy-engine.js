@@ -279,7 +279,11 @@
     const pullBar=new T.Group();equipment.add(pullBar);between(pullBar,[-1.62,0,0],[1.62,0,0],.038,.038,steel);pullBar.position.set(0,8.16,.12);
     const pullGrip=side=>pullBar.position.clone().add(new T.Vector3(side*1.20,0,0));
     const dipBars=new T.Group();equipment.add(dipBars);for(const side of [-1,1]){between(dipBars,[side*1.1,3.9,-.85],[side*1.1,3.9,.90],.045,.045,steel);between(dipBars,[side*1.1,.08,-.75],[side*1.1,3.9,-.75],.045,.045,steel);between(dipBars,[side*1.1,.08,-1.10],[side*1.1,.08,.75],.045,.045,steel);}
-    const flatBench=new T.Group();equipment.add(flatBench);box(flatBench,[1.68,.18,4.85],[0,.98,-1.03],studyPadMat);for(const z of [-2.70,.65]){between(flatBench,[0,.89,z],[0,.12,z],.065,.065,steel);between(flatBench,[-.85,.10,z],[.85,.10,z],.055,.055,steel);}
+    const flatBench=new T.Group();equipment.add(flatBench);
+    const benchPad=box(flatBench,[1.68,.18,4.85],[0,.98,-1.03],studyPadMat);
+    const benchPadTop=benchPad.position.y+benchPad.geometry.parameters.height/2;
+    const benchTissueCover=.012;
+    for(const z of [-2.70,.65]){between(flatBench,[0,.89,z],[0,.12,z],.065,.065,steel);between(flatBench,[-.85,.10,z],[.85,.10,z],.055,.055,steel);}
     const benchBarRadius=.042;
     const benchBar=new T.Group();equipment.add(benchBar);between(benchBar,[-2.45,0,0],[2.45,0,0],benchBarRadius,benchBarRadius,steel);for(const side of [-1,1]){const p=mesh(new T.CylinderGeometry(.30,.30,.16,24),steel,benchBar);p.rotation.z=Math.PI/2;p.position.x=side*2.12;}
     let exerciseDebug=null;
@@ -315,7 +319,24 @@
       }
       return shoulder;
     }
-    const pushBottomAngles=new Map(), benchTouchPoints=new Map();
+    const pushBottomAngles=new Map(), benchTouchPoints=new Map(), benchBackLifts=new Map();
+    const thoracicNodes=spineGroups.slice(5).map(level=>level.node);
+    const backSurfaces=[...thoracicNodes,...ribs,...scapulae.map(blade=>blade.node)];
+    function lowestSurfacePoint(groups){
+      const lowest=new T.Vector3(0,Infinity,0),point=new T.Vector3();
+      for(const group of groups){
+        group.updateWorldMatrix(true,true);
+        group.traverse(node=>{
+          if(!node.isMesh)return;
+          const vertices=node.geometry.attributes.position;
+          for(let i=0;i<vertices.count;i++){
+            point.fromBufferAttribute(vertices,i).applyMatrix4(node.matrixWorld);
+            if(point.y<lowest.y)lowest.copy(point);
+          }
+        });
+      }
+      return lowest;
+    }
     function benchTouchPoint(setup){
       // The chest pose is fixed within each bench setup. Fit the whole shaft
       // to the anterior rib, cartilage and sternum surfaces at the lower chest.
@@ -356,14 +377,18 @@
       exerciseArms.visible=true;equipment.visible=true;equipment.children.forEach(o=>o.visible=false);flatBench.visible=!push;benchBar.visible=!push;floor.visible=true;floor.scale.set(2.1,3.5,1);
       const pro=push?(b?.18+.64*Math.pow(1-phase,2):.08):b?-.64+.025*Math.sin(Math.PI*phase):-.12;
       const bow=(r,lo,hi)=>r<=lo||r>=hi?0:Math.pow(Math.sin(Math.PI*(r-lo)/(hi-lo)),2);
-      let delta=.33,origin,U,F,baseAngle,benchLift=0,shapePhase=phase;
+      let delta=.33,origin,U,F,baseAngle,benchLift=0,backLift=0,shapePhase=phase;
       const anchor=push?supportedFoot(legs[0],0,-2.65,.92,0,.08,.85).ankle:new T.Vector3();
       function setFrame(d){delta=d;U=new T.Vector3(0,Math.sin(d),Math.cos(d));F=new T.Vector3(0,-Math.cos(d),Math.sin(d));origin=anchor.clone().addScaledVector(U,3.08);baseAngle=Math.PI/2-d;}
       // The atlas shoulder blades are deeper than the original schematic
       // surfaces. Raise the upper back to the pad, tapering into the neck.
       const bladeSupport=fitShoulderGirdle ? (b?.182:.168) : 0;
       const spineOffset=r=>-.14+.035*Math.sin(r/2.5*Math.PI*2)+(push?-(b?.055*Math.pow(1-shapePhase,2):0)*bow(r,.9,2.60)-(b?.035:0)*bow(r,.12,1.25):(b?.31:.025)*bow(r,.12,1.65)-((b?.18:.13)+benchLift)*smooth(.10,1.80,r)+bladeSupport*smooth(.20,1.80,r)*(1-smooth(2.45,3.00,r)));
-      const centreAt=r=>origin.clone().addScaledVector(U,r).addScaledVector(F,spineOffset(r));
+      const centreAt=r=>{
+        const point=origin.clone().addScaledVector(U,r).addScaledVector(F,spineOffset(r));
+        if(backLift)point.y+=backLift*smooth(0,.65,r)*(1-smooth(2.05,3.4,r));
+        return point;
+      };
       const angleAt=r=>{const d=centreAt(r+.008).sub(centreAt(Math.max(0,r-.008)));return Math.atan2(d.z,d.y);};
       const turn=p=>centreAt(p[1]).add(new T.Vector3(p[0],0,p[2]+.14).applyAxisAngle(new T.Vector3(1,0,0),angleAt(p[1])));
       const pushWristZ=1.94, pushHandX=1.20;
@@ -416,9 +441,37 @@
         setFrame(T.MathUtils.lerp((lo+hi)/2,pushBottomAngles.get(b),descent));
       }else{origin=new T.Vector3(0,b?1.61:1.56,0);U=new T.Vector3(0,0,-1);F=new T.Vector3(0,1,0);baseAngle=-Math.PI/2;}
       const pelvisPitch=baseAngle+(push?(b?-.28:0):(b?.30:0));pelvis.position.copy(origin);pelvis.rotation.set(pelvisPitch,0,0);pelvis.updateMatrixWorld(true);
-      if(!push){benchLift=1.07-new T.Box3().setFromObject(pelvis,true).min.y;origin.y+=benchLift;pelvis.position.copy(origin);pelvis.updateMatrixWorld(true);}
-      placeChest();const torsoAngle=angleAt(1.85);head.position.copy(turn([0,2.95,-.08]));if(!push)head.position.y+=.12+(fitShoulderGirdle ? .008 : 0);head.rotation.set(angleAt(2.95),0,0);
-      spineGroups.forEach(v=>{const r=v.y-3.3;v.node.position.copy(centreAt(r));v.node.rotation.set(angleAt(r),0,0);v.node.visible=true;});spineGuide.visible=false;torso.visible=true;head.visible=true;pelvis.visible=true;arms.forEach(a=>a.node.visible=false);torso.children.forEach(o=>{if(o.isMesh&&o.material===ctxM)o.visible=false;});
+      function placeSpine(){
+        for(const level of spineGroups){
+          const r=level.y-3.3;
+          level.node.position.copy(centreAt(r));
+          level.node.rotation.set(angleAt(r),0,0);
+          level.node.visible=true;
+        }
+      }
+      let buttContact;
+      if(!push){
+        buttContact=lowestSurfacePoint([pelvis]);
+        benchLift=benchPadTop+benchTissueCover-buttContact.y;
+        origin.y+=benchLift;pelvis.position.copy(origin);pelvis.updateMatrixWorld(true);
+        buttContact.y=benchPadTop;
+        // The trunk pose is fixed within each setup. Fit the posterior bone
+        // surfaces once, blending the lift into the lumbar spine and neck.
+        if(!benchBackLifts.has(b)){
+          placeSpine();
+          backLift=Math.max(0,benchPadTop+benchTissueCover-lowestSurfacePoint(thoracicNodes).y);
+          benchBackLifts.set(b,backLift);
+        }
+        backLift=benchBackLifts.get(b);
+      }
+      placeChest();const torsoAngle=angleAt(1.85);head.position.copy(turn([0,2.95,-.08]));head.rotation.set(angleAt(2.95),0,0);
+      let headContact;
+      if(!push){
+        headContact=lowestSurfacePoint([head]);
+        head.position.y+=benchPadTop+.001-headContact.y;
+        headContact.y=benchPadTop;
+      }
+      placeSpine();spineGuide.visible=false;torso.visible=true;head.visible=true;pelvis.visible=true;arms.forEach(a=>a.node.visible=false);torso.children.forEach(o=>{if(o.isMesh&&o.material===ctxM)o.visible=false;});
       for(const s of scapulae){const level=1.95,theta=angleAt(level),offset=new T.Vector3(s.side*(.64+.16*pro),0,-.20+.25*pro).applyAxisAngle(new T.Vector3(1,0,0),theta);s.node.position.copy(torso.worldToLocal(centreAt(level).add(offset)));s.node.rotation.set(theta-torsoAngle,-s.side*(.20+.63*pro),0);s.node.visible=true;}
       const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),legChecks=[];
       for(const l of legs){
@@ -450,7 +503,13 @@
         const u=E.clone().sub(S).normalize(),v=W.clone().sub(E).normalize(),elbowAngle=T.MathUtils.radToDeg(Math.acos(T.MathUtils.clamp(-u.dot(v),-1,1)));armChecks.push({side,shoulder:S.toArray(),elbow:E.toArray(),wrist:W.toArray(),grip:G.toArray(),upperLength:S.distanceTo(E),foreLength:E.distanceTo(W),elbowAngle});
       }
       for(const key in regionMaterials)regionMaterials[key].color.setHex(key==='context'?palettes.context:palettes.ivory);if(!push&&b){for(const s of scapulae)studyMaterial(s.node,studyBenchScapMat,50);for(const r of ribs)studyMaterial(r,studyRibMat);if(!sternum.userData.azOriginalMaterial)sternum.userData.azOriginalMaterial=sternum.material;sternum.material=studyRibMat;}landmarks.forEach(x=>x.visible=false);ghost.visible=false;model.updateMatrixWorld(true);
-      const contacts=push?{hands:armChecks.map(a=>a.grip),toes:legChecks.map(l=>l.footContact),floorHeight:.08}:{head:[0,new T.Box3().setFromObject(head,true).min.y,head.position.z],upperBack:turn([0,2.10,-.36-bladeSupport]).toArray(),butt:[0,new T.Box3().setFromObject(pelvis,true).min.y,pelvis.position.z],feet:legChecks.map(l=>l.footContact),padHeight:1.07,floorHeight:.08};
+      let contacts;
+      if(push)contacts={hands:armChecks.map(a=>a.grip),toes:legChecks.map(l=>l.footContact),floorHeight:.08};
+      else{
+        const back=lowestSurfacePoint(backSurfaces);
+        contacts={head:headContact.toArray(),upperBack:[back.x,benchPadTop,back.z],upperBackBone:back.toArray(),
+          butt:buttContact.toArray(),feet:legChecks.map(l=>l.footContact),padHeight:benchPadTop,floorHeight:.08};
+      }
       exerciseDebug={movement:m,scenario:state.scenario||'a',phase,pelvisPitch,relativePelvisTilt:push?(b?-.28:0):(b?.30:0),protraction:pro,headPitch:angleAt(2.95),spine:[.25,.70,1.20,1.75,2.25,2.60].map(r=>centreAt(r).toArray()),legs:legChecks,arms:armChecks,bar:bar?bar.toArray():null,contacts,legDriveCue:!push&&b&&Boolean(state.ascending),support:{padOpacity:studyPadMat.opacity,ribOpacity:!push&&b?studyRibMat.opacity:1,scapulaeHighlighted:!push&&b}};
     }
     function poseLunge(phase){

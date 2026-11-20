@@ -66,6 +66,12 @@
 #lz-anatomy-zone .azc-species-tag{position:absolute;transform:translate(-50%,0);font-size:12px;font-weight:650;line-height:1.4;color:#344b63;background:#f7faffed;border:1px solid #ccdae5;border-radius:12px;padding:2px 9px;white-space:nowrap}
 #lz-anatomy-zone .azc-species-tag[hidden]{display:none}
 
-#lz-anatomy-zone .azc-helmet-toggle{position:absolute;bottom:9px;right:10px;z-index:2;min-height:32px;padding:5px 10px;border:1px solid #b5c8dc;border-radius:7px;background:#f8fbfe;color:#264769;font:inherit;font-size:12px;cursor:pointer}
-#lz-anatomy-zone .azc-helmet-toggle[hidden]{display:none}
-#lz-anatomy-zone .azc-helmet-toggle:focus-visible{outline:2px solid #3159b5;outline-offset:2px}
+
+#lz-anatomy-zone .azc-baby-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#lz-anatomy-zone .azc-baby-overlay[hidden],#lz-anatomy-zone .azc-balance-legend[hidden]{display:none}
+#lz-anatomy-zone .azc-balance-legend{display:flex;flex-wrap:wrap;gap:6px 18px;padding:8px 18px;background:#f3f7fb;color:#263d51;font-size:14px}
+#lz-anatomy-zone .azc-balance-legend span{display:inline-flex;align-items:center;gap:6px}
+#lz-anatomy-zone .azc-balance-legend i{box-sizing:border-box;width:12px;height:12px;border-radius:50%;border:2px solid #704522}
+#lz-anatomy-zone .azc-key-mass{background:#ffc25c}
+#lz-anatomy-zone .azc-key-projection{background:#fff4d8}
+#lz-anatomy-zone .azc-balance-legend .azc-key-base{width:17px;height:10px;border:1.5px solid #168783;border-radius:3px;background:#c5e4e0}

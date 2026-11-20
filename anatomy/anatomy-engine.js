@@ -893,27 +893,18 @@
       instance.forceContextLoss?.();
     }
     let drag=null,helmetFrame=0,helmetProgress=0,helmetOpen=false,helmetDistance=1,helmetYaw=0,helmetPitch=0;
-    const helmetButton=document.createElement('button');
-    helmetButton.type='button';helmetButton.className='azc-helmet-toggle';helmetButton.hidden=true;
-    helmetButton.textContent='Open helmet';helmetButton.setAttribute('aria-pressed','false');
-    container.setAttribute('role','group');
-    container.appendChild(helmetButton);
-    helmetButton.addEventListener('click',toggleHelmet);
     function closeHelmet(){
       if(!helmetOpen&&!helmetProgress)return;
       cancelAnimationFrame(helmetFrame);helmetFrame=0;helmetOpen=false;helmetProgress=0;
-      skull.userData.setOpening(0);helmetButton.textContent='Open helmet';helmetButton.setAttribute('aria-pressed','false');
+      skull.userData.setOpening(0);
     }
     function toggleHelmet(){
-      if(!skull?.userData.setOpening||helmetButton.hidden)return;
       if(helmetProgress===0){
         const normal=new T.Vector3(.38,.12,1).applyQuaternion(skull.getWorldQuaternion(new T.Quaternion())).normalize();
         helmetYaw=Math.atan2(Math.sin(Math.atan2(normal.x,normal.z)-yaw),Math.cos(Math.atan2(normal.x,normal.z)-yaw));
         helmetPitch=Math.asin(normal.y)-pitch;helmetDistance=distance;
       }
       helmetOpen=!helmetOpen;
-      helmetButton.textContent=helmetOpen?'Close helmet':'Open helmet';
-      helmetButton.setAttribute('aria-pressed',String(helmetOpen));
       cancelAnimationFrame(helmetFrame);
       const start=performance.now(),from=helmetProgress,to=Number(helmetOpen);
       const duration=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?0:490*Math.abs(from-to);
@@ -927,7 +918,7 @@
     }
     const helmetRay=new T.Raycaster();
     function helmetAt(event){
-      if(helmetButton.hidden)return false;
+      if(isDevelopment()||!head.visible||!skull?.userData.setOpening)return false;
       const rect=canvas.getBoundingClientRect();
       const pointer=new T.Vector2((event.clientX-rect.left)*2/rect.width-1,1-(event.clientY-rect.top)*2/rect.height);
       helmetRay.setFromCamera(pointer,camera);
@@ -1187,6 +1178,41 @@
     fixedTargetLabel.className='azc-target-label';
     fixedTargetLabel.textContent='Fixed balance target';
     labelLayer.appendChild(fixedTargetLabel);
+    const guide=document.createElement('canvas');
+    guide.className='azc-baby-overlay';guide.setAttribute('aria-hidden','true');
+    guide.hidden=true;labelLayer.appendChild(guide);
+    let guidePen;
+    function drawBabyBalance(){
+      if(!guidePen)guidePen=guide.getContext('2d');
+      if(!guidePen)return;
+      const ratio=Math.min(2,window.devicePixelRatio||1);
+      const w=Math.round(width*ratio),h=Math.round(height*ratio);
+      if(guide.width!==w||guide.height!==h){guide.width=w;guide.height=h;}
+      const pen=guidePen;
+      pen.setTransform(ratio,0,0,ratio,0,0);pen.clearRect(0,0,width,height);
+      const {center,ground,hull,rail}=developmentModel.balance;
+      const project=p=>screenPoint(p);
+      const dot=(p,r,color,fill)=>{
+        pen.beginPath();pen.arc(p.x,p.y,r,0,Math.PI*2);
+        if(fill){pen.fillStyle=fill;pen.fill();}
+        pen.strokeStyle=color;pen.lineWidth=2;pen.stroke();
+      };
+      const footprint=hull.map(v=>new T.Vector3(v.x,ground.y,v.z));
+      const inFront=p=>p.clone().applyMatrix4(camera.matrixWorldInverse).z < -camera.near;
+      if(hull.length>=3&&footprint.every(inFront)){
+        pen.beginPath();footprint.forEach((v,i)=>{
+          const p=project(v);
+          if(i)pen.lineTo(p.x,p.y);else pen.moveTo(p.x,p.y);
+        });pen.closePath();pen.fillStyle='rgba(20,137,135,.18)';pen.fill();
+        pen.strokeStyle='#168783';pen.lineWidth=1.6;pen.stroke();
+      }
+      for(const support of rail)if(inFront(support))dot(project(support),5,'#086763','#c1f2e9');
+      const c=project(center),g=project(ground);
+      if((!c.visible&&!g.visible)||!inFront(center)||!inFront(ground))return;
+      pen.beginPath();pen.moveTo(c.x,c.y);pen.lineTo(g.x,g.y);
+      pen.strokeStyle='#805015';pen.lineWidth=2;pen.setLineDash([3,4]);pen.stroke();pen.setLineDash([]);
+      dot(g,5,'#81501a','#fff4d8');dot(c,6,'#503422','#ffc25c');
+    }
     let developmentModel;
     const isDevelopment=()=>state.movement==='baby'||state.movement==='chimp';
     const speciesTags=['Human','Chimpanzee'].map(name=>{
@@ -1194,11 +1220,12 @@
       tag.hidden=true;labelLayer.appendChild(tag);return tag;
     });
     function render(){if(disposed)return;cameraUpdate();camera.updateMatrixWorld(true);
-      helmetButton.hidden=isDevelopment()||!head.visible||!skull||(!helmetOpen&&!screenPoint(skull.getWorldPosition(new T.Vector3())).visible);
+      guide.hidden=state.movement!=='baby';
       if(isDevelopment()){
         const comparing=state.movement==='chimp';
         const anchors=comparing?developmentModel.layout(yaw,state.mode==='chain'):[];
         if(renderer)renderer.render(developmentModel.scene,camera);else fallbackDraw(developmentModel.scene);
+        if(!guide.hidden)drawBabyBalance();
         for(const {tag,line} of labelNodes.values()){tag.hidden=true;line.hidden=true;}
         fixedTargetLabel.hidden=true;
         speciesTags.forEach((tag,i)=>{
@@ -2156,7 +2183,7 @@
       setView(name){closeHelmet();if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=isDevelopment()?(state.movement==='baby'?.90:-1.12):tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='baby'?.27:state.movement==='chimp'?.14:state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
       resetCamera(){closeHelmet();yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
-        if(disposed)return;disposed=true;cancelAnimationFrame(helmetFrame);helmetButton.removeEventListener('click',toggleHelmet);fitShoulderGirdle?.dispose();drag=null;ro.disconnect();
+        if(disposed)return;disposed=true;cancelAnimationFrame(helmetFrame);fitShoulderGirdle?.dispose();drag=null;ro.disconnect();
         clearCanvasEvents();
         const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,...tensionSpineMaterials.values(),steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
         for(const activeScene of [scene,developmentModel?.scene].filter(Boolean))activeScene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});

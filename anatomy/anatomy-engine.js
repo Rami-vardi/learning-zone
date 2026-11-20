@@ -284,6 +284,15 @@
     const cableGuide=mesh(new T.CylinderGeometry(.105,.105,.12,20),seatMat,rowUpright);
     cableGuide.rotation.x=Math.PI/2;
     cableGuide.position.copy(rowAnchor);cableGuide.position.z+=.055;
+    const rdlPressureCue=new T.Group();equipment.add(rdlPressureCue);
+    const cueMaterial=new T.MeshBasicMaterial({color:0x168b87});
+    for(const side of [-1,1]){
+      // Beside each sole so the arrow remains visible from the side.
+      const x=side*.94;
+      between(rdlPressureCue,[x,.19,0],[x,.46,0],.018,.018,cueMaterial);
+      const tip=mesh(new T.ConeGeometry(.068,.13,12),cueMaterial,rdlPressureCue);
+      tip.rotation.z=Math.PI;tip.position.set(x,.15,0);
+    }
     const pullBar=new T.Group();equipment.add(pullBar);between(pullBar,[-1.62,0,0],[1.62,0,0],.038,.038,steel);pullBar.position.set(0,8.16,.12);
     const pullGrip=side=>pullBar.position.clone().add(new T.Vector3(side*1.20,0,0));
     const dipBars=new T.Group();equipment.add(dipBars);for(const side of [-1,1]){between(dipBars,[side*1.1,3.9,-.85],[side*1.1,3.9,.90],.045,.045,steel);between(dipBars,[side*1.1,.08,-.75],[side*1.1,3.9,-.75],.045,.045,steel);between(dipBars,[side*1.1,.08,-1.10],[side*1.1,.08,.75],.045,.045,steel);}
@@ -578,6 +587,7 @@
         hipY=3.27-(b?.70:.55)*phase;hipZ=-(b?1.27:1.18)*phase;basePitch=(b?.90:1.12)*phase;pelvisPitch=basePitch*(b?.65:.78);
         lumbar=b?.26*smooth(.24,1,phase):0;thoracic=b?.28*smooth(.42,1,phase):0;cervical=b?.20*smooth(.62,1,phase):0;
         pro=b?.68*smooth(.25,1,phase):.025;
+        rdlPressureCue.visible=true;rdlPressureCue.position.z=b?-.035:.22;
         floor.visible=true;floor.scale.set(1.6,1.35,1);
       }
       if(m==='squat'){
@@ -1212,24 +1222,27 @@
 
     // Conventional pull: the knees withdraw as the bar rises, then hips finish the lift.
     // Positions are illustrative, solved with fixed bones, planted feet and straight arms.
+    // Keep the inside of each gripping hand outside the shin throughout the pull.
+    const deadliftGripX=.90;
     function tensionDeadliftFrame(lift){
       const q=T.MathUtils.clamp(lift,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
       const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),femurSag=Math.sqrt(L1*L1-.05*.05),tibiaSag=Math.sqrt(L2*L2-.05*.05);
       const points=tensionFootPoints(legs[0]),ankleY=.08-Math.min(...points.map(v=>v.y)),ankleZ=.045;
-      const shinAngle=.20*Math.pow(1-q,2),thighAngle=1.20*(1-q);
+      const setupShinAngle=.12;
+      const shinAngle=setupShinAngle*Math.pow(1-q,2),thighAngle=1.20*(1-q);
       const kneeY=ankleY+tibiaSag*Math.cos(shinAngle),kneeZ=ankleZ+tibiaSag*Math.sin(shinAngle);
       const hipY=kneeY+femurSag*Math.cos(thighAngle),hipZ=kneeZ-femurSag*Math.sin(thighAngle);
-      const armReach=2.225,barZ=.35;
+      const armReach=2.165,barZ=.405,lateralReach=1.04-deadliftGripX;
       function solve(pitch){
         const Q=new T.Quaternion().setFromAxisAngle(V(1,0,0),pitch),origin=V(0,hipY,hipZ).sub(V(0,-.17,.005).applyQuaternion(Q));
-        const S=V(1.04,2.25,.02).applyQuaternion(Q).add(origin),deltaZ=S.z-barZ,vertical=Math.sqrt(Math.max(.001,armReach*armReach-.39*.39-deltaZ*deltaZ));
+        const S=V(1.04,2.25,.02).applyQuaternion(Q).add(origin),deltaZ=S.z-barZ,vertical=Math.sqrt(Math.max(.001,armReach*armReach-lateralReach*lateralReach-deltaZ*deltaZ));
         return {origin,Q,bar:V(0,S.y-vertical,barZ)};
       }
       // Match a real plate on the ground exactly at lift-off despite rig proportions.
       let low=1.05,high=1.30;
-      const baseShin=.20,baseThigh=1.20,baseKY=ankleY+tibiaSag*Math.cos(baseShin),baseKZ=ankleZ+tibiaSag*Math.sin(baseShin),baseHY=baseKY+femurSag*Math.cos(baseThigh),baseHZ=baseKZ-femurSag*Math.sin(baseThigh);
+      const baseShin=setupShinAngle,baseThigh=1.20,baseKY=ankleY+tibiaSag*Math.cos(baseShin),baseKZ=ankleZ+tibiaSag*Math.sin(baseShin),baseHY=baseKY+femurSag*Math.cos(baseThigh),baseHZ=baseKZ-femurSag*Math.sin(baseThigh);
       for(let i=0;i<36;i++){
-        const t=(low+high)/2,oy=baseHY+.17*Math.cos(t)+.005*Math.sin(t),oz=baseHZ+.17*Math.sin(t)-.005*Math.cos(t),sy=oy+2.25*Math.cos(t)-.02*Math.sin(t),sz=oz+2.25*Math.sin(t)+.02*Math.cos(t),by=sy-Math.sqrt(armReach*armReach-.39*.39-(sz-barZ)*(sz-barZ));
+        const t=(low+high)/2,oy=baseHY+.17*Math.cos(t)+.005*Math.sin(t),oz=baseHZ+.17*Math.sin(t)-.005*Math.cos(t),sy=oy+2.25*Math.cos(t)-.02*Math.sin(t),sz=oz+2.25*Math.sin(t)+.02*Math.cos(t),by=sy-Math.sqrt(armReach*armReach-lateralReach*lateralReach-(sz-barZ)*(sz-barZ));
         if(by>.90)low=t;else high=t;
       }
       const pitch=(low+high)/2*Math.pow(1-q,.65),frame=solve(pitch);
@@ -1240,7 +1253,9 @@
 
     // Slight yielding through the chain, with most visible recoil at the ankle.
     function poseTensionPogo(phase){
-      const p=T.MathUtils.clamp(phase,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),contactEnd=.30,contact=p<contactEnd,u=contact?p/contactEnd:(p-contactEnd)/(1-contactEnd);
+      const p=T.MathUtils.clamp(phase,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),contactEnd=.30;
+      const contact=p<=contactEnd||p===1;
+      const u=p===1?0:contact?p/contactEnd:(p-contactEnd)/(1-contactEnd);
       const pulse=contact?Math.sin(Math.PI*u):0,compression=.09*pulse,footLift=contact?0:.34*Math.sin(Math.PI*u),footPitch=.44-.35*pulse;
       const footQ=new T.Quaternion().setFromAxisAngle(V(1,0,0),footPitch),L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),f=legs[0];
       const landingToe=l=>{
@@ -1285,7 +1300,7 @@
       let level=m==='tension_deadlift'?.95:m==='tension_pushup'?.54:m==='tension_cat'?.12:m==='tension_swing'?.30+.60*Math.pow(Math.sin(Math.PI*p),2):.30;
       for(const mat of tensionSpineMaterials.values())mat.color.copy(new T.Color(palettes.ivory)).lerp(new T.Color(0x4d83b4),level);
       thorM.color.copy(new T.Color(palettes.ivory)).lerp(new T.Color(0x709dbf),level*.80);pelvicM.color.copy(new T.Color(palettes.ivory)).lerp(new T.Color(0x709dbf),level*.70);
-      if(m==='tension_pogo'){const contact=tensionDebug?.contact??p<.30;for(const l of legs){l.footMat.color.setHex(contact?0x4d83b4:0xa6bccb);l.shinMat.color.setHex(contact?0x7ea8c4:palettes.context);}}
+      if(m==='tension_pogo'){const contact=tensionDebug.contact;for(const l of legs){l.footMat.color.setHex(contact?0x4d83b4:0xa6bccb);l.shinMat.color.setHex(contact?0x7ea8c4:palettes.context);}}
       if(tensionDebug)tensionDebug.tensionEmphasis=level;
     }
     function tensionFootPoints(l,live=false){
@@ -1333,7 +1348,7 @@
         jointChecks.push({side:l.side,hip:H.toArray(),knee:K.toArray(),ankle:A.toArray(),footMinHeight:minY+A.y,footPitch});
       }
       for(const arm of exArms){const s=arm.side,S=turn(s*1.04,2.25,.02);let E,W,G;
-        if(m==='tension_deadlift'){G=bar.clone().add(V(s*.65,0,0));const dir=G.clone().sub(S).normalize();W=G.clone().addScaledVector(dir,-.17);E=twoJoint(S,W,1.08,.98,V(s*.25,0,.20));}
+        if(m==='tension_deadlift'){G=bar.clone().add(V(s*deadliftGripX,0,0));const dir=G.clone().sub(S).normalize();W=G.clone().addScaledVector(dir,-.17);E=twoJoint(S,W,1.08,.98,V(s*.25,0,.20));}
         else{const upper=V(s*.06,-1,.03).normalize(),fore=V(s*.02,-1,.08).normalize();E=S.clone().addScaledVector(upper,1.08);W=E.clone().addScaledVector(fore,.98);G=W.clone().addScaledVector(fore,.17);}
         poseSegment(arm.clavicle,turn(0,2.40,.30),S);poseSegment(arm.upper,S,E);poseSegment(arm.fore,E,W);poseHand(arm,W,G.clone().sub(W).normalize(),m==='tension_deadlift'?G:null);armChecks.push({side:s,shoulder:S.toArray(),elbow:E.toArray(),wrist:W.toArray(),grip:G.toArray(),upperLength:S.distanceTo(E),foreLength:E.distanceTo(W)});
       }
@@ -1348,11 +1363,12 @@
     // A straight two-hand grip sits between the curved sides of the handle.
     const bellHandle=new T.CurvePath();
     const handlePoint=(x,y)=>new T.Vector3(x,y,0);
-    bellHandle.add(new T.CubicBezierCurve3(handlePoint(-.22,-.18),handlePoint(-.43,-.10),handlePoint(-.54,.19),handlePoint(-.38,.19)));
-    bellHandle.add(new T.LineCurve3(handlePoint(-.38,.19),handlePoint(.38,.19)));
-    bellHandle.add(new T.CubicBezierCurve3(handlePoint(.38,.19),handlePoint(.54,.19),handlePoint(.43,-.10),handlePoint(.22,-.18)));
+    bellHandle.add(new T.CubicBezierCurve3(handlePoint(-.22,-.18),handlePoint(-.43,-.10),handlePoint(-.54,.19),handlePoint(-.405,.19)));
+    bellHandle.add(new T.LineCurve3(handlePoint(-.405,.19),handlePoint(.405,.19)));
+    bellHandle.add(new T.CubicBezierCurve3(handlePoint(.405,.19),handlePoint(.54,.19),handlePoint(.43,-.10),handlePoint(.22,-.18)));
     mesh(new T.TubeGeometry(bellHandle,64,.045,12,false),tensionBellMaterial,tensionBellGroup);
-    const bellGrip=handlePoint(.18,.19);
+    // Centre each hand on its own half of the straight handle, with a gap for the thumbs.
+    const bellGrip=handlePoint(.215,.19);
     function poseTensionSwingCat(m,phase){
       const p=T.MathUtils.clamp(phase,0,1),V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),smooth=(lo,hi,v)=>{const t=T.MathUtils.clamp((v-lo)/(hi-lo),0,1);return t*t*(3-2*t);},cat=m==='tension_cat';
       // The model's knee center sits above the load-bearing patellar surface.
@@ -1676,6 +1692,8 @@
       debugPoseSnapshot:capturePose,
       zoomCamera,
       setOrbit(newYaw,newPitch){yaw=newYaw;pitch=newPitch;render();},
+      get squatBelowKnees(){return state.movement==='squat'&&exerciseDebug.legs.every(leg=>leg.kneeAboveHip>0);},
+      get pogoInContact(){return tensionDebug?.contact;},
       get rowPastTrunk(){return state.movement==='row'&&exerciseDebug.arms.every(arm=>arm.humeralSagittal<0);},
       debugCamera:()=>({yaw,pitch,distance,target:target.toArray()}),
       update(next){const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();applyPose(0);rebuildGhost();}applyPose();render();},

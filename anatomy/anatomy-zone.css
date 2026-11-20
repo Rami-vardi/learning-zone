@@ -47,3 +47,6 @@
 
 #lz-anatomy-zone .azc-camera-zoom{display:flex;gap:.4rem}
 #lz-anatomy-zone .azc-camera-zoom button{flex:1;min-height:44px}
+
+#lz-anatomy-tension .tf-scale-note{margin:10px 0 4px;font-size:12px;color:#445b73}
+#lz-anatomy-tension .tf-dot.tf-flight{background:#a6bccb}

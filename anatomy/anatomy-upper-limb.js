@@ -272,12 +272,12 @@ window.azAttachUpperSkeleton = function(parts) {
     for (let i = 0; i < positions.count; i++) {
       const y = positions.getY(i);
       const distal=T.MathUtils.smoothstep(-y,.61,1.33);
-      positions.setY(i,y+.122*distal);
-      positions.setZ(i,positions.getZ(i)+.030*distal);
+      positions.setY(i,y+.082*distal);
+      positions.setZ(i,positions.getZ(i)-.010*distal);
       positions.setX(i,positions.getX(i)+leg.side*.018*distal);
     }
     fibula.geometry.computeVertexNormals();
-    fibula.position.set(0, 0, 0);
+    fibula.position.set(leg.side*.029, 0, -.009);
     fibula.quaternion.identity();
     fibula.name = 'BodyParts3D fibula';
   }

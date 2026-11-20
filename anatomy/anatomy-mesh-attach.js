@@ -37,6 +37,7 @@ window.azAttachAnatomyMeshes=function(parts){
   const pelvisMaterial = reliefMaterial(parts.materials.pelvis);
   for(const name of ['rightHip','leftHip','sacrum']){
     const mesh=new T.Mesh(geometry(assets[name],p=>[p[0]*.00582,(p[2]-840.4)*.00582,-(p[1]+79.1)*.00582+.005]),pelvisMaterial);
+    if(name==='sacrum') mesh.scale.x=.967;
     mesh.name='BodyParts3D '+name;parts.pelvis.add(mesh);
   }
   // The meshes were fitted to the existing hip, knee and ankle anchors.
@@ -59,8 +60,8 @@ window.azAttachAnatomyMeshes=function(parts){
       const point = transform(position);
       const depth=-point[1];
       const distal=T.MathUtils.smoothstep(depth,.59,1.30);
-      point[1] += .144 * distal;
-      point[2] += .030 * distal;
+      point[1] += .117 * distal;
+      point[2] -= .030 * distal;
       // Leave room for the joint surfaces as the rig bends and rotates.
       point[1] -= .022 * (1-T.MathUtils.smoothstep(depth, .225, .72));
       return point;
@@ -336,7 +337,7 @@ function attachAtlasFeet(T, legs, remove) {
     // Place the ankle rotation axis inside the talar dome. The midfoot and
     // heel share this registration, including when toes extend against a support.
     const hindfoot = new T.Group();
-    hindfoot.position.set(0,-.049,.030);
+    hindfoot.position.set(0,-.089,-.010);
     leg.footRegistration=hindfoot.position;
     foot.add(hindfoot);
     hindfoot.add(mid);
@@ -346,6 +347,14 @@ function attachAtlasFeet(T, legs, remove) {
     const cuboid = addBone('Cuboid', mid);
     const cuneiforms = ['Medial', 'Intermediate', 'Lateral'].map(name => addBone(name + ' cuneiform', mid));
     const tarsals = [calcaneus, talus, navicular, cuboid, ...cuneiforms];
+    talus.position.y += .008;
+    navicular.scale.z = .92;
+    navicular.position.z += .004;
+    cuboid.position.x += side * .006;
+    for(const bone of cuneiforms) bone.position.z += .006;
+    navicular.position.x -= side * .003;
+    const subtalarAxis = local([-.22,.61,.76]).normalize();
+    const subtalarPivot = calcaneus.position.clone().lerp(talus.position,.55);
     const rest = tarsals.map(bone => bone.position.clone());
 
     const rays = toeHinges.map((hinge, index) => {
@@ -376,18 +385,20 @@ function attachAtlasFeet(T, legs, remove) {
       tarsals.forEach((bone, index) => bone.position.copy(rest[index]));
       // Loaded example: heel everts, talar head moves medially, and the
       // medial column lowers more than the lateral column. Bones stay rigid.
-      calcaneus.rotation.z = side * amount * .065;
+      calcaneus.quaternion.setFromAxisAngle(subtalarAxis, side * amount * .073);
+      calcaneus.position.sub(subtalarPivot).applyQuaternion(calcaneus.quaternion).add(subtalarPivot);
       talus.position.x -= side * amount * .010;
-      talus.position.y -= amount * .012;
+      talus.position.y -= amount * .002;
       talus.rotation.y = -side * amount * .048;
-      navicular.position.y -= amount * .034;
-      navicular.position.z += amount * .004;
+      navicular.position.y -= amount * .018;
+      navicular.position.z += Math.abs(amount) * .008;
+      navicular.position.x -= side * Math.max(0,amount) * .010;
       navicular.rotation.y = side * amount * .036;
       navicular.rotation.x = -amount * .036;
       cuboid.position.y -= amount * .004;
       for (const [index, bone] of cuneiforms.entries()) {
-        bone.position.y -= amount * (.031 - index * .008);
-        bone.position.z += amount * .006;
+        bone.position.y -= amount * (.017 - index * .004);
+        bone.position.z += Math.abs(amount) * .010;
         bone.rotation.x = -amount * (.044 - index * .008);
       }
       for (const [index, {ray, metatarsal, origin}] of rays.entries()) {

@@ -1220,11 +1220,12 @@
       }
       fitShoulderGirdle?.fitHands(m);
       const upperMoment=offset(0,1.05,-.03).multiplyScalar(trunkMass).addScaledVector(offset(0,2.95,-.08),headMass);
-      const addSegment=(sum,start,end,mass)=>sum.addScaledVector(start,mass/2).addScaledVector(end,mass/2);
+      // Fraction of segment length measured from its proximal joint (Winter, 2009).
+      const addSegment=(sum,start,end,mass,fraction)=>sum.addScaledVector(start,mass*(1-fraction)).addScaledVector(end,mass*fraction);
       for(const arm of exArms){
-        addSegment(upperMoment,arm.upper.position,arm.fore.position,upperArmMass);
-        addSegment(upperMoment,arm.fore.position,arm.hand.position,forearmMass);
-        addSegment(upperMoment,arm.hand.position,arm.contact,handMass);
+        addSegment(upperMoment,arm.upper.position,arm.fore.position,upperArmMass,.436);
+        addSegment(upperMoment,arm.fore.position,arm.hand.position,forearmMass,.430);
+        addSegment(upperMoment,arm.hand.position,arm.contact,handMass,.5);
       }
 
       const frames=legs.map(l=>{
@@ -1238,8 +1239,8 @@
         const moment=upperMoment.clone().addScaledVector(origin,upperMass);
         const solvedLegs=frames.map(({l,frame,A,footCenter})=>{
           const H=V(l.side*.51,-.17,.005).add(origin),K=deepKnee(H,A,l.side);
-          addSegment(moment,H,K,thighMass);
-          addSegment(moment,K,A,shinMass);
+          addSegment(moment,H,K,thighMass,.433);
+          addSegment(moment,K,A,shinMass,.433);
           moment.addScaledVector(footCenter,footMass);
           return {l,frame,H,K,A};
         });
@@ -1255,7 +1256,9 @@
         solved=balanceAt(solved.origin.z+1.10*error);
       }
       const {origin,body,combined,load,solvedLegs}=solved;
-      pelvis.position.copy(origin);
+      const hipAxis=V(0,-.17,.005);
+      pelvis.rotation.x=pitch*.45;
+      pelvis.position.copy(origin).add(hipAxis).sub(hipAxis.clone().applyQuaternion(pelvis.quaternion));
       torso.position.copy(offset(0,1.42,0)).add(origin);
       head.position.copy(offset(0,2.95,-.08)).add(origin);
       head.quaternion.copy(rotation);
@@ -1263,6 +1266,7 @@
         v.node.position.copy(offset(0,v.y-3.3,v.z)).add(origin);
         v.node.quaternion.copy(rotation);
       }
+      blendLumbar();
       for(const arm of exArms){
         for(const node of [arm.clavicle,arm.upper,arm.fore,arm.hand])node.position.add(origin);
         arm.contact.add(origin);
@@ -1523,6 +1527,16 @@
       }
       for(const leg of legs) leg.fitPatella?.();
     }
+    function blendLumbar(){
+      pelvis.updateMatrix();torso.updateMatrix();
+      for(let i=0;i<5;i++){
+        const v=spineGroups[i],fraction=i/5;
+        const lower=new T.Vector3(0,v.y-3.3,v.z).applyMatrix4(pelvis.matrix);
+        const upper=new T.Vector3(0,v.y-4.72,v.z).applyMatrix4(torso.matrix);
+        v.node.position.copy(lower).lerp(upper,fraction);
+        v.node.quaternion.copy(pelvis.quaternion).slerp(torso.quaternion,fraction);
+      }
+    }
     function setJointPose(amount){
       const a=Math.max(-1,Math.min(1,amount)),chain=state.mode==='chain',selectedSide=state.side==='right'?-1:1,m=state.movement;
       restoreStudyMaterials();for(const item of tensionSpineMeshes)item.mesh.material=item.original;previewEquipment.visible=false;previewDebug=null;tensionEquipment.visible=false;tensionBellGroup.visible=false;tensionDebug=null;
@@ -1591,14 +1605,7 @@
         head.quaternion.copy(torso.quaternion);
         if(m==='ribshift'||m==='scapula'&&chain||m==='chain'&&chain||m==='hike'&&chain){
           // Blend the five lumbar vertebrae between their two moving references.
-          pelvis.updateMatrix();
-          for(let i=0;i<5;i++){
-            const v=spineGroups[i],fraction=(i+1)/6;
-            const lower=new T.Vector3(0,v.y-3.3,v.z).applyMatrix4(pelvis.matrix);
-            const upper=new T.Vector3(0,v.y-4.72,v.z).applyMatrix4(torso.matrix);
-            v.node.position.copy(lower).lerp(upper,fraction);
-            v.node.quaternion.copy(pelvis.quaternion).slerp(torso.quaternion,fraction);
-          }
+          blendLumbar();
         }
       }
       pelvis.updateMatrixWorld(true);
@@ -1647,6 +1654,7 @@
           l.poseFootArch(selected?a:0);
         }
       }
+      if(m==='foot'&&chain)blendLumbar();
       if(m==='foot'){
         floor.visible=true;floor.scale.set(chain?1.15:.42,chain?.65:.55,1);floor.position.x=chain?0:selectedSide*.61;floor.position.z=.23;
         model.updateMatrixWorld(true);

@@ -105,7 +105,7 @@
         tube(g,pts,.034,thorM,28);
       }
     }
-    const sternum=between(torso,[0,.99,.39],[0,-.02,.59],.058,.045,thorM),sternumRest=sternum.position.clone();
+    const sternum=between(torso,[0,.99,.39],[0,-.02,.59],.058,.045,thorM),sternumRest=sternum.position.clone(),sternumRestRotation=sternum.quaternion.clone();
     const fitCostalCartilage=window.azAttachThorax?.(T,ribs,sternum);
     // Store each atlas rib in the frame of its own thoracic vertebra.
     const ribParents=ribs.map((rib,i)=>{
@@ -909,7 +909,8 @@
       helmetOpen=!helmetOpen;
       cancelAnimationFrame(helmetFrame);
       const start=performance.now(),from=helmetProgress,to=Number(helmetOpen);
-      const duration=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?0:490*Math.abs(from-to);
+      const reduced=document.documentElement?.dataset.lzMotion==='reduced'||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const duration=reduced?0:490*Math.abs(from-to);
       function animate(now){
         if(disposed)return;
         const t=duration?Math.min(1,(now-start)/duration):1;
@@ -1795,7 +1796,7 @@
       surface.position.copy(pos).sub(node.position).applyQuaternion(workQ).divide(node.scale);
       surface.quaternion.copy(workQ).multiply(q);
     }
-    const terminalFrame=new T.Quaternion();
+    const terminalFrame=new T.Quaternion(),lateralAxis=new T.Vector3(0,0,1);
     const articulatedLessons=new Set(['bench','pushup','lunge','tension_pushup','tension_swing','tension_pogo','squat','rdl','row','dips','press','pullup','tension_cat','tension_deadlift','deadlift_types','cgoblet','cheels','csafety']);
     function pitchInFrame(frame,rotation){
       workQ.copy(frame).invert().multiply(rotation);
@@ -1812,6 +1813,13 @@
         ribDelta.copy(toChest).multiply(actualFrame)
           .multiply(fromGuide.copy(level.node.matrix).invert()).multiply(torso.matrix).multiply(rib.matrix);
         ribDelta.decompose(rib.position,rib.quaternion,rib.scale);
+        if(i===0&&state.movement==='tension_cat'){
+          // The manubrium follows the first rib during spinal flexion.
+          // This carries both medial clavicular attachments with the chest.
+          rib.updateMatrix();
+          sternum.position.copy(sternumRest).sub(fromDisc.set(0,.93,-.30)).applyMatrix4(rib.matrix);
+          sternum.quaternion.copy(rib.quaternion).multiply(sternumRestRotation);
+        }
       }
     }
     function fitAxialPose(amount){
@@ -1822,6 +1830,33 @@
       const target=axial[last].node;
       base.q.copy(pelvis.quaternion);
       base.pos.copy(base.origin).sub(fromDisc.set(0,3.3,0)).applyQuaternion(base.q).add(pelvis.position);
+      if(state.movement==='ribshift'||state.mode==='chain'&&['hike','ribs','scapula','chain'].includes(state.movement)){
+        // Reconstruct the lumbar curve from its disc centres. The rib cage
+        // translates with T12, so the ribs stay attached as the pelvis moves.
+        const upper=axial[5],span=upper.origin.y-base.origin.y;
+        const shift=fromDisc.copy(upper.origin).sub(base.origin).applyQuaternion(base.q).add(base.pos);
+        const tilt=upper.node.position.clone().sub(shift).applyQuaternion(workQ.copy(base.q).invert());
+        seatSurface(base);
+        for(let i=1;i<=5;i++){
+          const level=axial[i],t=i/5,bend=Math.sin(Math.PI*t)*1.55/span;
+          level.q.copy(base.q).slerp(torso.quaternion,t)
+            .multiply(stepQ.setFromAxisAngle(spineAxis,tilt.z*bend))
+            .multiply(stepQ.setFromAxisAngle(lateralAxis,-tilt.x*bend));
+          joinLevels(axial[i-1],level,i-1,1);
+          // The sagittal lookup excludes the extra clearance required by
+          // lateral bending between asymmetric articular facets.
+          workQ.copy(axial[i-1].q).invert().multiply(level.q);
+          const lateral=Math.hypot(workQ.y,workQ.z);
+          const gap=i===1?.004+.8*lateral:i===5?.001+1.2*lateral:0;
+          const hikeFacet=i===4&&state.movement==='hike'?Math.abs(amount):0;
+          level.pos.add(fromDisc.set(0,gap-.003*hikeFacet,-.005*hikeFacet).applyQuaternion(level.q));
+          if(i<5)seatSurface(level);
+        }
+        const residual=fromDisc.copy(upper.pos).sub(upper.node.position);
+        torso.position.add(residual);head.position.add(residual);
+        for(let i=5;i<axial.length;i++)axial[i].node.position.add(residual);
+        return;
+      }
       if(!articulated&&!trunkTransition){
         seatSurface(base);
         for(let i=1;i<5;i++){
@@ -1960,7 +1995,7 @@
       spineGuide.rotation.x=0;spineGuide.position.z=0;
       for(const s of spineGroups){s.node.position.set(0,s.y,s.z);s.node.rotation.set(0,0,0);}
       pressureMarks.forEach(p=>p.node.visible=false);floor.visible=false;floorRing.visible=false;floor.position.set(0,.08,0);
-      sternum.position.copy(sternumRest);
+      sternum.position.copy(sternumRest);sternum.quaternion.copy(sternumRestRotation);
       if(tensionIds.has(m)){poseTension(m,Math.max(0,a));return;}
       if(previewIds.has(m)){posePreview(a);return;}
       if(exerciseIds.has(m)){poseExercise(Math.max(0,a));return;}
@@ -2139,7 +2174,7 @@
       }else if(m==='chimp'){
         if(chain)frame(0,.11,0,3.62,4.28);
         else frame(0,1.69,.08,8.05,5.65);
-      }else if(m==='deadlift_types')frame(0,3.24,-.15,11.6,3.65);
+      }else if(m==='deadlift_types')frame(0,3.14,-.15,13.0,3.65);
       else if(tensionIds.has(m)){
         const horizontal=m==='tension_pushup'||m==='tension_cat';
         frame(0,horizontal?1.4:m==='tension_pogo'?3.5:3.15,m==='tension_swing'?.4:m==='tension_cat'?-.2:.2,
@@ -2149,7 +2184,7 @@
       else if(m==='pushup'||m==='bench')frame(0,m==='pushup'?1.4:1.8,m==='pushup'?.2:-.25,m==='bench'?9.0:8.4,m==='pushup'?8.05:7.35);
       else if(exerciseIds.has(m)){
         const y=m==='pullup'?4.68:m==='dips'?3.7:m==='press'?3.3:3.1;
-        const depth=m==='pullup'?15.5:m==='dips'?13.4:m==='press'?13.2:m==='row'?13.7:12.4;
+        const depth=m==='pullup'?16.55:m==='dips'?13.4:m==='press'?14.2:m==='row'?13.7:12.4;
         frame(0,y,m==='row'?1.50:.1,depth,m==='row'?5.8:m==='press'?5.4:4.7);
       }else if(m==='ribshift')frame(0,4.55,.06,5.6,2.15);
       else if(m==='ribs'||m==='scapula')frame(0,5.0,.10,4.2,m==='scapula'?2.85:2.1);
@@ -2189,7 +2224,7 @@
       update(next){
         if((next.movement&&next.movement!==state.movement)||(next.mode&&next.mode!==state.mode))closeHelmet();
         const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();if(!isDevelopment()){applyPose(0);rebuildGhost();}}applyPose();render();},
-      setView(name){closeHelmet();if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=isDevelopment()?(state.movement==='baby'?.90:-1.12):tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='baby'?.27:state.movement==='chimp'?.14:state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
+      setView(name){closeHelmet();if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=.04;}else{yaw=isDevelopment()?(state.movement==='baby'?1.22:-1.12):tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:state.movement==='squat'?.75:state.movement==='bench'?1.10:state.movement==='lunge'?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='baby'?.29:state.movement==='chimp'?.14:state.movement==='bench'?.42:state.movement==='lunge'?.12:.10;}render();},
       resetCamera(){closeHelmet();yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
         if(disposed)return;disposed=true;cancelAnimationFrame(helmetFrame);fitShoulderGirdle?.dispose();drag=null;ro.disconnect();

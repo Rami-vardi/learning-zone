@@ -18,7 +18,7 @@ function decode(T, key, side) {
     for(let i=0;i<positions.length;i+=3){
       const lateral=T.MathUtils.smoothstep(-positions[i+1],.48,.78);
       positions[i]+=side*.0045*lateral;
-      positions[i+1]+=.0055*lateral;
+      positions[i+1]+=.0055*lateral+.017*T.MathUtils.smoothstep(-positions[i+1],.86,1.0);
       positions[i+2]-=.0036*lateral;
     }
   }
@@ -224,9 +224,8 @@ window.azAttachUpperSkeleton = function(parts) {
   function setClaviclePivot(side,movement){
     // Register the medial end against the upper lateral manubrium. The
     // shorter rib cage needs a higher attachment in its scaled local frame.
-    if(movement==='deadlift_types')start.set(side*.118,.791+.029*shortTorsoFraction(),.197);
-    else if(['pullup','scapula','press','bench','dips','tension_pogo','tension_deadlift','cgoblet','cheels','csafety'].includes(movement))start.set(side*.118,.791,.197);
-    else start.set(side*.0708,.7408,.11408);
+    const rise=movement==='deadlift_types'?.029*shortTorsoFraction():0;
+    start.set(side*.118,.791+rise,.197);
     sternum.updateMatrix();
     start.applyMatrix4(sternumRestInverse).applyMatrix4(sternum.matrix);
   }
@@ -497,7 +496,7 @@ window.azAttachUpperSkeleton = function(parts) {
       }
       if(!mobile&&scapula.visible&&torso.visible){
         // Allow the blade to wrap around the lateral ribs at full protraction.
-        const clearance=movement==='scapula'?.075:exerciseArms.visible?.044:.058;
+        const clearance=movement==='scapula'?.075:['rdl','lunge','squat','row','dips','tension_swing','tension_cat'].includes(movement)?.095:exerciseArms.visible?.044:.073;
         seatBlade(scapula,headCentre,acromion,chest,bladePoints,clearance,movement==='tension_cat'?2.4:0);
       }
       if (!exerciseArms.visible) arm.node.position.copy(joint.copy(headCentre).applyMatrix4(scapula.matrix));
@@ -506,9 +505,10 @@ window.azAttachUpperSkeleton = function(parts) {
       arm.clavicle.scale.y = clavicleLength;
       arm.clavicle.quaternion.setFromUnitVectors(down, end.normalize());
       if(movement==='deadlift_types')arm.clavicle.quaternion.multiply(rotation.setFromAxisAngle(axisY,arm.side*.40*shortTorsoFraction()));
-      if(movement==='bench'){
+      if(movement==='bench'||movement==='squat'){
         // Axial rotation clears the upper ribs while preserving both endpoints.
-        arm.clavicle.quaternion.multiply(rotation.setFromAxisAngle(axisY,arm.side*.30));
+        const roll=movement==='bench'?.30:.12;
+        arm.clavicle.quaternion.multiply(rotation.setFromAxisAngle(axisY,arm.side*roll));
       }
       if(exerciseArms.visible&&(movement==='press'||movement==='pullup')){
         // Elevation includes clavicular posterior rotation about its long

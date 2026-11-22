@@ -38,7 +38,7 @@
     const mat = color => new T.MeshStandardMaterial({color,roughness:.82});
     const skin=mat(0xffc5a8), suit=mat(0x303239), lapel=mat(0x40424b);
     const white=mat(0xfffaf1), tie=mat(0x15171e), shoe=mat(0x29252a);
-    const brow=mat(0xae805d);
+    const brow=mat(0xc79a77);
     suit.roughness=.80;lapel.roughness=.53;tie.roughness=.48;shoe.roughness=.35;
     const ivory=mat(0xd9cebb), blue=mat(0x608caf), rust=mat(0xb07852);
     const pad=mat(0xdce6eb), railMat=mat(0x73949d);
@@ -240,7 +240,7 @@
       const rim=eyeDepth(f,x,y)-.007;
       return lerp(skinZ,rim,(1-smooth(r,.84,1.60))*(1-smooth(Math.abs(u),.98,1.45)));
     }
-    const baseSkin=new T.Color(0xffcbb3),flush=new T.Color(0xe87e7f),warmLip=new T.Color(0xd8887f);
+    const baseSkin=new T.Color(0xffcbb3),flush=new T.Color(0xea9a8b),warmLip=new T.Color(0xd8887f);
     const skinHighlight=new T.Color(0xffdfca),skinShadow=new T.Color(0xba756c);
     const tint=new T.Color();
     function skinColor(x,y,front){
@@ -346,7 +346,7 @@
         return [x,y,eyeZ(x,y)];
       });
       const gx=cx-side*.008-.013,gy=cy+.017,rx=.079,ry=.083;
-      const darkRim=new T.Color(0x283c41),jade=new T.Color(0x608b83),amber=new T.Color(0x9eab83);
+      const darkRim=new T.Color(0x283c41),jade=new T.Color(0x638e9a),amber=new T.Color(0xb2b394);
       const black=new T.Color(0x101b23),eyeColors=[];
       const iris=patch(head,irisPaint,72,18,(t,v)=>{
         const a=TAU*t,rad=v,x=gx+rx*rad*Math.cos(a),[lo,hi]=eyeLimits(x);
@@ -395,7 +395,7 @@
       paintLid(lowerLid,cx,cy);
       faceStrip(brow,t=>{
         const x=side*lerp(.049,.294,t);return [x,browLine(t,raised)];
-      },raised?.006:.008,.0025,side<0);
+      },raised?.009:.012,.0035,side<0);
       // Hollow the outer ear and build its helix in one continuous surface.
       const earShell=oval(head,skin,side*.390,.065,-.015,.058,.076,.044);
       earShell.rotation.z=-side*.17;
@@ -412,11 +412,12 @@
     }
     faceStrip(lipSeam,t=>{const x=lerp(-.067,.088,t);return [x,mouthLine(x)];},.0031,.001);
     faceStrip(crease,t=>[.083+.018*t,-.081+.009*t],.0022,.0005);
-    const blond=new T.Color(0xc99967),lightBlond=new T.Color(0xe8c58b);
+    const blond=new T.Color(0xd9ad73),lightBlond=new T.Color(0xf6d79b),hairRoot=new T.Color(0xbf925e);
     function hairline(a){
       a=Math.atan2(Math.sin(a),Math.cos(a));
-      return .306+.280*Math.cos(a)+.025*Math.sin(a)
-        -.125*bell(a+.17,.34)-.103*bell(Math.abs(a)-1.42,.22)+.003*Math.sin(31*a+.6*Math.sin(12*a));
+      const sweep=.118*bell(a+.22,.38)+.047*bell(a+.42,.13);
+      return .327+.257*Math.cos(a)+.024*Math.sin(a)-sweep
+        -.075*bell(Math.abs(a)-1.41,.26)+.021*Math.sin(3*a+.6)+.006*Math.sin(15*a);
     }
     function scalpPoint(a,t,lift=0){
       const edge=Math.asin((hairline(a)-faceMid)/faceHeight);
@@ -424,35 +425,43 @@
       const offset=lift*Math.cos(phi);
       return [(s.width+offset)*Math.sin(a),y+lift*Math.sin(phi),s.center+(s.depth+offset)*Math.cos(a)];
     }
-    const scalpMat=mat(0xffffff);scalpMat.vertexColors=true;complexSkin(scalpMat);scalpMat.roughness=.82;
-    const scalpColors=[],cols=144,rows=27;
-    const scalp=patch(head,scalpMat,cols,rows,(u,v)=>{
-      const a=TAU*u,part=Math.atan2(Math.sin(a+.19-.98*v),Math.cos(a+.19-.98*v));
-      const root=smooth(v+.020*Math.sin(33*a),-.018,.105);
-      const grain=.5+.5*Math.sin(61*a-17*v+2*Math.sin(a*4-3*v));
-      const color=blond.clone().lerp(lightBlond,.12+.29*grain+.38*bell(part,.060+.09*v));
-      scalpColors.push(...tint.copy(baseSkin).lerp(color,root*(.70+.25*smooth(v,.05,.60))).toArray());
-      return scalpPoint(a,v,.0004+.0018*smooth(v,0,.11));
+    const scalpMat=mat(0xffffff);scalpMat.vertexColors=true;complexSkin(scalpMat);scalpMat.roughness=.74;
+    const scalpColors=[];
+    const scalp=patch(head,scalpMat,144,32,(u,v)=>{
+      const a=TAU*u,front=(1+Math.cos(a))/2;
+      const part=Math.atan2(Math.sin(a-.32-.75*v),Math.cos(a-.32-.75*v));
+      const direction=a-.55*v+.14*Math.sin(2*a-4*v);
+      const groups=.5+.5*Math.cos(14*direction+1.5*Math.sin(3*direction));
+      const fade=smooth(v+.018*Math.sin(15*a),0,lerp(.30,.08,front));
+      const color=blond.clone().lerp(lightBlond,.10+.39*groups+.17*v).lerp(baseSkin,.52*bell(part,.07+.09*v));
+      scalpColors.push(...tint.copy(baseSkin).lerp(color,fade*(.58+.38*front)).toArray());
+      return scalpPoint(a,v,.0006+.0017*fade);
     });
     scalp.geometry.setAttribute('color',new T.Float32BufferAttribute(scalpColors,3));
-    // Sweep fine locks away from the part, blending both ends into the scalp.
-    // All the wisps share one draw call in the moving lesson.
-    const fibers=[],fiberColors=[],indices=[],strands=255,steps=13;
+    // Comb tapered locks toward the side part. Wider front locks have a
+    // rounded cross section; near the nape their fine ends fade into skin.
+    const fibers=[],fiberColors=[],indices=[],strands=124,steps=16;
     for(let i=0;i<strands;i++){
-      const seed=.5+.5*Math.sin(i*77.37),a=TAU*(i+.3*seed)/strands;
-      const signed=Math.atan2(Math.sin(a+.17),Math.cos(a+.17));
-      const turn=(signed<0?-.52:.76)*(1-.38*Math.cos(a));
-      const length=.50+.39*seed,base=2*(steps+1)*i;
+      const seed=.5+.5*Math.sin(i*77.37),a=TAU*(i+.39*seed)/strands;
+      const front=(1+Math.cos(a))/2;
+      const tip=.004+.21*(1-front)*seed;
+      const length=.48+.34*seed+.12*front;
+      const turn=.30+.71*Math.sin(.48-a)+.14*Math.cos(2*a);
+      const base=fibers.length/3;
       for(let j=0;j<=steps;j++){
-        const t=j/steps,v=.003+length*t,bend=turn*Math.sin(t*Math.PI*.70);
-        const angle=a+bend+.035*Math.sin(5*t+a)*t;
-        const width=.0038*(.35+seed)*Math.sin(Math.PI*t)**.55;
-        const col=lightBlond.clone().lerp(blond,(.31+.37*seed)*Math.sin(Math.PI*t));
-        col.lerp(baseSkin,1-smooth(v,.018,.16));
-        for(const side of [-1,1]){
-          fibers.push(...scalpPoint(angle+side*width,v,.0031));fiberColors.push(...col.toArray());
+        const t=j/steps,v=tip+(length-tip)*t,arch=Math.sin(Math.PI*t);
+        const angle=a+turn*Math.sin(t*Math.PI*.65)+.06*Math.sin(4*t+2*a)*t;
+        const width=(.009+.012*seed+.010*front)*arch**.72;
+        for(let k=0;k<3;k++){
+          const mid=k===1,relief=.0026+arch*(.001+.004*front*front)*(mid?1:.10);
+          fibers.push(...scalpPoint(angle+(k-1)*width,v,relief));
+          const color=blond.clone().lerp(mid?lightBlond:hairRoot,mid?.46+.34*seed:.18+.16*seed);
+          color.lerp(baseSkin,(1-smooth(v,0,.30))*(.64+.35*(1-front)));
+          fiberColors.push(...color.toArray());
         }
-        if(j<steps){const k=base+2*j;indices.push(k,k+1,k+2,k+1,k+3,k+2);}
+        if(j<steps)for(let k=0;k<2;k++){
+          const n=base+3*j+k;indices.push(n,n+1,n+3,n+1,n+4,n+3);
+        }
       }
     }
     const hairGeo=new T.BufferGeometry();hairGeo.setAttribute('position',new T.Float32BufferAttribute(fibers,3));
@@ -756,6 +765,7 @@
       const pelvisNode=pelvis(figure,ape),close=pelvis(root,ape);
       const basePad=floor(root,ape?.69:.65,ape?1.76:1.22);
       if(ape)basePad.position.z=.18;
+      const platformTop=new T.Box3().setFromObject(basePad,true).max.y;
       const bone=(x,y,z,rx,ry,rz)=>oval(trunk,ivory,x,y,z,rx,ry,rz);
       const chest=ape?1.31:1.25;
       for(let i=0;i<19;i++){
@@ -827,7 +837,9 @@
             rod(end,ivory,vec(x*.64,-.025,.07),vec(x*1.20+(ape&&w===1?-s*.087:0),-.047,.235+.072*w),.018);
           }
         }
-        limbs.push({s,arm,members,end});
+        // Use the lowest modeled sole or knuckle as the stance landmark.
+        const stanceY=platformTop-new T.Box3().setFromObject(end,true).min.y;
+        limbs.push({s,arm,members,end,stanceY});
       }
       return {ape,root,figure,trunk,neck,pelvisNode,close,basePad,limbs,chest};
     }
@@ -839,7 +851,7 @@
         close.position.set(0,0,0);close.scale.setScalar(1);close.rotation.set(0,(t-.0)*Math.PI*.58,0);return;
       }
       figure.position.z=(t-.5)*(ape?.89:.88);
-      const wave=Math.sin(TAU*t),lean=ape?.94:.065, base=vec(.038*wave,(ape?1.04:1.62)+.027*Math.cos(2*TAU*t),ape?-.38:-.08);
+      const wave=Math.sin(TAU*t),lean=ape?.94:.065, base=vec(.038*wave,(ape?.99:1.62)+.027*Math.cos(2*TAU*t),ape?-.38:-.08);
       const rotation=new T.Euler(lean,0,0);
       trunk.position.copy(base);trunk.rotation.copy(rotation);
       const onTrunk=(x,y,z)=>vec(x,y,z).applyEuler(rotation).add(base);
@@ -854,9 +866,9 @@
           target=vec(s*.43,start.y-1.25,start.z-.34*Math.cos((t+(s>0?0:.5))*TAU));
           l1=.69;l2=.63;bend=vec(s*.08,0,-1);
         }else if(arm){
-          target=vec(s*.42,.12+lift,.91+step);l1=.88;l2=.85;bend=vec(s*.18,.1,-1);
+          target=vec(s*.42,l.stanceY+lift,.91+step);l1=.88;l2=.85;bend=vec(s*.18,.1,-1);
         }else{
-          target=vec(s*(ape?.25:.21),.09+lift,(ape?-.41:-.07)+step);
+          target=vec(s*(ape?.25:.21),l.stanceY+lift,(ape?-.41:-.07)+step);
           l1=ape?.59:.78;l2=ape?.54:.73;bend=vec(s*.08,.12,1);
         }
         const [mid,end]=solve(start,target,l1,l2,bend);

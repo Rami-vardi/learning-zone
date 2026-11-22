@@ -81,3 +81,138 @@
 #lz-anatomy-zone .azc-key-mass{background:#ffc25c}
 #lz-anatomy-zone .azc-key-projection{background:#fff4d8}
 #lz-anatomy-zone .azc-balance-legend .azc-key-base{width:17px;height:10px;border:1.5px solid #168783;border-radius:3px;background:#c5e4e0}
+
+/* Size the playback rail against the lesson's usable width, including when
+   the app navigation or larger text reduces the space for the model. */
+#lz-anatomy-zone {
+  container: anatomy / inline-size;
+  --azc-rail: clamp(230px, 22cqi, 288px);
+}
+#lz-anatomy-zone:not(.azc-tension-active) > .azc-explorer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--azc-rail);
+  grid-template-areas: "toolbar toolbar" "stage playback" "legend playback";
+}
+#lz-anatomy-zone .azc-explorer > .azc-toolbar { grid-area: toolbar; padding-block: 12px; row-gap: 8px; }
+#lz-anatomy-zone .azc-stage-area { grid-area: stage; min-width: 0; }
+#lz-anatomy-zone .azc-balance-legend { grid-area: legend; }
+#lz-anatomy-zone #azc-stage { height: clamp(340px, 56dvh, 510px); }
+#lz-anatomy-zone.azc-build-active #azc-stage {
+  height: clamp(245px, min(56dvh, calc(100dvh - 355px)), 510px);
+}
+#lz-anatomy-zone .azc-com-stage { height: clamp(285px, 45dvh, 400px); }
+#lz-anatomy-zone .azc-explorer > .azc-bottom,
+#lz-anatomy-tension .tf-model > .tf-bottom {
+  grid-area: playback;
+  align-self: start;
+  min-width: 0;
+  padding: 17px 18px;
+  border-top: 0;
+  position: sticky;
+  top: 8px;
+  text-align: start;
+}
+#lz-anatomy-zone .azc-slider-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 2px 8px;
+  margin: 0;
+  line-height: 1.3;
+}
+#lz-anatomy-zone #azc-range { grid-column: 1 / -1; grid-row: 1; width: 100%; margin: 0; }
+#lz-anatomy-zone .azc-slider-row span { grid-row: 2; max-width: none; min-width: 0; }
+#lz-anatomy-zone #azc-positive { grid-column: 2; }
+#lz-anatomy-zone .azc-bottom-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+#lz-anatomy-zone .azc-bottom-actions button { justify-content: center; padding: 6px 12px; }
+#lz-anatomy-zone .azc-bottom-actions .azc-play { min-width: 78px; }
+#lz-anatomy-zone #azc-explanation,
+#lz-anatomy-tension .tf-caption { min-height: 0; margin: 14px 0 0; }
+#lz-anatomy-zone #azc-mode-hint { display: block; justify-self: stretch; margin: 8px 0 0; text-align: start; }
+#lz-anatomy-zone.azc-build-active .azc-toolbar {
+  /* Center the proportion presets on the same axis as the model title. */
+  grid-template-columns: minmax(0, 1fr) var(--azc-rail);
+  column-gap: 0;
+  padding-inline: 0;
+}
+#lz-anatomy-zone.azc-build-active .azc-pickers { padding-inline: 20px; }
+#lz-anatomy-zone.azc-build-active .azc-body-types { grid-column: 1; }
+#lz-anatomy-zone.azc-build-active .azc-options { grid-column: 2; margin-inline-end: 20px; }
+
+#lz-anatomy-tension .tf-model {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--azc-rail);
+  grid-template-areas: "title playback" "stage playback" "legend playback";
+  overflow: clip;
+}
+#lz-anatomy-tension .tf-head { margin-bottom: 8px; }
+#lz-anatomy-tension .tf-title { grid-area: title; min-width: 0; padding-block: 9px 6px; }
+#lz-anatomy-tension .tf-stage { grid-area: stage; min-width: 0; height: clamp(240px, calc(100dvh - 470px), 460px); }
+#lz-anatomy-tension .tf-legend { grid-area: legend; }
+#lz-anatomy-tension .tf-motion { flex-direction: column; align-items: flex-start; gap: 8px; }
+#lz-anatomy-tension .tf-motion label { width: 100%; }
+
+@container anatomy (max-width: 720px) {
+  #lz-anatomy-zone:not(.azc-tension-active) > .azc-explorer {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "toolbar" "playback" "stage" "legend";
+  }
+  #lz-anatomy-tension .tf-model {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "title" "playback" "stage" "legend";
+  }
+  #lz-anatomy-zone .azc-explorer > .azc-bottom,
+  #lz-anatomy-tension .tf-model > .tf-bottom {
+    position: static;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--azc-line);
+  }
+  #lz-anatomy-zone.azc-build-active .azc-toolbar { grid-template-columns: minmax(0, 1fr); }
+  #lz-anatomy-zone.azc-build-active .azc-body-types { width: auto; max-width: 100%; }
+  #lz-anatomy-zone.azc-build-active .azc-options { grid-column: 1; }
+  #lz-anatomy-tension .tf-motion { flex-direction: row; align-items: center; }
+  #lz-anatomy-tension .tf-motion label { min-width: 0; }
+}
+/* Preserve the width of all three squat views on smaller desktop windows. */
+@container anatomy (min-width: 721px) and (max-width: 950px) {
+  #lz-anatomy-zone:not(.azc-tension-active) > .azc-explorer:has(.azc-stage-area.is-com) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "toolbar" "playback" "stage" "legend";
+  }
+  #lz-anatomy-zone .azc-com-stage { height: clamp(225px, calc(100dvh - 475px), 385px); }
+  #lz-anatomy-zone .azc-explorer:has(.is-com) > .azc-bottom {
+    position: static;
+    display: grid;
+  }
+}
+
+@container anatomy (min-width: 460px) and (max-width: 720px) {
+  #lz-anatomy-zone .azc-explorer > .azc-bottom,
+  #lz-anatomy-tension .tf-model > .tf-bottom { display: grid; }
+}
+@container anatomy (min-width: 460px) and (max-width: 950px) {
+  /* When the controls sit above a model, keep the slider compact on the right. */
+  #lz-anatomy-zone .azc-explorer > .azc-bottom,
+  #lz-anatomy-tension .tf-model > .tf-bottom {
+    grid-template-columns: minmax(0, 1fr) minmax(190px, 35%);
+    column-gap: 24px;
+    align-content: start;
+  }
+  #lz-anatomy-zone .azc-slider-row,
+  #lz-anatomy-tension .tf-motion { grid-area: 1 / 2; }
+  #lz-anatomy-zone .azc-bottom-actions { grid-area: 2 / 2; }
+  #lz-anatomy-zone #azc-explanation,
+  #lz-anatomy-tension .tf-caption { grid-area: 1 / 1; align-self: start; }
+  #lz-anatomy-zone #azc-mode-hint { grid-area: 2 / 1; }
+}
+@container anatomy (min-width: 460px) and (max-width: 720px) {
+  #lz-anatomy-zone #azc-explanation,
+  #lz-anatomy-tension .tf-caption { margin-top: 0; }
+  #lz-anatomy-tension .tf-motion { flex-direction: column; align-items: stretch; }
+}

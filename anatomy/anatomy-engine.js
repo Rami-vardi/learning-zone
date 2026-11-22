@@ -2135,7 +2135,7 @@
         distance=Math.max(verticalDistance,widthDistance);
       }
       if(m==='baby'){
-        frame(0,.8,0,4.95,3.2);
+        frame(0,.8,0,5.17,3.2);
       }else if(m==='chimp'){
         if(chain)frame(0,.11,0,3.62,4.28);
         else frame(0,1.69,.08,8.05,5.65);

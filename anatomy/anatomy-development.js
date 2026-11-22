@@ -169,21 +169,30 @@
       const t=T.MathUtils.clamp((y-faceMid)/faceHeight,-1,1);
       const lower=1-smooth(t,-.70,.32);
       const circle=Math.sqrt(Math.max(0,1-Math.abs(t)**(t<0?2.85:2.27)));
-      return {width:circle*(.439+.024*smooth(t,-.48,.52)+.010*bell(t+.55,.31)),
+      return {width:circle*(.439+.024*smooth(t,-.48,.52)+.039*bell(t+.59,.235)),
         depth:circle*(.370-.019*lower),center:-.014+.036*lower+.118*smooth(-t,.36,1)};
     }
     function browLine(t,raised){
       return (raised?.133:.121)+.014*t+(raised?.053:.014)*Math.sin(Math.PI*t)
         +(raised?.012:0)*(1-t)**2;
     }
+    const mouthLeft=-.103,mouthRight=.129;
     function mouthLine(x){
-      const t=T.MathUtils.clamp((x+.067)/.155,0,1);
-      return -.101-.011*Math.sin(Math.PI*t)+.021*t*t;
+      const t=T.MathUtils.clamp((x-mouthLeft)/(mouthRight-mouthLeft),0,1);
+      return -.095-.016*Math.sin(Math.PI*t)+.034*t**2.7;
     }
     function facialRelief(x,y){
       const a=Math.abs(x),browT=T.MathUtils.clamp((a-.050)/.238,0,1);
-      const smile=mouthLine(x),lipWidth=bell(x-.002,.083);
-      return .031*bell(a-.234,.168)*bell(y+.043,.107)
+      const smile=mouthLine(x),lipWidth=bell(x-.009,.111);
+      const lifted=smooth(x,-.04,.145);
+      const cheekY=-.047+.033*lifted+.053*(a-.22);
+      const dimple=bell(x-mouthRight-.008,.025)*bell(y-mouthLine(mouthRight)-.003,.024);
+      const lipT=T.MathUtils.clamp((x-mouthLeft)/(mouthRight-mouthLeft),0,1);
+      const lipArc=Math.sin(Math.PI*lipT);
+      const lipPad=lipArc**.75;
+      const lipGap=y-smile;
+      return (.060+.030*lifted)*bell(a-.238,.143)*bell(y-cheekY,.087)
+        +.016*bell(a-.295,.107)*bell(y+.087,.080)-.024*dimple
         -.018*bell(a-.155,.128)*bell(y-.065,.085)
         +.011*bell(a-.146,.119)*bell(y-browLine(browT,x>0)+.004,.064)
         +.018*bell(x,.045)*bell(y-.110,.085)
@@ -192,9 +201,10 @@
         +.027*bell(a-.044,.030)*bell(y+.025,.029)
         -.010*bell(x,.043)*bell(y+.057,.016)
         +.018*bell(x,.127)*bell(y+.090,.054)
-        +.010*bell(a-.019,.013)*bell(y+.080,.022)
-        +lipWidth*(.018*bell(y-smile-.009,.019)+.032*bell(y-smile+.016,.023))
-        -.011*bell(a-.099,.025)*bell(y+.099,.026)
+        +.006*bell(a-.019,.016)*bell(y+.080,.022)
+        +lipPad*lipWidth*(.025*bell(lipGap-.008,.015)+.034*bell(lipGap+.014,.019))
+        -.012*lipPad*bell(lipGap,.005)
+        -.008*bell(x-mouthLeft,.026)*bell(y-mouthLine(mouthLeft),.024)
         +.025*bell(x,.107)*bell(y+.168,.044);
     }
     const eyeWidth=.134;
@@ -208,7 +218,7 @@
     // jaw through the chin, lip rolls, philtrum and tip of the nose.
     const profile=[
       [-.220,.140],[-.212,.206],[-.200,.270],[-.182,.324],[-.165,.352],[-.151,.357],
-      [-.139,.349],[-.128,.359],[-.116,.382],[-.105,.373],[-.096,.380],[-.086,.377],
+      [-.139,.349],[-.128,.358],[-.116,.374],[-.105,.367],[-.096,.375],[-.086,.374],
       [-.073,.364],[-.059,.362],[-.047,.389],[-.038,.406],[-.030,.415],[-.022,.418],[-.014,.417],[-.006,.414],
       [.010,.406],[.034,.388],[.061,.373],[.094,.368],[.134,.375]
     ];
@@ -246,13 +256,13 @@
     function skinColor(x,y,front){
       const a=Math.abs(x),cheek=bell(a-.226,.120)*bell(y+.042,.074);
       const nose=bell(x,.068)*bell(y+.024,.045),lid=bell(a-.17,.13)*bell(y-.113,.039);
-      const dy=y-mouthLine(x),mouth=bell(x,.078)*bell(dy,.023);
+      const dy=y-mouthLine(x),mouth=bell(x-.008,.099)*bell(dy,.020);
       const tip=bell(x+.009,.029)*bell(y+.006,.018),noseShadow=bell(x,.056)*bell(y+.047,.013);
       const chin=bell(x,.090)*bell(y+.173,.039),lipLight=bell(x-.002,.051)*bell(dy+.014,.008);
-      const crease=bell(a-.088,.022)*bell(y+.085,.015)+.44*bell(x,.052)*bell(dy+.038,.011);
+      const crease=bell(x-mouthRight-.004,.022)*bell(y-mouthLine(mouthRight)-.006,.018)+.28*bell(x,.064)*bell(dy+.030,.011);
       const nostril=bell(a-.035,.013)*bell(y+.045,.006);
       return tint.copy(baseSkin).lerp(flush,front*(.82*cheek+.28*nose+.18*lid))
-        .lerp(warmLip,front*.76*mouth).lerp(skinShadow,front*(.50*noseShadow+.25*crease+.64*nostril))
+        .lerp(warmLip,front*.96*mouth).lerp(skinShadow,front*(.50*noseShadow+.25*crease+.64*nostril))
         .lerp(skinHighlight,front*(.45*tip+.26*chin+.34*lipLight));
 
     }
@@ -317,7 +327,7 @@
       },reverse);
     }
     const sclera=mat(0xfffcf6),irisPaint=mat(0xffffff),lash=mat(0x603e34);
-    const lidSkin=mat(0xffffff),crease=mat(0xa97165),lipSeam=mat(0x925b51);
+    const lidSkin=mat(0xffffff),crease=mat(0xa97165),lipSeam=mat(0x925f56);
     lidSkin.vertexColors=true;
     complexSkin(lidSkin);sclera.roughness=.29;irisPaint.vertexColors=true;irisPaint.roughness=.32;
     const glint=new T.MeshBasicMaterial({color:0xfffcf2});
@@ -331,7 +341,7 @@
       }
       part.geometry.setAttribute('color',new T.Float32BufferAttribute(col,3));
     }
-    const eyes=[];
+    const eyes=[],earSurfaces=[];
     for(const side of [-1,1]){
       const raised=side===1,f=eyeFrames[Number(raised)],{cx,cy}=f,w=eyeWidth;
       function eyeLimits(x){
@@ -396,22 +406,29 @@
       faceStrip(brow,t=>{
         const x=side*lerp(.049,.294,t);return [x,browLine(t,raised)];
       },raised?.009:.012,.0035,side<0);
-      // Hollow the outer ear and build its helix in one continuous surface.
-      const earShell=oval(head,skin,side*.390,.065,-.015,.058,.076,.044);
-      earShell.rotation.z=-side*.17;
-      const earTint=[],earMat=mat(0xffffff);earMat.vertexColors=true;complexSkin(earMat);
-      const pinna=patch(head,earMat,40,14,(t,v)=>{
-        const a=TAU*t,h=Math.sin(a),u=Math.cos(a),r=v;
-        const fold=.016*bell(r-.77,.18)+.008*bell(r-.44,.15)*Math.max(0,h);
-        const col=tint.copy(baseSkin).lerp(flush,.42*(1-r)**.6);
-        earTint.push(...col.toArray());
-        return [side*(.439+.005*(1-r*r)+fold-.047*r**4),.065+.067*h*r,-.012+.046*u*r+.009*h*r];
+      // The returning back surface seats the ear against the side of the skull.
+      // Its opening faces slightly forward so the rim reads in a three quarter view.
+      const earColors=[],earMat=mat(0xffffff);earMat.vertexColors=true;complexSkin(earMat);
+      const pinna=patch(head,earMat,56,36,(t,v)=>{
+        const angle=TAU*t,latitude=(v-.5)*Math.PI,r=Math.cos(latitude);
+        const u=Math.cos(angle)*r,h=Math.sin(angle)*r,front=Math.max(0,Math.sin(latitude));
+        const overhang=.069*u*(1+.16*h)+.012*h;
+        const bowl=bell(u+.07,.48)*bell(h-.05,.49);
+        const rim=bell(r-.79,.19)*(.026+.009*h);
+        const ridgeU=.22+.14*bell(h-.05,.38)-.30*smooth(h,.10,.65);
+        const innerRidge=.021*bell(u-ridgeU,.19)*bell(h-.11,.64);
+        const tragus=.020*bell(u+.52,.19)*bell(h+.10,.26);
+        const relief=.027*Math.sin(latitude)+front*(rim+innerRidge+tragus-.027*bowl);
+        const col=tint.copy(baseSkin).lerp(flush,.09+.58*front*bowl);
+        earColors.push(...col.toArray());
+        return [side*(.442+.50*overhang+.866*relief),.012+.091*h,
+          -.035-.866*overhang+.50*relief-.010*h];
       },side<0);
-      pinna.geometry.setAttribute('color',new T.Float32BufferAttribute(earTint,3));
-
+      pinna.geometry.setAttribute('color',new T.Float32BufferAttribute(earColors,3));
+      earSurfaces.push(pinna);
     }
-    faceStrip(lipSeam,t=>{const x=lerp(-.067,.088,t);return [x,mouthLine(x)];},.0031,.001);
-    faceStrip(crease,t=>[.083+.018*t,-.081+.009*t],.0022,.0005);
+    faceStrip(lipSeam,t=>{const x=lerp(mouthLeft,mouthRight,t);return [x,mouthLine(x)];},.0033,.0005);
+    faceStrip(crease,t=>[mouthRight-.004+.019*t,mouthLine(mouthRight)-.001+.015*t-.003*t*t],.0020,.0005);
     const blond=new T.Color(0xd9ad73),lightBlond=new T.Color(0xf6d79b),hairRoot=new T.Color(0xbf925e);
     function hairline(a){
       a=Math.atan2(Math.sin(a),Math.cos(a));
@@ -608,7 +625,7 @@
       probes.push({part,points});
     }
     sampleSurface(faceMesh,5);
-    for(const part of head.children)if(part.geometry===sphere)sampleSurface(part,5);
+    for(const ear of earSurfaces)sampleSurface(ear,7);
     sampleSurface(jacket,2);sampleSurface(seat,2);
     for(const limb of babyLimbs){
       for(const part of [limb.upper,limb.lower,limb.joint,limb.end])sampleSurface(part,3);

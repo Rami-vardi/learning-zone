@@ -250,6 +250,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     balanceLegend.hidden=true;
     pause();q('#azc-options').open=false;
     if(tensionActive)return;
+    root.classList.remove('azc-build-active');
     viewer?.dispose();viewer=null;comparisonActive=false;disposeComparison();tensionActive=true;root.classList.add('azc-tension-active');q('#azc-tension-pane').hidden=false;q('#azc-body-movement').value='';q('#azc-exercise').value='tension';q('#azc-body-field').classList.remove('is-active');q('#azc-exercise-field').classList.add('is-active');
     root.anatomyExerciseState={...state,playing:false,section:'tension'};
     try{if(!window.LZAnatomyTension?.mount)throw Error('Tension & DOF could not load. Choose another movement and reopen it to retry.');tension=window.LZAnatomyTension.mount(q('#azc-tension-pane'));}catch(error){const notice=document.createElement('p');notice.setAttribute('role','alert');notice.textContent=error.message;q('#azc-tension-pane').replaceChildren(notice);}
@@ -286,6 +287,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     if(squatTypes){sourceLink.textContent='Ankle mobility, segment ratios and trunk lean in the back squat';sourceLink.href='https://pubmed.ncbi.nlm.nih.gov/28301442/';}
     if(special){sourceLink.textContent=special.link[0];sourceLink.href=special.link[1];}
     const activeBuild=selectors.find(s=>s.movement===state.movement);
+    root.classList.toggle('azc-build-active',Boolean(activeBuild));
     for(const selector of selectors){
       selector.group.hidden=selector!==activeBuild;
       if(!selector.group.hidden)for(const button of selector.group.children)

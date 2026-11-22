@@ -82,7 +82,15 @@ window.azAttachThorax = function(three, ribs, sternum){
       samples++;
     }
     if (samples) pivot.multiplyScalar(1 / samples);
-    ribJoints.push({group, origin:group.position.clone(), pivot, level, side:i % 2 === 0 ? -1 : 1});
+    // Keep the upper ribs aimed toward the sternum. For the longer ribs,
+    // retain the posterolateral contour that supports the scapula.
+    let front=0,furthest=-Infinity;
+    for(let j=0;j<end;j++){
+      const span=level<=3?points.getZ(j):Math.abs(points.getX(j))-.7*points.getZ(j);
+      if(span>furthest){furthest=span;front=j;}
+    }
+    const tip=new three.Vector3().fromBufferAttribute(points,front);
+    ribJoints.push({group, origin:group.position.clone(), pivot, tip, level, side:i % 2 === 0 ? -1 : 1});
   });
   fit(sternum, sternum, 'sternum', 'BodyParts3D sternum');
   // The atlas contains the seven direct sternal cartilages. Complete the
@@ -189,6 +197,17 @@ window.azAttachThorax = function(three, ribs, sternum){
       group.position.copy(movedPivot).sub(pivotAfter.copy(pivot).applyQuaternion(group.quaternion));
     }
   }
+  const oldAxis=new three.Vector3(),newAxis=new three.Vector3(),swing=new three.Quaternion();
+  fitCostalCartilage.seatRib=(index,frame,offset)=>{
+    const {group,pivot,tip}=ribJoints[index];
+    group.updateMatrix();
+    goal.copy(pivot).add(offset).applyMatrix4(frame);
+    oldAxis.subVectors(tip,pivot).applyQuaternion(group.quaternion).normalize();
+    newAxis.copy(tip).applyMatrix4(group.matrix).sub(goal).normalize();
+    swing.setFromUnitVectors(oldAxis,newAxis);
+    group.quaternion.premultiply(swing);
+    group.position.copy(goal).sub(point.copy(pivot).applyQuaternion(group.quaternion));
+  };
   fitCostalCartilage.moveRibs=amount=>rotateRibs(amount,true);
   fitCostalCartilage.expandPosedRibs=amount=>rotateRibs(amount,false);
   return fitCostalCartilage;

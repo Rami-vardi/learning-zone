@@ -178,7 +178,7 @@ window.azAttachUpperSkeleton = function(parts) {
   // Fit a scapula whose socket can move with the upper limb. Pitch and yaw
   // occur about the acromion; the outer end of the clavicle can also travel
   // on a sphere about the sternum. Upward rotation comes from the arm pose.
-  function seatMobileSocket(frame,acromion,chest,markers){
+  function seatMobileSocket(frame,acromion,chest,markers,clearance){
     updateChest(chest);frame.updateMatrix();
     const matrix=Array.from({length:4},()=>new Float64Array(5)),jac=new Float64Array(4),total=new Float64Array(4);
     const penalty=[.52,.52,1.0,2.1],delta=new Float64Array(4);
@@ -197,7 +197,7 @@ window.azAttachUpperSkeleton = function(parts) {
         }
         gap/=sum;surfaceNormal.divideScalar(sum);armLever.subVectors(probe,before);moment.crossVectors(armLever,surfaceNormal);
         jac[0]=moment.x;jac[1]=moment.y;jac[2]=cx.dot(surfaceNormal);jac[3]=cz.dot(surfaceNormal);
-        const weight=1+30*(1-T.MathUtils.smoothstep(gap,-.005,.035)),error=.041-gap;
+        const weight=1+30*(1-T.MathUtils.smoothstep(gap,-.005,.035)),error=clearance-gap;
         for(let j=0;j<4;j++){
           for(let k=0;k<4;k++)matrix[j][k]+=weight*jac[j]*jac[k];
           matrix[j][4]+=weight*jac[j]*error;
@@ -496,7 +496,7 @@ window.azAttachUpperSkeleton = function(parts) {
       }
       if(!mobile&&scapula.visible&&torso.visible){
         // Allow the blade to wrap around the lateral ribs at full protraction.
-        const clearance=movement==='scapula'?.075:['rdl','lunge','squat','row','dips','tension_swing','tension_cat'].includes(movement)?.095:exerciseArms.visible?.044:.073;
+        const clearance=movement==='scapula'?.075:['rdl','lunge','squat','row','dips','cgoblet','cheels','csafety','tension_pogo','tension_swing','tension_cat'].includes(movement)?.095:exerciseArms.visible?.044:.073;
         seatBlade(scapula,headCentre,acromion,chest,bladePoints,clearance,movement==='tension_cat'?2.4:0);
       }
       if (!exerciseArms.visible) arm.node.position.copy(joint.copy(headCentre).applyMatrix4(scapula.matrix));
@@ -524,14 +524,14 @@ window.azAttachUpperSkeleton = function(parts) {
   // For presses and pull-ups the arm follows the rotating glenoid. Keep the
   // acromion at the end of the clavicle and fit the inner blade about that
   // point before the elbow, hand and apparatus solve their contacts.
-  fit.socketOnCage=(side,desired,movement)=>{
+  fit.socketOnCage=(side,desired,movement,clearance=movement==='pullup'?.095:.041)=>{
     const {scapula,headCentre,acromion,chest,bladePoints}=joints.find(j=>j.arm.side===side);
     setClaviclePivot(side,movement);
     scapula.updateMatrix();joint.copy(headCentre).applyMatrix4(scapula.matrix);
     scapula.position.add(torso.worldToLocal(desired.clone()).sub(joint));scapula.updateMatrix();
     end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);
     scapula.position.addScaledVector(end,clavicleLength/end.length()-1);scapula.updateMatrix();
-    seatMobileSocket(scapula,acromion,chest,bladePoints);
+    seatMobileSocket(scapula,acromion,chest,bladePoints,clearance);
     return headCentre.clone().applyMatrix4(scapula.matrix);
   };
   fit.floorPivot=(side,contact)=>{

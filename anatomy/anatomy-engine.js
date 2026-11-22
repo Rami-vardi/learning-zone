@@ -1,16 +1,16 @@
 (function(){
   'use strict';
   const deadliftBuilds=window.azDeadliftBuilds={
-    longLong:{label:'Long torso, long arms',torso:0.8250,arm:1.2317},
-    longShort:{label:'Long torso, short arms',torso:0.8250,arm:1.0283},
-    shortLong:{label:'Short torso, long arms',torso:0.6750,arm:1.2317},
-    shortShort:{label:'Short torso, short arms',torso:0.6750,arm:1.0283}
+    longLong:{label:'Long Torso, Long Arms',torso:0.8250,arm:1.2317},
+    longShort:{label:'Long Torso, Short Arms',torso:0.8250,arm:1.0283},
+    shortLong:{label:'Short Torso, Long Arms',torso:0.6750,arm:1.2317},
+    shortShort:{label:'Short Torso, Short Arms',torso:0.6750,arm:1.0283}
   };
   const squatBuilds=window.azSquatBuilds={
-    shortLong:{label:'Short femur, long torso',femur:1.45,torso:1.00},
-    longLong:{label:'Long femur, long torso',femur:1.78,torso:1.00},
-    shortShort:{label:'Short femur, short torso',femur:1.45,torso:.82},
-    longShort:{label:'Long femur, short torso',femur:1.78,torso:.82}
+    shortLong:{label:'Short Femur, Long Torso',femur:1.45,torso:1.00},
+    longLong:{label:'Long Femur, Long Torso',femur:1.78,torso:1.00},
+    shortShort:{label:'Short Femur, Short Torso',femur:1.45,torso:.82},
+    longShort:{label:'Long Femur, Short Torso',femur:1.78,torso:.82}
   };
   // Relative sagittal turns from L5 upward, fitted to the two ends of each
   // lesson's spine. Seventeen evenly spaced poses share the same atlas disc
@@ -488,7 +488,10 @@
         if(!pushBottomAngles.has(b)){
           // A level reference pose gives the pitch at which each point on the
           // actual rib cage would touch the floor when pivoting about the toes.
-          shapePhase=1;setFrame(0);placeChest();fitCostalCartilage?.();torso.updateMatrixWorld(true);
+          shapePhase=1;setFrame(0);placeChest();
+          pelvis.position.copy(origin);pelvis.rotation.set(baseAngle+(b?-.28:0),0,0);
+          head.position.copy(turn([0,2.95,-.08]));head.rotation.set(angleAt(2.95),0,0);
+          fitAxialPose(1);fitCostalCartilage?.();torso.updateMatrixWorld(true);
           const point=new T.Vector3();let bottom=-Math.PI/2;
           for(const group of [...ribs,sternum])group.traverse(mesh=>{
             if(!mesh.isMesh)return;
@@ -558,11 +561,14 @@
         const K=twoJoint(H,A,L1,L2,push?new T.Vector3(0,-1,0):new T.Vector3(0,1,.10)),fd=K.clone().sub(H),sd=A.clone().sub(K);
         l.root.position.copy(H);l.femur.quaternion.setFromUnitVectors(new T.Vector3(l.side*.10,-1.63,0).normalize(),fd.clone().normalize());l.femur.scale.set(1,fd.length()/L1,1);l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(new T.Vector3(0,-1.31,.04).normalize(),sd.clone().normalize());l.shin.scale.set(1,sd.length()/L2,1);l.foot.position.copy(l.shin.worldToLocal(A.clone()));l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(foot.quaternion);l.foot.scale.y=L2/sd.length();l.root.visible=true;l.femur.visible=true;l.shin.visible=true;l.foot.visible=true;l.femurMat.color.setHex(palettes.ivory);l.shinMat.color.setHex(palettes.context);l.footMat.color.setHex(!push&&b?(state.ascending?0x709dbf:0x9bb5c9):palettes.ivory);legChecks.push({side:l.side,hip:H.toArray(),knee:K.toArray(),ankle:A.toArray(),footContact:foot.contact.toArray()});
       }
-      if(!push)fitCostalCartilage?.();
+      if(!push){fitAxialPose(phase);fitCostalCartilage?.();}
       model.updateMatrixWorld(true);const armChecks=[];
       const shoulders=exArms.map(({side})=>{
         const desired=shoulderPoint(turn,side,0,pro*.30);
-        return push||!fitShoulderGirdle?desired:torso.localToWorld(fitShoulderGirdle.socketOnCage(side,desired,m));
+        if(push||!fitShoulderGirdle)return desired;
+        // The tucked blades tip against the pad as the bar descends.
+        const clearance=T.MathUtils.lerp(.081,.054,smooth(0,.18,phase));
+        return torso.localToWorld(fitShoulderGirdle.socketOnCage(side,desired,m,clearance));
       });
       let bar=null;
       if(!push){
@@ -601,7 +607,6 @@
       head.position.copy(turn([0,2.95,-.08]));head.quaternion.copy(frameQ);
       for(const v of spineGroups){v.node.position.copy(centreAt(v.y-3.3));v.node.quaternion.copy(frameQ);v.node.visible=true;}
       spineGuide.visible=false;torso.visible=true;head.visible=true;pelvis.visible=true;arms.forEach(a=>a.node.visible=false);torso.children.forEach(o=>{if(o.isMesh&&o.material===ctxM)o.visible=false;});
-      seatRibsOnSpine();
       sternum.position.copy(sternumRest);
       for(const s of scapulae){s.node.position.set(s.side*.65,.53,-.34);s.node.rotation.set(0,-s.side*.24,0);s.node.visible=true;}
       const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),legChecks=[];
@@ -790,6 +795,7 @@
         if(m==='press'){s.node.rotation.z=s.side*(.08+.55*phase);s.node.rotation.x-=.075*phase;}
         if(m==='pullup'){s.node.rotation.z=s.side*(.08+.48*(1-phase));s.node.position.y+=.10*(1-phase);}
       }
+      if(m==='press'||m==='pullup')fitAxialPose(phase);
       if((m==='press'||m==='pullup')&&fitShoulderGirdle?.socketOnCage){
         for(const arm of exArms)sockets.set(arm.side,fitShoulderGirdle.socketOnCage(arm.side,shoulderAt(arm.side),m));
         if(m==='pullup'){
@@ -1904,6 +1910,33 @@
         }
       }
     }
+    function seatCostovertebralJoints(){
+      if(!fitCostalCartilage?.seatRib)return;
+      torso.updateMatrix();
+      const toChest=guideInverse.copy(torso.matrix).invert();
+      for(let i=0;i<ribs.length;i++){
+        const level=axial[16-Math.floor(i/2)];
+        level.node.updateMatrix();level.surface.updateMatrix();
+        actualFrame.copy(toChest).multiply(level.node.matrix).multiply(level.surface.matrix);
+        fitCostalCartilage.seatRib(i,actualFrame,ribParents[i].offset);
+      }
+    }
+    // Register the free shoulder girdle to T1 after the spine has articulated.
+    // Keep the same sternum-to-spine relationship as the atlas reference pose.
+    const chestAtRest=torso.position.clone();
+    function seatLungeChest(top){
+      const offset=top.origin.clone().sub(chestAtRest).applyQuaternion(torso.quaternion);
+      const shift=top.pos.clone().sub(offset).sub(torso.position);
+      torso.position.add(shift);
+      for(const arm of exArms){
+        for(const part of [arm.upper,arm.fore,arm.hand])part.position.add(shift);
+      }
+      for(const arm of exerciseDebug.arms){
+        for(const key of ['shoulder','elbow','wrist','grip'])
+          arm[key]=new T.Vector3().fromArray(arm[key]).add(shift).toArray();
+      }
+      seatRibsOnSpine();
+    }
     function profileBaseOffset(scale){return .049-(scale-.675)*.185;}
     function fitAxialPose(amount){
       if(!axial.every(Boolean)||state.movement==='foot'&&state.mode==='local')return;
@@ -1975,13 +2008,16 @@
       }
       if(!articulated){
         for(let i=0;i<last;i++)seatSurface(axial[i]);
+        seatCostovertebralJoints();
         return;
       }
       const top=axial[16];top.q.copy(top.node.quaternion);
       const diff=axial[15].q.angleTo(top.q);if(diff>.098)top.q.slerp(axial[15].q,1-.098/diff);
       joinLevels(axial[15],top,15,scale);
       for(const level of axial)seatSurface(level);
-      if(['rdl','squat','squat_types','row','dips','tension_deadlift','deadlift_types','tension_cat'].includes(state.movement))carryRibsWithVertebrae();
+      if(m==='lunge')seatLungeChest(top);
+      if(['lunge','rdl','squat','squat_types','row','dips','tension_deadlift','deadlift_types','tension_cat'].includes(m))carryRibsWithVertebrae();
+      if(!braced&&m!=='lunge')seatCostovertebralJoints();
       if(!skull||!neck.every(Boolean))return;
       const lower=axial[16];
       for(let i=0;i<neck.length;i++){
@@ -2023,7 +2059,8 @@
         }
       }
       const gripMovement=state.movement==='squat_types'?'squat':state.movement;
-      if(gripMovement!=='squat')fitAxialPose(amount);
+      // These lifts need the final ribs before solving shoulder or bar contact.
+      if(!['squat','bench','press','pullup'].includes(gripMovement))fitAxialPose(amount);
       if(state.movement!=='bench')fitCostalCartilage?.();
       if(exerciseArms.visible&&!previewDebug)fitShoulderGirdle?.fitHands(gripMovement);
       fitShoulderGirdle?.(gripMovement);

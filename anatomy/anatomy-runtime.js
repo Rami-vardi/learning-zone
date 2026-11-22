@@ -119,6 +119,39 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   let viewer,tension=null,tensionActive=false;let comparisonViewers=[],comparisonFrame=0,viewerGeneration=0,comparisonActive=false,comparisonZoom=0,comparisonOrbit=null;const listeners=[];
   try{
   const q=s=>root.querySelector(s),all=s=>Array.from(root.querySelectorAll(s));
+  const stageArea=q('.azc-stage-area');
+  const fullscreenButton=document.createElement('button');
+  fullscreenButton.type='button';
+  fullscreenButton.className='azc-fullscreen';
+  fullscreenButton.hidden=!document.fullscreenEnabled;
+  fullscreenButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path/></svg>';
+  const fullscreenIcon=fullscreenButton.querySelector('path');
+  const fullscreenStatus=document.createElement('span');
+  fullscreenStatus.className='azc-screen-status';
+  fullscreenStatus.setAttribute('role','status');
+  stageArea.prepend(fullscreenButton,fullscreenStatus);
+  function syncFullscreen(){
+    const active=document.fullscreenElement?.contains(fullscreenButton);
+    fullscreenButton.setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');
+    fullscreenIcon.setAttribute('d',active
+      ?'M3 9h6V3m6 0v6h6M3 15h6v6m6 0v-6h6'
+      :'M9 3H3v6m12-6h6v6M3 15v6h6m6 0h6v-6');
+  }
+  async function toggleFullscreen(){
+    const target=fullscreenButton.closest('.tf-model,.azc-explorer');
+    if(!target)return;
+    fullscreenStatus.textContent='';
+    try{
+      if(document.fullscreenElement===target)await document.exitFullscreen();
+      else await target.requestFullscreen();
+    }catch{
+      fullscreenStatus.textContent='Fullscreen is unavailable in this window.';
+    }
+    syncFullscreen();
+  }
+  syncFullscreen();
+  listen(fullscreenButton,'click',toggleFullscreen);
+  listen(document,'fullscreenchange',syncFullscreen);
   const anatomy=window.azCleanSceneData,exercises=window.azAppliedScenes;
   viewer=window.createAnatomyViewer(q('#azc-stage'));
   const state={movement:'lunge',amount:.45,mode:'chain',scenario:'a',frontHipHike:false,side:'right',labels:false,ghost:false,minimal:true};
@@ -245,7 +278,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
       else viewer.update({...state,ascending:direction<0});
     }
   }
-  function leaveTension(){if(!tensionActive)return;tension?.destroy();tension=null;tensionActive=false;root.classList.remove('azc-tension-active');q('#azc-tension-pane').hidden=true;}
+  function leaveTension(){if(!tensionActive)return;stageArea.prepend(fullscreenButton,fullscreenStatus);tension?.destroy();tension=null;tensionActive=false;root.classList.remove('azc-tension-active');q('#azc-tension-pane').hidden=true;}
   function openTension(){
     balanceLegend.hidden=true;
     pause();q('#azc-options').open=false;
@@ -253,7 +286,9 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     root.classList.remove('azc-build-active');
     viewer?.dispose();viewer=null;comparisonActive=false;disposeComparison();tensionActive=true;root.classList.add('azc-tension-active');q('#azc-tension-pane').hidden=false;q('#azc-body-movement').value='';q('#azc-exercise').value='tension';q('#azc-body-field').classList.remove('is-active');q('#azc-exercise-field').classList.add('is-active');
     root.anatomyExerciseState={...state,playing:false,section:'tension'};
-    try{if(!window.LZAnatomyTension?.mount)throw Error('Tension & DOF could not load. Choose another movement and reopen it to retry.');tension=window.LZAnatomyTension.mount(q('#azc-tension-pane'));}catch(error){const notice=document.createElement('p');notice.setAttribute('role','alert');notice.textContent=error.message;q('#azc-tension-pane').replaceChildren(notice);}
+    try{if(!window.LZAnatomyTension?.mount)throw Error('Tension & DOF could not load. Choose another movement and reopen it to retry.');tension=window.LZAnatomyTension.mount(q('#azc-tension-pane'));
+      q('.tf-model').append(fullscreenButton,fullscreenStatus);
+    }catch(error){const notice=document.createElement('p');notice.setAttribute('role','alert');notice.textContent=error.message;q('#azc-tension-pane').replaceChildren(notice);}
   }
   function setCamera(value){comparisonOrbit=null;if(comparison())for(const item of comparisonViewers)item.viewer.setView(value);else viewer?.setView(value);}
   function stepZoom(step){
@@ -344,6 +379,9 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     if(e.key==='Escape'&&menu){
       menu.open=false;
       menu.querySelector('summary').focus({preventScroll:true});
+    }else if(e.key==='Escape'&&document.fullscreenElement?.contains(fullscreenButton)){
+      e.preventDefault();
+      toggleFullscreen();
     }
   });
   listen(document,'visibilitychange',()=>{if(document.hidden)pause();});

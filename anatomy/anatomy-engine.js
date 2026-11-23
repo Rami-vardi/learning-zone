@@ -373,7 +373,7 @@
     for(const z of [-2.70,.65]){between(flatBench,[0,.89,z],[0,.12,z],.065,.065,steel);between(flatBench,[-.85,.10,z],[.85,.10,z],.055,.055,steel);}
     const splitSquatBench=new T.Group();equipment.add(splitSquatBench);
     const splitSquatPadTop=1.18;
-    const splitSquatRearAnkleZ=-1.57;
+    const splitSquatRearAnkleZ=-1.39;
     box(splitSquatBench,[1.86,.16,1.48],[.25,splitSquatPadTop-.08,splitSquatRearAnkleZ-.87],dumbbellHeads);
     for(const offset of [-1.38,-.37]){
       const z=splitSquatRearAnkleZ+offset;
@@ -617,10 +617,10 @@
       const mix=(top,bottom)=>T.MathUtils.lerp(top,bottom,phase);
       // In this rig the model faces +Z, its right side is -X and its left is +X.
       // Both bench variations share the same depth and clear the floor.
-      const hipY=elevated?mix(2.87,1.98)+.06*phase**4:offload?mix(2.82,2.12):mix(2.72,1.97);
+      const hipY=elevated?mix(2.87,1.98)+.15*phase**4:offload?mix(2.82,2.12):mix(2.72,1.97);
       const heelDownShift=-.38-.72*phase*(1.45-.45*phase);
       // Bring the rear hip farther toward the fixed bench near the bottom.
-      const benchOffloadShift=mix(.37,-.06)-.42*phase*phase;
+      const benchOffloadShift=mix(.37,-.06)-.56*phase*phase;
       const hipZ=elevated?(rear?benchOffloadShift:mix(.32,.13))
         :rear?(offload?heelDownShift:mix(-.30,-.75)):mix(.28,.70)+(moreFront?mix(.12,.15):0);
       const hipX=rear?(offload?mix(.12,.20):.045):(moreFront?mix(-.12,-.18):-.045);

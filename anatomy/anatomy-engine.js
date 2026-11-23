@@ -3,8 +3,8 @@
   const deadliftBuilds=window.azDeadliftBuilds={
     longLong:{label:'Long Torso, Long Arms',torso:0.8250,arm:1.2317,setupShin:.164,shoulderLead:.35,kneePassThigh:.585},
     longShort:{label:'Long Torso, Short Arms',torso:0.8250,arm:1.0283,setupShin:.176,shoulderLead:.42,kneePassThigh:.68},
-    shortLong:{label:'Short Torso, Long Arms',torso:0.6750,arm:1.2317,setupShin:.14,shoulderLead:.32,kneePassThigh:.465},
-    shortShort:{label:'Short Torso, Short Arms',torso:0.6750,arm:1.0283,setupShin:.183,shoulderLead:.23,kneePassThigh:.55}
+    shortLong:{label:'Short Torso, Long Arms',torso:0.6750,arm:1.2317,setupShin:.14,shoulderLead:.32,kneePassThigh:.408},
+    shortShort:{label:'Short Torso, Short Arms',torso:0.6750,arm:1.0283,setupShin:.183,shoulderLead:.16,kneePassThigh:.55}
   };
   const standardDeadliftBuild={torso:.75,arm:1.13,setupShin:.166,shoulderLead:.34,kneePassThigh:.565};
   const isConventionalPull=m=>m==='deadlift_types'||m==='tension_deadlift';

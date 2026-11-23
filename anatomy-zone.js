@@ -1,7 +1,7 @@
 /* Learning Zone Anatomy, lazy local asset entry. */
 (function(){
   'use strict';
-  const VERSION='20261123-deadlift-motion';
+  const VERSION='20261123-deadlift-flow';
   if(window.LZAnatomy?.version===VERSION)return;
   const source=document.currentScript?.src||new URL('anatomy-zone.js',document.baseURI).href;
   const base=new URL('./anatomy/',source);

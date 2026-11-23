@@ -9,6 +9,14 @@
   const standardDeadliftBuild={torso:.75,arm:1.13,setupShin:.166,shoulderLead:.34,kneePassThigh:.565};
   const isConventionalPull=m=>m==='deadlift_types'||m==='tension_deadlift';
   const isDeadlift=m=>isConventionalPull(m)||m==='rdl';
+  // Bounds of each complete tension movement, with room for the hands,
+  // feet and apparatus at the ends of the cycle.
+  const tensionFrames={
+    tension_pushup:{y:1.58,z:.51,half:[1.83,1.65,3.63]},
+    tension_swing:{y:3.44,z:.74,half:[1.30,3.62,2.44]},
+    tension_pogo:{y:3.74,z:.05,half:[1.56,3.92,.94]},
+    tension_cat:{y:1.57,z:-.14,half:[1.43,1.65,2.53]}
+  };
   const squatBuilds=window.azSquatBuilds={
     shortLong:{label:'Short Femur, Long Torso',femur:1.45,torso:1.00},
     longLong:{label:'Long Femur, Long Torso',femur:1.78,torso:1.00},
@@ -28,10 +36,6 @@
     tension_pushup:'bfADJiT99x88PDUT2cTEbO0CJiYB+iA8PDQQ1cTEaun/JikJACQ8PC8JzcTEaeX8Ji4SByc7Oif/x8TEZ9/5JzMdECw7NR7yxMTEZdn1KDkmGDE8MRXmxMTEZNXzKT0tHTU8LxDexMTEY9PxKT8wIDY8Lg7axMTEY9PxKUAwIDc8Lg3ZxMTEY9PxKT8wIDY8Lg7axMTEZNXzKT0tHTU8LxDexMTEZdn1KDkmGDE8MRXmxMTEZ9/5JzMdECw7NR7yxMTEaeX8Ji4SByc7Oif/x8TEaun/JikJACQ8PC8JzcTEbO0CJiYB+iA8PDQQ1cTEbfADJiT99x88PDUT2cTE',
     tension_swing:'SqjJbW48PDw3K8TExMTES6TSbG48PDw5LMXExMTEQ5jgbW48PDw8LsfExMTELJ7ZV2I6Ozs5MdbLxcTEFMbbHDQuMzMvJv7nzsTE/eDnAhghJyglHhH84MfE9ePpAhYeIyQiHRL/58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQiHRL/58rE/eDnAhghJyglHhH84MfEFMbbHDQuMzMvJv7nzsTELJ7ZV2I6Ozs5MdbLxcTEQ5jgbW48PDw8LsfExMTES6TSbG48PDw5LMXExMTESqjJbW48PDw3K8TExMTE',
     tension_pogo:'/e3w/AcLDhAREA0G/PDl/N7l/A8YHiEhHhYI9NzN/NXe/BUhKSwrJxsH7MvE/Nbe/BQgKCsqJhsI7c3F/OHn/A0VGx4dGxUI9uDR/e/y/QUKDQ4ODgsG/fPo/vP1/QMGCQoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw',
-    rdl_a:'Jtzb7f8LFiAmKSQV/d/HJcvL7g0YJC0zMysN6s3EDKerHkUwNjk7OjLnzsTE5JOjYGw8PDw8OSzIxMTE0pK5bm48PDw7OCzFxMTEwJPWbm48PDw7OSvIxMTEsJTtbm48PDw8OyvIxMTEqZMAbm48PDw8PDXGxMTEp5IQbm48PDw8OzLHxMTEo5Ijbm48PDw8OSfHxMTEl5JAbm48PDw7OSTIxMTEnZJLbm48PDw7OSrGxMTEsZJFbm48PDw8OyLGxMTErZNWbm48PDw7Og3GxMTEs5NXbm48PDw7ORDGxMTExpJMbm48PDw8OQnExMTE15I6bm48PDw8OxHExMTE',
-    rdl_b:'J93b7f8KFiAmKSQV/d/HKtDP7AcVIiwyMikP7c7EGbCxEjQrNDg6OCru0sXE9ZaeWGY7PDw8OCPKxcTE6pOsbm48PDw8OR7FxMTE6pO9bm48PDw8ORvGxMTE45Tcbm48PDw8NxDGxMTE05MIbm48PDw6NQTFxMTEvJU8bm48PDw6NQ7HxMTEppxmbm48PDw7NhrHxMTEsqhtbm48PDw7NyjHxMTExbxubm48PDw7NynIxMTE29Nubm48PDw7OCnFxMTE995ubm48PDw7OTLFxMTEC+lubm48PDw7NivHxMTEEf9ubm48PDw6NB3FxMTEEBtubm48PDw7OB3ExMTE',
-    squat_a:'A5KTU248PDw8OCnExMTEApObZ248PDw8OSTFxMTECJOqbm48PDw7OSTFxMTEEJK0bm48PDw6NRbFxMTEG5O6bm48PDw7NgrGxMTEKJO/bm48PDw7OAnIxMTEL5PNbm48PDw7M//GxMTEOZPebm48PDw7NPvFxMTERZTlbm48PDw6NQHExMTEVJnjbm48PDw8Og3FxMTEU6bnbm48PDw7OAHFxMTESMrmbm48PDw6Nd/FxMTEQAbUbm48PDw6M9HFxMTEPCbTbm48PDw6LcnExMTEPjXbbm48PDw5JcfExMTEP0Dobm48PDw4GcfExMTEQEX6bm48PDw7EcbExMTE',
-    squat_b:'W5KSkpUIPDw8PDw83MTEUJKSkpckPDw8PDw80MTERJKSkpc5PDw8PDw6yMTEQJKSkpQ8PDw8PDwzxcTEQpKSkpI7PDw8PDwuxMTESJKSkpI7PDw8PDwtxMTEUZKSkpQ7PDw8PDwvxcTEWJKSkpw8PDw8PDwxx8TEWZKSkrQ8PDw8PDwxyMTEW5KSk9Q8PDw8PDwyxsTEN5KSnhM8PDw8PDoTxMTEDZKT31w8PDw8OjbixMTEA5KrR248PDw5MSLJxMTEKbvbX208PDw4LgXExMTEWisARWQ8ODMxMADMxMTEa2hDUmA6MCIWFvvZx8fYbm5rams7NzAO69fNxscJ',
     row_a:'FOni5/H5BRIbHR0XCffi',
     row_b:'bRj+HPb4CBw5PDcqGcTE',
     press_a:'kxAR9uTi4+bq6/YMLDky',
@@ -643,11 +647,14 @@
       exerciseDebug={movement:'lunge',scenario:state.scenario||'a',phase,frontHipHike,frontSide:'right',rearSide:'left',loadedSide:rear?'left rear':'right front',pelvisPitch:pelvicPitch,pelvicRoll,pelvicYaw,pelvisPosition:origin.toArray(),headPitch:trunkPitch,legs:legChecks,arms:armChecks,bar:null,contacts:{floorHeight:floorY,rightFront:legChecks.find(l=>l.side===-1),leftRear:legChecks.find(l=>l.side===1)},support:{rearHeelChosen:rear?'Heel lowers within this selected stance':'Rear heel raised',pressureCue:'Selected support foot; no force values calculated'}};
     }
 
-    const profileToeAngle=Math.PI/6;
+    const standardSquat={femur:Math.hypot(.10,1.63),torso:1};
+    const profileToeAngle=Math.PI/6,standardSquatToeAngle=Math.PI/18;
     const profilePlants=new Map();
-    function squatProfilePlant(leg){
-      if(!profilePlants.has(leg.side)){
-        const plant=supportedFoot(leg,leg.side*.92,.045,0,leg.side*profileToeAngle);
+    function squatProfilePlant(leg,profile){
+      const key=leg.side*(profile?2:1);
+      if(!profilePlants.has(key)){
+        const toeAngle=profile?profileToeAngle:standardSquatToeAngle;
+        const plant=supportedFoot(leg,leg.side*(profile?.92:.78),.045,0,leg.side*toeAngle);
         let heel=Infinity,toe=-Infinity;
         const point=new T.Vector3();
         for(const vertex of tensionFootPoints(leg)){
@@ -655,9 +662,9 @@
           heel=Math.min(heel,z);toe=Math.max(toe,z);
         }
         plant.midfootZ=plant.ankle.z+(heel+toe)/2;
-        profilePlants.set(leg.side,plant);
+        profilePlants.set(key,plant);
       }
-      return profilePlants.get(leg.side);
+      return profilePlants.get(key);
     }
     const squatBarOffsets=new Map();
     function neutralSquatBar(scale){
@@ -669,7 +676,7 @@
       seat.y*=scale;
       if(axial.every(Boolean)){
         axial[0].pos.copy(axial[0].origin).sub(new T.Vector3(0,3.3,0));
-        axial[0].pos.y+=profileBaseOffset(scale);
+        if(scale!==1)axial[0].pos.y+=profileBaseOffset(scale);
         axial[0].q.identity();
         for(let i=1;i<=15;i++){
           axial[i].q.identity();joinLevels(axial[i-1],axial[i],i-1,scale);
@@ -678,21 +685,29 @@
       }else seat.add(new T.Vector3(0,(squatSupportLevel.y-3.3)*scale,squatSupportLevel.z));
       seat.sub(hipOffset);squatBarOffsets.set(scale,seat);return seat;
     }
-    function squatBuildFrame(build,phase){
-      const foot=legs[0],side=foot.side,plant=squatProfilePlant(foot);
-      const shin=Math.hypot(1.31,.04),parallel=.80,fullDrop=.3463;
-      const shinTilt=T.MathUtils.degToRad(4+32.5*phase);
-      const travel=shin*Math.sin(shinTilt);
-      const knee=plant.ankle.clone().add(new T.Vector3(side*Math.sin(profileToeAngle)*travel,
-        shin*Math.cos(shinTilt),Math.cos(profileToeAngle)*travel));
-      const sagittal=Math.sqrt(build.femur**2-(knee.x-side*.51)**2);
-      const angle=phase<=parallel?T.MathUtils.lerp(-.035,Math.PI/2,phase/parallel):
-        Math.PI/2+Math.asin(fullDrop/sagittal)*(phase-parallel)/(1-parallel);
-      const hip=new T.Vector3(0,knee.y+sagittal*Math.cos(angle),knee.z-sagittal*Math.sin(angle));
+    function squatFrame(build,phase,profile,extension){
+      const foot=legs[0],side=foot.side,plant=squatProfilePlant(foot,profile);
+      const shin=Math.hypot(1.31,.04),fullDrop=.3463,toeAngle=profile?profileToeAngle:standardSquatToeAngle;
       const seat=neutralSquatBar(build.torso);
+      // Begin close to extension with the bar balanced above the foot. The
+      // knees open toward the toes as the hips and knees bend together.
+      const uprightSeat=seat.clone().applyAxisAngle(spineAxis,.15);
+      const lean=Math.asin((plant.midfootZ-plant.ankle.z-uprightSeat.z)/(shin+build.femur));
+      const shinAngle=T.MathUtils.lerp(lean+.022,T.MathUtils.degToRad(36.5),phase);
+      const travel=shin*Math.sin(shinAngle);
+      const standingX=T.MathUtils.lerp(plant.ankle.x,side*.51,shin/(shin+build.femur));
+      const kneeX=T.MathUtils.lerp(standingX,plant.ankle.x+side*Math.sin(toeAngle)*travel,1-(1-phase)**3);
+      const kneeZ=plant.ankle.z+travel*Math.cos(toeAngle*phase);
+      const kneeY=plant.ankle.y+Math.sqrt(shin**2-(kneeX-plant.ankle.x)**2-(kneeZ-plant.ankle.z)**2);
+      const sagittal=Math.sqrt(build.femur**2-(kneeX-side*.51)**2);
+      const angle=monotoneGuide([0,.08,.24,.55,.80,1],[-lean+.022,-lean+.068,.28,.98,Math.PI/2,
+        Math.PI/2+Math.asin(fullDrop/sagittal)],phase);
+      const hip=new T.Vector3(0,kneeY+sagittal*Math.cos(angle),kneeZ-sagittal*Math.sin(angle));
       const pitch=Math.asin((plant.midfootZ-hip.z)/Math.hypot(seat.y,seat.z))-Math.atan2(seat.z,seat.y);
-      const origin=hip.sub(new T.Vector3(0,-.17,.005).applyAxisAngle(spineAxis,pitch));
-      return {origin,pitch,knee};
+      const tuck=T.MathUtils.smoothstep(phase,.65,1);
+      const pelvicPitch=pitch+(profile?0:extension?.14-.25*tuck:-.075*tuck);
+      const origin=hip.sub(new T.Vector3(0,-.17,.005).applyAxisAngle(spineAxis,pelvicPitch));
+      return {origin,pitch,pelvicPitch,knee:new T.Vector3(kneeX,kneeY,kneeZ)};
     }
     const rdlTorso=.825,rdlArm=1.13;
     function poseExercise(t){
@@ -703,37 +718,32 @@
       const smooth=(lo,hi,x)=>{const v=Math.max(0,Math.min(1,(x-lo)/(hi-lo)));return v*v*(3-2*v);};
       exerciseArms.visible=true;equipment.visible=true;equipment.children.forEach(o=>o.visible=false);
       let hipY=3.27,hipZ=0,basePitch=0,pelvisPitch=0,lumbar=0,thoracic=0,cervical=0,rearShift=0,expansion=0,pro=0,bodyLift=0,feetY=.19,feetZ=.045;
-      const profile=build?squatBuildFrame(build,phase):null;
+      const squat=m==='squat'?squatFrame(build||standardSquat,phase,Boolean(build),b):null;
       const rdl=m==='rdl',torsoScale=rdl?rdlTorso:build?.torso||1;
       const armScale=rdl?rdlArm:1;
       const rdlFeet=new Map();
       let rdlKnee;
-      const late=smooth(.64,1,phase);
       if(rdl){
         for(const l of legs)rdlFeet.set(l.side,supportedFoot(l,l.side*.61,feetZ,0,l.side*T.MathUtils.degToRad(10)));
         const {ankle}=rdlFeet.get(legs[0].side);
         const shinAngle=T.MathUtils.lerp(-.027,b?.075:.025,phase);
-        const thighAngle=T.MathUtils.lerp(.078,b?.55:.41,phase);
+        const thighAngle=T.MathUtils.lerp(.078,b?.55:.45,phase);
         const shin=Math.sqrt(1.31**2+.04**2-.05**2),thigh=Math.sqrt(1.63**2+.10**2-.05**2);
         rdlKnee=new T.Vector3(0,ankle.y+shin*Math.cos(shinAngle),ankle.z+shin*Math.sin(shinAngle));
-        basePitch=(b?.88:1.06)*phase;
+        basePitch=(b?1.04:1.13)*phase;
         pelvisPitch=basePitch*(b?.65:1);
         const pivot=new T.Vector3(0,-.17,.005).applyAxisAngle(spineAxis,pelvisPitch);
         hipY=rdlKnee.y+thigh*Math.cos(thighAngle)-pivot.y;
         hipZ=rdlKnee.z-thigh*Math.sin(thighAngle)-pivot.z;
-        lumbar=b?.26*smooth(.24,1,phase):0;thoracic=b?.28*smooth(.42,1,phase):0;cervical=b?.20*smooth(.62,1,phase):0;
-        pro=b?.68*smooth(.25,1,phase):.025;
+        lumbar=b?.20*smooth(.24,1,phase):0;
+        cervical=b?.10*smooth(.62,1,phase):0;
+        pro=b?.25*smooth(.25,1,phase):0;
         rdlPressureCue.visible=true;rdlPressureCue.position.z=b?-.035:.22;
         deadliftFloor.visible=true;
       }
-      if(m==='squat'){
-        hipY=3.25-(b?2.20:2.25)*phase;hipZ=-.10-(b?.55:.46)*phase;basePitch=b?.24+.18*phase:.12+.35*phase;
-        pelvisPitch=b?.30-.45*late:.045-.11*phase;
-        lumbar=b?-.30+.50*smooth(.60,1,phase):-.025;
-        thoracic=b?-.02+.15*smooth(.71,1,phase):0;
-        if(profile){
-          hipY=profile.origin.y;hipZ=profile.origin.z;pelvisPitch=basePitch=profile.pitch;lumbar=thoracic=0;
-        }
+      if(squat){
+        hipY=squat.origin.y;hipZ=squat.origin.z;
+        pelvisPitch=squat.pelvicPitch;basePitch=squat.pitch;
         floor.visible=true;floor.scale.set(1.65,1.20,1);floorRing.visible=false;
       }
       if(m==='press'||m==='row'){
@@ -763,7 +773,7 @@
       const nominalAngle=r=>basePitch+lumbar*smooth(.12,1.25,r)+thoracic*smooth(1.0,2.30,r)+cervical*smooth(2.40,2.95,r);
       const bow=(r,lo,hi)=>r<=lo||r>=hi?0:Math.pow(Math.sin(Math.PI*(r-lo)/(hi-lo)),2);
       const centreAt=r=>{
-        if(profile)return new T.Vector3(0,r*build.torso,-.14).applyQuaternion(pelvis.quaternion).add(pelvis.position);
+        if(squat||rdl)return new T.Vector3(0,r*torsoScale,-.14).applyAxisAngle(spineAxis,basePitch).add(pelvis.position);
         const steps=28,step=r/steps,stride=step*torsoScale,v=new T.Vector3(0,hipY,hipZ-.14);
         for(let i=0;i<steps;i++){const a=nominalAngle((i+.5)*step);v.y+=Math.cos(a)*stride;v.z+=Math.sin(a)*stride;}
         v.z+=.045*Math.sin(r/2.5*Math.PI*2)-lumbar*.28*bow(r,.10,1.45)-thoracic*.30*bow(r,.95,2.55)+rearShift*smooth(.8,1.9,r);
@@ -777,8 +787,8 @@
       const sockets=new Map();
       const shoulderAt=side=>{
         if(sockets.has(side))return torso.localToWorld(sockets.get(side).clone());
+        if(rdl||squat)return torso.localToWorld(new T.Vector3(side*(1.04+(build?.15*(1-build.torso):0)),.83,.02));
         const shoulder=shoulderPoint(turn,side,elevationArc,reachArc);
-        if(build)shoulder.x+=side*.15*(1-build.torso);
         return shoulder;
       };
       const explicitPullVectors=side=>{
@@ -797,12 +807,18 @@
       const torsoAngle=angleAt(1.85);
       torso.scale.y=torsoScale;
       torso.position.copy(turn([0,1.42,0]));torso.rotation.set(torsoAngle,0,0);torso.updateMatrixWorld(true);
-      head.position.copy(turn([0,2.95,-.08]));head.rotation.set(angleAt(2.95),0,0);
-      for(const v of spineGroups){const r=v.y-3.3;v.node.scale.y=torsoScale;v.node.position.copy(build?turn([0,r,v.z]):centreAt(r));v.node.rotation.set(angleAt(r),0,0);v.node.visible=true;}
+      head.position.copy(turn([0,2.95,-.08]));head.rotation.set(rdl?basePitch+lumbar+cervical:angleAt(2.95),0,0);
+      for(const v of spineGroups){
+        const r=v.y-3.3;
+        v.node.scale.y=torsoScale;
+        v.node.position.copy(squat||rdl?turn([0,r,v.z]):centreAt(r));
+        v.node.rotation.set(rdl?basePitch+lumbar*T.MathUtils.smoothstep(r,1.20,2.45):angleAt(r),0,0);
+        v.node.visible=true;
+      }
       spineGuide.visible=false;torso.visible=true;head.visible=true;pelvis.visible=true;
       arms.forEach(a=>a.node.visible=false);torso.children.forEach(o=>{if(o.isMesh&&o.material===ctxM)o.visible=false;});
       // Rib attachments follow the vertebral curve rather than one rigid chest tilt.
-      if(!build)for(let i=0;i<ribs.length;i++){
+      if(!squat&&!rdl)for(let i=0;i<ribs.length;i++){
         const r=ribs[i],level=2.35-Math.floor(i/2)*.132;
         r.position.copy(torso.worldToLocal(centreAt(level)));r.rotation.x=angleAt(level)-torsoAngle;r.scale.set(1,1,1);
       }
@@ -810,13 +826,19 @@
       sternum.position.copy(sternumRest);sternum.position.z+=expansion*.08;
       if(m==='pullup'&&b){sternum.position.y+=.05*(1-.20*phase);sternum.position.z+=.035;}
       for(const s of scapulae){
-        const level=1.95,theta=angleAt(level),offset=new T.Vector3(s.side*(.64+.14*pro),0,-.20+.23*pro-expansion*.55).applyAxisAngle(new T.Vector3(1,0,0),theta);
-        s.node.position.copy(torso.worldToLocal(centreAt(level).add(offset)));s.node.visible=true;
+        s.node.visible=true;
+        if(rdl||squat){
+          s.node.position.set(s.side*(.64+.14*pro),.53,-.36+.12*pro);
+          s.node.rotation.set(0,-s.side*(.20+.30*pro),0);
+          continue;
+        }
+        const level=1.95,theta=angleAt(level),offset=new T.Vector3(s.side*(.64+.14*pro),0,-.20+.23*pro-expansion*.55).applyAxisAngle(spineAxis,theta);
+        s.node.position.copy(torso.worldToLocal(centreAt(level).add(offset)));
         s.node.rotation.set(theta-torsoAngle,-s.side*(.20+.58*pro),0);
         if(m==='press'){s.node.rotation.z=s.side*(.08+.55*phase);s.node.rotation.x-=.075*phase;}
         if(m==='pullup'){s.node.rotation.z=s.side*(.08+.48*(1-phase));s.node.position.y+=.10*(1-phase);}
       }
-      if(m==='press'||m==='pullup')fitAxialPose(phase);
+      if(rdl||squat||m==='press'||m==='pullup')fitAxialPose(phase);
       if((m==='press'||m==='pullup')&&fitShoulderGirdle?.socketOnCage){
         for(const arm of exArms)sockets.set(arm.side,fitShoulderGirdle.socketOnCage(arm.side,shoulderAt(arm.side),m));
         if(m==='pullup'){
@@ -828,30 +850,20 @@
         }
       }
       const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04),legChecks=[];
-      const squatToeAngle=build?profileToeAngle:10*Math.PI/180;
-      function squatKnee(H,A,side){
-        const delta=A.clone().sub(H),distance=delta.length(),axis=delta.normalize(),along=(L1*L1-L2*L2+distance*distance)/(2*distance),radius=Math.sqrt(Math.max(0,L1*L1-along*along)),centre=H.clone().addScaledVector(axis,along);
-        // Intersect the limb-length circle with the vertical plane of the toes.
-        const normal=new T.Vector3(Math.cos(side*squatToeAngle),0,-Math.sin(side*squatToeAngle)),across=normal.clone().addScaledVector(axis,-normal.dot(axis)),n=across.length();
-        if(radius<.00001||n<.00001)return twoJoint(H,A,L1,L2,new T.Vector3(side*.20,0,1));
-        across.divideScalar(n);const component=normal.dot(A.clone().sub(centre))/(radius*n);
-        if(Math.abs(component)>1)return twoJoint(H,A,L1,L2,new T.Vector3(side*.20,0,1));
-        const forward=new T.Vector3().crossVectors(axis,across).normalize();if(forward.z<0)forward.negate();
-        return centre.addScaledVector(across,radius*component).addScaledVector(forward,radius*Math.sqrt(Math.max(0,1-component*component)));
-      }
+      const squatToeAngle=build?profileToeAngle:standardSquatToeAngle;
       for(const l of legs){
         const H=pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005));
-        const planted=rdl?rdlFeet.get(l.side):build?squatProfilePlant(l):m==='squat'?supportedFoot(l,l.side*.78,.045,0,l.side*squatToeAngle):['press','row'].includes(m)?supportedFoot(l,l.side*.61,feetZ,0,0,b?.58:.08):null;
+        const planted=rdl?rdlFeet.get(l.side):squat?squatProfilePlant(l,Boolean(build)):['press','row'].includes(m)?supportedFoot(l,l.side*.61,feetZ,0,0,b?.58:.08):null;
         const A=planted?planted.ankle:m==='pullup'?new T.Vector3(l.side*.61,.19+bodyLift,hipZ+.045):m==='dips'?new T.Vector3(l.side*.61,1.75-.40*phase,-.72):new T.Vector3(l.side*.61,feetY,feetZ);
-        const K=profile?new T.Vector3(l.side*Math.abs(profile.knee.x),profile.knee.y,profile.knee.z):
-          rdl?new T.Vector3(l.side*.56,rdlKnee.y,rdlKnee.z):m==='squat'?squatKnee(H,A,l.side):twoJoint(H,A,L1,L2,new T.Vector3(0,0,1));
+        const K=squat?new T.Vector3(l.side*Math.abs(squat.knee.x),squat.knee.y,squat.knee.z):
+          rdl?new T.Vector3(l.side*.56,rdlKnee.y,rdlKnee.z):twoJoint(H,A,L1,L2,new T.Vector3(0,0,1));
         const fd=K.clone().sub(H),sd=A.clone().sub(K);
         const femurScale=build?Math.sqrt(build.femur**2-.10**2)/1.63:fd.length()/L1;
         const shaft=new T.Vector3(l.side*.10,-1.63*(build?femurScale:1),0).normalize();
         const thighDirection=fd.clone().normalize();
         l.root.position.copy(H);l.femur.quaternion.setFromUnitVectors(shaft,thighDirection);
         // Follow the turned-out knee around the thigh axis while keeping the hip and knee seated.
-        if(build)l.femur.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(thighDirection,-l.side*(.30-.10*phase)));
+        if(squat)l.femur.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(thighDirection,-l.side*squatToeAngle*(.45+.30*phase)));
         l.femur.scale.set(1,femurScale,1);
         l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(new T.Vector3(0,-1.31,.04).normalize(),sd.clone().normalize());l.shin.scale.set(1,sd.length()/L2,1);
         l.foot.position.copy(l.shin.worldToLocal(A.clone()));l.foot.quaternion.copy(l.shin.quaternion).invert();if(planted)l.foot.quaternion.multiply(planted.quaternion);
@@ -869,8 +881,7 @@
         gripCentre=new T.Vector3(0,S.y-dy,z);
         tensionEquipment.visible=tensionBar.visible=true;tensionBar.position.copy(gripCentre);
       }
-      if(m==='squat'){
-        fitAxialPose(phase);
+      if(squat){
         const support=axial[15]?.surface||squatSupportLevel.node;
         gripCentre=support.localToWorld(squatBarSeat(squatBarRadius));
         barbell.position.copy(gripCentre);barbell.visible=true;
@@ -1268,11 +1279,20 @@
         centre=developmentModel.babyCenter();
       }
       // Compare shaft and joint heights without parallax from the near plate.
-      camera=isDeadlift(state.movement)?deadliftCamera:perspective;
-      if(camera===deadliftCamera){
+      const fit=tensionFrames[state.movement];
+      camera=isDeadlift(state.movement)||fit?deadliftCamera:perspective;
+      if(fit){
+        const [x,y,z]=fit.half;
+        const c=Math.abs(Math.cos(yaw)),s=Math.abs(Math.sin(yaw));
+        // Project the whole movement envelope, including during manual orbit.
+        const horizontal=x*c+z*s;
+        const vertical=y*Math.abs(Math.cos(pitch))+(x*s+z*c)*Math.abs(Math.sin(pitch));
+        radius*=Math.max(vertical,horizontal/perspective.aspect);
+      }else if(camera===deadliftCamera){
         const span=Math.hypot(8.85*Math.cos(yaw),4.15*Math.sin(yaw));
         const widthScale=1/(2*halfFovTan*perspective.aspect);
-        radius*=Math.max(13.1,span*widthScale)/Math.max(13.1,4.15*widthScale);
+        const baseDistance=state.movement==='tension_deadlift'?11.7:13.1;
+        radius*=Math.max(baseDistance,span*widthScale)/Math.max(baseDistance,4.15*widthScale);
       }
       if(helmetProgress&&head.visible&&!isDevelopment()){
         const t=helmetProgress*helmetProgress*(3-2*helmetProgress);
@@ -1591,8 +1611,8 @@
     const setupBarZ=.329, lockoutBarZ=.23, lockoutLean=.052;
 
     // Monotone cubic interpolation keeps the calibrated joint paths smooth
-    // through the knee pass and prevents overshoot between the guide poses.
-    function pullGuide(stops,values,phase){
+    // and prevents overshoot between the guide poses.
+    function monotoneGuide(stops,values,phase){
       const last=stops.length-1;
       const rate=i=>(values[i+1]-values[i])/(stops[i+1]-stops[i]);
       const slope=i=>{
@@ -1639,9 +1659,9 @@
       const phase=lift+lift*lift*(1-lift);
       const keys=[0,kneePass*.62,kneePass,kneePass+(1-kneePass)*.42,kneePass+(1-kneePass)*.80,1];
       const pass=build.kneePassThigh;
-      const shinAngle=pullGuide(keys,[build.setupShin,build.setupShin*.31,-.032,-.018,-.029,-lockoutLean],phase);
-      const thighAngle=pullGuide(keys,[startThigh,(startThigh+pass)*.5,pass,pass*.71,pass*.28,lockoutLean],phase);
-      const bar=V(0,groundedBarY+travel*phase,pullGuide(keys,[setupBarZ,.321,.28,.185,.207,lockoutBarZ],phase));
+      const shinAngle=monotoneGuide(keys,[build.setupShin,build.setupShin*.31,-.032,-.018,-.029,-lockoutLean],phase);
+      const thighAngle=monotoneGuide(keys,[startThigh,(startThigh+pass)*.5,pass,pass*.71,pass*.28,lockoutLean],phase);
+      const bar=V(0,groundedBarY+travel*phase,monotoneGuide(keys,[setupBarZ,.321,.28,.185,.207,lockoutBarZ],phase));
       const knee=kneeAt(shinAngle),hip=hipAt(knee,thighAngle);
 
       // Find the forward trunk orientation with a fixed shoulder-to-grip
@@ -1925,11 +1945,11 @@
     const disc=new T.Vector3(),fromDisc=new T.Vector3(),workQ=new T.Quaternion();
     const spineAxis=new T.Vector3(1,0,0);
     const referenceQ=new T.Quaternion(),stepQ=new T.Quaternion();
-    function joinLevels(from,to,index,scale=1){
+    function joinLevels(from,to,index,scale=1,toScale=scale){
       disc.copy(from.centre).lerp(to.centre,.5);
       fromDisc.subVectors(disc,from.origin);fromDisc.y*=scale;
       to.pos.copy(fromDisc.applyQuaternion(from.q)).add(from.pos);
-      fromDisc.subVectors(to.origin,disc);fromDisc.y*=scale;
+      fromDisc.subVectors(to.origin,disc);fromDisc.y*=toScale;
       to.pos.add(fromDisc.applyQuaternion(to.q));
       const rel=referenceQ.copy(from.q).invert().multiply(to.q);
       const angle=2*Math.atan2(rel.x,rel.w);
@@ -2007,6 +2027,24 @@
       }
       seatRibsOnSpine();
     }
+    function seatFittedChest(top,scale){
+      // Keep the sternum and shoulder girdle in the upper thorax frame.
+      // Each rib's posterior attachment follows its own seated vertebra.
+      torso.quaternion.copy(top.q);
+      torso.position.copy(chestAtRest).sub(top.origin);
+      torso.position.y*=scale;
+      torso.position.applyQuaternion(top.q).add(top.pos);
+      torso.updateMatrix();
+      const toChest=guideInverse.copy(torso.matrix).invert();
+      const dimensions=new T.Vector3(1,scale,1);
+      for(let i=0;i<ribs.length;i++){
+        const level=axial[16-Math.floor(i/2)],{rib,offset}=ribParents[i];
+        actualFrame.compose(level.pos,level.q,dimensions);
+        ribDelta.makeTranslation(offset.x,offset.y,offset.z).premultiply(actualFrame).premultiply(toChest);
+        ribDelta.decompose(rib.position,rib.quaternion,rib.scale);
+      }
+      torso.updateMatrixWorld(true);
+    }
     function profileBaseOffset(scale){return .049-(scale-.675)*.185;}
     function fitAxialPose(amount){
       if(!axial.every(Boolean)||state.movement==='foot'&&state.mode==='local')return;
@@ -2056,8 +2094,9 @@
       terminalFrame.copy(target.quaternion).multiply(stepQ.setFromAxisAngle(spineAxis,-targetPitch));
       const m=state.movement;
       let key=m,phase=amount;
-      if(['bench','pushup','lunge','rdl','squat','row','press','dips','pullup'].includes(m))key+='_'+(state.scenario==='b'?'b':'a');
-      const profile=isConventionalPull(m)||m==='squat_types',braced=profile;
+      if(['bench','pushup','lunge','row','press','dips','pullup'].includes(m))key+='_'+(state.scenario==='b'?'b':'a');
+      const fittedChest=m==='rdl'||m==='squat'||m==='squat_types';
+      const braced=isConventionalPull(m);
       // The pelvis and the cervical bones retain their original dimensions.
       // Seat the two ends of the scaled thoracolumbar column against them.
       if(scale!==1)base.pos.add(fromDisc.set(0,profileBaseOffset(scale),0).applyQuaternion(base.q));
@@ -2073,6 +2112,7 @@
         // The reference surfaces already contain the spinal curves. Carry the
         // column with the pelvis throughout the braced lifts.
         if(braced)v.q.copy(base.q);
+        else if(fittedChest)v.q.copy(v.node.quaternion).slerp(base.q,1-T.MathUtils.smoothstep(i,0,m==='rdl'?9:5));
         else v.q.copy(base.q).slerp(terminalFrame,i/last).multiply(stepQ.setFromAxisAngle(spineAxis,angle));
         joinLevels(axial[i-1],v,i-1,scale);
       }
@@ -2086,16 +2126,17 @@
       joinLevels(axial[15],top,15,scale);
       for(const level of axial)seatSurface(level);
       if(m==='lunge')seatLungeChest(top);
-      if(['lunge','rdl','squat','squat_types','row','dips','tension_deadlift','deadlift_types','tension_cat'].includes(m))carryRibsWithVertebrae();
-      if(!braced&&m!=='lunge')seatCostovertebralJoints();
+      if(fittedChest)seatFittedChest(top,scale);
+      else if(['lunge','row','dips','tension_deadlift','deadlift_types','tension_cat'].includes(m))carryRibsWithVertebrae();
+      if(!fittedChest&&!braced&&m!=='lunge')seatCostovertebralJoints();
       if(!skull||!neck.every(Boolean))return;
       const lower=axial[16];
       for(let i=0;i<neck.length;i++){
         const v=neck[i];v.q.copy(lower.q).slerp(head.quaternion,(i+1)/8);
         const prev=i?neck[i-1]:lower,angle=prev.q.angleTo(v.q);
         if(angle>.098)v.q.slerp(prev.q,1-.098/angle);
-        joinLevels(prev,v,16+i);
-        if(scale!==1&&i===0)v.pos.add(fromDisc.set(0,.013-(scale-.675)*.05,0).applyQuaternion(v.q));
+        joinLevels(prev,v,16+i,fittedChest&&i===0?scale:1,1);
+        if(!fittedChest&&scale!==1&&i===0)v.pos.add(fromDisc.set(0,.013-(scale-.675)*.05,0).applyQuaternion(v.q));
         seatSurface(v);
       }
       skull.position.copy(neck[6].pos).sub(head.position).applyQuaternion(workQ.copy(head.quaternion).invert());
@@ -2130,7 +2171,7 @@
       }
       const gripMovement=state.movement==='squat_types'?'squat':state.movement;
       // These lifts need the final ribs before solving shoulder or bar contact.
-      if(!['squat','bench','press','pullup'].includes(gripMovement))fitAxialPose(amount);
+      if(!['squat','rdl','bench','press','pullup'].includes(gripMovement))fitAxialPose(amount);
       if(state.movement!=='bench')fitCostalCartilage?.();
       if(exerciseArms.visible&&!previewDebug)fitShoulderGirdle?.fitHands(gripMovement);
       fitShoulderGirdle?.(gripMovement);
@@ -2365,13 +2406,14 @@
       }else if(m==='chimp'){
         if(chain)frame(0,.11,0,3.62,4.28);
         else frame(0,1.69,.08,8.05,5.65);
-      }else if(isDeadlift(m))frame(0,3.20,.15,13.1,4.15);
-      else if(tensionIds.has(m)){
-        const horizontal=m==='tension_pushup'||m==='tension_cat';
-        frame(0,horizontal?1.4:m==='tension_pogo'?3.5:3.15,m==='tension_swing'?.4:m==='tension_cat'?-.2:.2,
-          horizontal?9.2:m==='tension_swing'?13.8:13.7,m==='tension_pushup'?8.05:horizontal?7.35:m==='tension_swing'?5.5:4.4);
+      }else if(m==='tension_deadlift')frame(0,3.12,.13,11.7,4.15);
+      else if(isDeadlift(m))frame(0,3.20,.15,13.1,4.15);
+      else if(tensionFrames[m]){
+        const {y,z}=tensionFrames[m];
+        target.set(0,y,z);
+        distance=1/halfFovTan;
       }else if(previewIds.has(m))frame(0,3.15,.10,13.8,4.0);
-      else if(m==='squat_types')frame(0,3.28,-.10,13.4,4.7);
+      else if(m==='squat'||m==='squat_types')frame(0,3.47,-.04,13.65,4.7);
       else if(m==='lunge')frame(0,3.05,.05,12.7,4.3);
       else if(m==='pushup'||m==='bench')frame(0,m==='pushup'?1.4:1.8,m==='pushup'?.2:-.25,m==='bench'?9.0:8.4,m==='pushup'?8.05:7.35);
       else if(exerciseIds.has(m)){

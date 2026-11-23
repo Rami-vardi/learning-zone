@@ -618,8 +618,9 @@
       // In this rig the model faces +Z, its right side is -X and its left is +X.
       const hipY=elevated?mix(2.87,1.98):offload?mix(2.82,2.12):mix(2.72,1.97);
       const heelDownShift=-.38-.72*phase*(1.45-.45*phase);
-      // Keep the bench fixed and move the pelvis toward it as the rear knee bends.
-      const hipZ=elevated?(rear?mix(.37,-.06):mix(.32,.13))
+      // Bring the rear hip farther toward the fixed bench near the bottom.
+      const benchOffloadShift=mix(.37,-.06)-.42*phase*phase;
+      const hipZ=elevated?(rear?benchOffloadShift:mix(.32,.13))
         :rear?(offload?heelDownShift:mix(-.30,-.75)):mix(.28,.70)+(moreFront?mix(.12,.15):0);
       const hipX=rear?(offload?mix(.12,.20):.045):(moreFront?mix(-.12,-.18):-.045);
       const pelvicRoll=moreFront?mix(-.135,-.195):rear?mix(.056,.080):mix(-.070,-.100);

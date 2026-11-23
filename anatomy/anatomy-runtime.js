@@ -249,7 +249,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   function detail(){
     if(state.movement==='lunge'&&state.splitStanceOption){
       return state.scenario==='a'?'Shift toward the front foot. The front hip hikes and the chest turns toward the front leg.'
-        :'Keep the rear heel down as the pelvis shifts back and turns toward the rear leg.';
+        :'Keep the rear heel down as the pelvis opens toward the rear leg and the chest follows.';
     }
     const example=exercises[state.movement];
     if(state.movement==='squat_types')return squatTypeCaptions[state.amount<.015?0:state.amount>.985?2:1];

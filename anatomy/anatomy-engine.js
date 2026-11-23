@@ -612,19 +612,21 @@
     function poseSplitStance(phase){
       const elevated=state.movement==='bulgarian_split_squat',rear=state.scenario==='b',loadedSide=rear?1:-1,floorY=.08;
       const offload=rear&&Boolean(elevated||state.splitStanceOption);
+      const heelDown=offload&&!elevated;
       const moreFront=!rear&&Boolean(elevated||state.splitStanceOption);
       const mix=(top,bottom)=>T.MathUtils.lerp(top,bottom,phase);
       // In this rig the model faces +Z, its right side is -X and its left is +X.
       const hipY=elevated?mix(2.87,1.98):offload?mix(2.82,2.12):mix(2.72,1.97);
       const heelDownShift=-.38-.72*phase*(1.45-.45*phase);
-      const hipZ=elevated?(rear?mix(.42,.38):mix(.47,.42))
+      const hipZ=elevated?(rear?mix(.42,.38):mix(.42,.30))
         :rear?(offload?heelDownShift:mix(-.30,-.75)):mix(.28,.70)+(moreFront?mix(.12,.15):0);
       const hipX=rear?(offload?mix(.12,.20):.045):(moreFront?mix(-.12,-.18):-.045);
       const pelvicRoll=moreFront?mix(-.135,-.195):rear?mix(.056,.080):mix(-.070,-.100);
-      const pelvicYaw=rear?(offload?(elevated?mix(.13,.26):mix(.17,.37)):mix(.075,.10)):(moreFront?mix(-.11,-.18):mix(-.075,-.10));
+      const pelvicYaw=heelDown?mix(.24,.55):rear?(offload?mix(.13,.26):mix(.075,.10))
+        :(moreFront?mix(-.11,-.18):mix(-.075,-.10));
       const pelvicPitch=elevated?mix(.06,.18):offload?mix(.025,.075):.025;
-      const trunkPitch=elevated?mix(.08,rear?.30:.32):rear?(offload?mix(.035,.17):mix(-.025,-.050)):mix(.055,moreFront?.195:.170);
-      const trunkYaw=moreFront?mix(-.125,-.235):offload?mix(.065,.13):pelvicYaw*.50;
+      const trunkPitch=elevated?mix(.08,rear?.30:.27):rear?(offload?mix(.035,.17):mix(-.025,-.050)):mix(.055,moreFront?.195:.170);
+      const trunkYaw=heelDown?mix(.16,.44):moreFront?mix(-.125,-.235):pelvicYaw*.50;
       const frameQ=new T.Quaternion().setFromEuler(new T.Euler(trunkPitch,trunkYaw,pelvicRoll*.25,'XYZ'));
       const origin=new T.Vector3(hipX,hipY,hipZ);
       const centreAt=r=>new T.Vector3(0,r,-.14+.035*Math.sin(r/2.5*Math.PI*2)).applyQuaternion(frameQ).add(origin);
@@ -644,14 +646,17 @@
         const theta=front?0:elevated?Math.PI-.39:offload?-.065:rear?mix(1.13,1.03):mix(.90,1.04);
         const surface=!front&&elevated?splitSquatPadTop:floorY;
         if(rearForefoot)l.poseToes?.(theta*.88);
-        const footQ=new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),theta);
+        // Turn the rear foot out with the hip while keeping its heel planted.
+        const rearFootYaw=!front&&heelDown?.23:0;
+        const footQ=new T.Quaternion().setFromEuler(new T.Euler(theta,rearFootYaw,0,'YXZ'));
         const rest=tensionFootPoints(l,rearForefoot),points=rest.map(p=>p.clone().applyQuaternion(footQ));
         let minY=Infinity,maxZ=-Infinity;for(const p of points){minY=Math.min(minY,p.y);maxZ=Math.max(maxZ,p.z);}
         const footZ=front?1.18:elevated?splitSquatRearAnkleZ:offload?-.73:-.94-maxZ;
         const A=new T.Vector3(l.side*.60,surface-minY,footZ),H=pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005));
         // Keep the elevated shin in a near-sagittal plane even when the rear
         // thigh approaches horizontal and the pelvis shifts across the stance.
-        const bend=!front&&elevated?new T.Vector3(0,A.z-H.z,H.y-A.y):new T.Vector3(l.side===loadedSide?-l.side*.04:0,0,1);
+        const bendX=rearFootYaw||(l.side===loadedSide?-l.side*.04:0);
+        const bend=!front&&elevated?new T.Vector3(0,A.z-H.z,H.y-A.y):new T.Vector3(bendX,0,1);
         const K=twoJoint(H,A,L1,L2,bend),fd=K.clone().sub(H),sd=A.clone().sub(K);
         l.root.position.copy(H);l.femur.quaternion.setFromUnitVectors(new T.Vector3(l.side*.10,-1.63,0).normalize(),fd.clone().normalize());l.femur.scale.set(1,fd.length()/L1,1);
         l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(new T.Vector3(0,-1.31,.04).normalize(),sd.clone().normalize());l.shin.scale.set(1,sd.length()/L2,1);

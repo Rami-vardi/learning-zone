@@ -1786,7 +1786,7 @@
         tensionDebug={...exerciseDebug,movement:m,phase:p,contacts:exerciseDebug.contacts};tensionHighlight(m,p);return;
       }
       if(m==='tension_swing'||m==='tension_cat'){
-        if(m==='tension_swing')poseTensionSwing(lift);else poseTensionCat(lift);
+        if(m==='tension_swing')poseTensionSwing(lift);else poseTensionCat(p);
         tensionHighlight(m,lift);tensionDebug.cyclePhase=p;return;
       }
       const jointChecks=[],armChecks=[];
@@ -1915,7 +1915,7 @@
     }
 
     function poseTensionCat(phase){
-      const V=(x,y,z)=>new T.Vector3(x,y,z),flex=-Math.cos(Math.PI*phase);
+      const V=(x,y,z)=>new T.Vector3(x,y,z),flex=Math.sin(2*Math.PI*phase);
       const hipSlide=-.15+.13*flex,kneeY=.273,kneeZ=-1.06;
       const hipY=kneeY+Math.sqrt(tensionFemur**2-(.64-.51)**2-hipSlide**2);
       const archCentre=Math.PI/2+.005;
@@ -2267,7 +2267,9 @@
         if(details.contacts?.hands)details.contacts.hands=armChecks.map(sample=>sample.grip);
         if(details.contacts?.palms)details.contacts.palms=armChecks.map(sample=>sample.grip);
       }
-      for(const leg of legs) leg.fitPatella?.();
+      // Seat the proximal shank surfaces in the kneeling pose with the ankle fixed.
+      const shankFit=state.movement==='tension_cat'?1.045:1;
+      for(const leg of legs) leg.fitPatella?.(shankFit);
     }
     function blendLumbar(){
       pelvis.updateMatrix();torso.updateMatrix();

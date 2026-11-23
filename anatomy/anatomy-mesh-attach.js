@@ -83,7 +83,7 @@ window.azAttachAnatomyMeshes=function(parts){
     const ankle = new T.Vector3();
     const tibiaRest=new T.Vector3();
     const hingeAxis=new T.Vector3(1,0,0);
-    leg.fitPatella = () => {
+    leg.fitPatella = shankFit => {
       leg.foot.getWorldPosition(ankle);
       leg.femur.worldToLocal(ankle).sub(knee);
       const flexion = T.MathUtils.clamp(Math.atan2(-ankle.z, -ankle.y) + Math.atan2(.04, 1.31), 0, 2.75);
@@ -95,7 +95,10 @@ window.azAttachAnatomyMeshes=function(parts){
       for(const bone of [tibia,leg.fibula]){
         bone.quaternion.setFromAxisAngle(hingeAxis,glide);
         const rest=bone===tibia?tibiaRest:(leg.fibulaRest||tibiaRest);
-        bone.position.copy(rest).sub(anklePivot).applyQuaternion(bone.quaternion).add(anklePivot);
+        bone.scale.y=shankFit;
+        bone.position.copy(rest).sub(anklePivot);
+        bone.position.y*=shankFit;
+        bone.position.applyQuaternion(bone.quaternion).add(anklePivot);
       }
       // Small lateral excursion peaks in mid flexion and decreases at depth.
       const tracking=Math.sin(Math.min(Math.PI,flexion*1.18));

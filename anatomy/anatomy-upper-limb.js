@@ -142,7 +142,7 @@ window.azAttachUpperSkeleton = function(parts) {
   const probe=new T.Vector3(), before=new T.Vector3();
   const axisX=vector(1,0,0), axisY=vector(0,1,0), axisZ=vector(0,0,1), increment=new T.Quaternion();
   const pivotA=new T.Vector3(),pivotB=new T.Vector3(), surfaceNormal=new T.Vector3(),armLever=new T.Vector3(),moment=new T.Vector3();
-  function seatBlade(frame,pivot,acromion,chest,markers,clearance,stiffness) {
+  function seatBlade(frame,pivot,acromion,chest,markers,clearance,stiffness,contactBand=.038) {
     updateChest(chest);
     frame.updateMatrix();before.copy(pivot).applyMatrix4(frame.matrix);
     pivotA.subVectors(before,start).normalize();
@@ -163,7 +163,7 @@ window.azAttachUpperSkeleton = function(parts) {
           surfaceNormal.addScaledVector(n,weight);
         }
         gap/=sum;surfaceNormal.divideScalar(sum);
-        const error=clearance-gap, weight=1+12*(1-T.MathUtils.smoothstep(gap,-.015,.038));
+        const error=clearance-gap, weight=1+12*(1-T.MathUtils.smoothstep(gap,-.015,contactBand));
         armLever.subVectors(probe,before);moment.crossVectors(armLever,surfaceNormal);
         const a=moment.dot(pivotA),b=moment.dot(pivotB);
         aa+=weight*a*a;ab+=weight*a*b;bb+=weight*b*b;ar+=weight*a*error;br+=weight*b*error;
@@ -523,7 +523,10 @@ window.azAttachUpperSkeleton = function(parts) {
       if(!mobile&&scapula.visible&&torso.visible){
         // Allow the blade to wrap around the lateral ribs at full protraction.
         const clearance=movement==='scapula'?.075:['rdl','lunge','squat','row','dips','cgoblet','cheels','csafety','tension_pogo','tension_swing','tension_cat'].includes(movement)?.095:exerciseArms.visible?.044:.073;
-        seatBlade(scapula,headCentre,acromion,chest,bladePoints,clearance,movement==='tension_cat'?2.4:0);
+        // The ribs change slope appreciably in Cat-Camel. Blend their contact
+        // weights over a wider band so the blade does not snap at the arch.
+        const catCamel=movement==='tension_cat';
+        seatBlade(scapula,headCentre,acromion,chest,bladePoints,clearance,catCamel?2.4:0,catCamel?.075:undefined);
       }
       if (!exerciseArms.visible) arm.node.position.copy(joint.copy(headCentre).applyMatrix4(scapula.matrix));
       end.copy(acromion).applyMatrix4(scapula.matrix).sub(start);

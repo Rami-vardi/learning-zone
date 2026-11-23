@@ -616,7 +616,8 @@
       const moreFront=!rear&&Boolean(elevated||state.splitStanceOption);
       const mix=(top,bottom)=>T.MathUtils.lerp(top,bottom,phase);
       // In this rig the model faces +Z, its right side is -X and its left is +X.
-      const hipY=elevated?mix(2.87,1.98):offload?mix(2.82,2.12):mix(2.72,1.97);
+      // Both bench variations share the same depth and clear the floor.
+      const hipY=elevated?mix(2.87,1.98)+.06*phase**4:offload?mix(2.82,2.12):mix(2.72,1.97);
       const heelDownShift=-.38-.72*phase*(1.45-.45*phase);
       // Bring the rear hip farther toward the fixed bench near the bottom.
       const benchOffloadShift=mix(.37,-.06)-.42*phase*phase;

@@ -667,33 +667,43 @@
       return profilePlants.get(key);
     }
     const squatBarOffsets=new Map();
-    function neutralSquatBar(scale){
-      if(squatBarOffsets.has(scale))return squatBarOffsets.get(scale);
+    function squatBarOffset(scale,pelvicOffset=0){
+      const neutral=pelvicOffset===0;
+      if(neutral&&squatBarOffsets.has(scale))return squatBarOffsets.get(scale);
       // Reconstruct the same high bar seat used by the rendered vertebrae,
       // relative to the hip joint in the upright trunk's coordinate system.
       const hipOffset=new T.Vector3(0,-.17,.005);
       const seat=squatBarSeat(squatBarRadius);
       seat.y*=scale;
       if(axial.every(Boolean)){
-        axial[0].pos.copy(axial[0].origin).sub(new T.Vector3(0,3.3,0));
-        if(scale!==1)axial[0].pos.y+=profileBaseOffset(scale);
-        axial[0].q.identity();
+        const root=axial[0];
+        root.q.setFromAxisAngle(spineAxis,pelvicOffset);
+        root.pos.copy(root.origin).sub(new T.Vector3(0,3.3,0));
+        if(scale!==1)root.pos.y+=profileBaseOffset(scale);
+        root.pos.applyQuaternion(root.q);
         for(let i=1;i<=15;i++){
-          axial[i].q.identity();joinLevels(axial[i-1],axial[i],i-1,scale);
+          axial[i].q.setFromAxisAngle(spineAxis,pelvicOffset*squatPelvisWeight(i));
+          joinLevels(axial[i-1],axial[i],i-1,scale);
         }
         seat.add(axial[15].pos);
       }else seat.add(new T.Vector3(0,(squatSupportLevel.y-3.3)*scale,squatSupportLevel.z));
-      seat.sub(hipOffset);squatBarOffsets.set(scale,seat);return seat;
+      seat.sub(hipOffset.applyAxisAngle(spineAxis,pelvicOffset));
+      if(neutral)squatBarOffsets.set(scale,seat);
+      return seat;
+    }
+    function squatPelvisWeight(level){
+      return 1-T.MathUtils.smoothstep(level,0,5);
     }
     function squatFrame(build,phase,profile,extension){
       const foot=legs[0],side=foot.side,plant=squatProfilePlant(foot,profile);
       const shin=Math.hypot(1.31,.04),fullDrop=.3463,toeAngle=profile?profileToeAngle:standardSquatToeAngle;
-      const seat=neutralSquatBar(build.torso);
+      const seat=squatBarOffset(build.torso);
       // Begin close to extension with the bar balanced above the foot. The
       // knees open toward the toes as the hips and knees bend together.
       const uprightSeat=seat.clone().applyAxisAngle(spineAxis,.15);
       const lean=Math.asin((plant.midfootZ-plant.ankle.z-uprightSeat.z)/(shin+build.femur));
-      const shinAngle=T.MathUtils.lerp(lean+.022,T.MathUtils.degToRad(36.5),phase);
+      const tuck=T.MathUtils.smoothstep(phase,.56,.98);
+      const shinAngle=T.MathUtils.lerp(lean+.022,T.MathUtils.degToRad(36.5),phase)-(extension?.12*tuck:0);
       const travel=shin*Math.sin(shinAngle);
       const standingX=T.MathUtils.lerp(plant.ankle.x,side*.51,shin/(shin+build.femur));
       const kneeX=T.MathUtils.lerp(standingX,plant.ankle.x+side*Math.sin(toeAngle)*travel,1-(1-phase)**3);
@@ -703,9 +713,13 @@
       const angle=monotoneGuide([0,.08,.24,.55,.80,1],[-lean+.022,-lean+.068,.28,.98,Math.PI/2,
         Math.PI/2+Math.asin(fullDrop/sagittal)],phase);
       const hip=new T.Vector3(0,kneeY+sagittal*Math.cos(angle),kneeZ-sagittal*Math.sin(angle));
-      const pitch=Math.asin((plant.midfootZ-hip.z)/Math.hypot(seat.y,seat.z))-Math.atan2(seat.z,seat.y);
-      const tuck=T.MathUtils.smoothstep(phase,.65,1);
-      const pelvicPitch=pitch+(profile?0:extension?.14-.25*tuck:-.075*tuck);
+      // Use the articulated shaft seat. When the pelvis tucks and the lumbar
+      // arch reduces, the trunk inclines to keep the load over the foot.
+      const pelvicOffset=profile?0:extension?.32-.68*tuck:-.075*tuck;
+      const fittedSeat=squatBarOffset(build.torso,pelvicOffset);
+      const pitch=Math.asin((plant.midfootZ-hip.z)/Math.hypot(fittedSeat.y,fittedSeat.z))
+        -Math.atan2(fittedSeat.z,fittedSeat.y);
+      const pelvicPitch=pitch+pelvicOffset;
       const origin=hip.sub(new T.Vector3(0,-.17,.005).applyAxisAngle(spineAxis,pelvicPitch));
       return {origin,pitch,pelvicPitch,knee:new T.Vector3(kneeX,kneeY,kneeZ)};
     }
@@ -727,17 +741,17 @@
         for(const l of legs)rdlFeet.set(l.side,supportedFoot(l,l.side*.61,feetZ,0,l.side*T.MathUtils.degToRad(10)));
         const {ankle}=rdlFeet.get(legs[0].side);
         const shinAngle=T.MathUtils.lerp(-.027,b?.075:.025,phase);
-        const thighAngle=T.MathUtils.lerp(.078,b?.55:.45,phase);
+        const thighAngle=T.MathUtils.lerp(.078,b?.58:.47,phase);
         const shin=Math.sqrt(1.31**2+.04**2-.05**2),thigh=Math.sqrt(1.63**2+.10**2-.05**2);
         rdlKnee=new T.Vector3(0,ankle.y+shin*Math.cos(shinAngle),ankle.z+shin*Math.sin(shinAngle));
-        basePitch=(b?1.04:1.13)*phase;
-        pelvisPitch=basePitch*(b?.65:1);
+        basePitch=1.30*phase;
+        pelvisPitch=basePitch*(b?.60:1);
         const pivot=new T.Vector3(0,-.17,.005).applyAxisAngle(spineAxis,pelvisPitch);
         hipY=rdlKnee.y+thigh*Math.cos(thighAngle)-pivot.y;
         hipZ=rdlKnee.z-thigh*Math.sin(thighAngle)-pivot.z;
-        lumbar=b?.20*smooth(.24,1,phase):0;
-        cervical=b?.10*smooth(.62,1,phase):0;
-        pro=b?.25*smooth(.25,1,phase):0;
+        lumbar=b?.32*smooth(.20,1,phase):0;
+        cervical=b?.105*smooth(.50,1,phase):0;
+        pro=b?.40*smooth(.25,1,phase):0;
         rdlPressureCue.visible=true;rdlPressureCue.position.z=b?-.035:.22;
         deadliftFloor.visible=true;
       }
@@ -875,7 +889,7 @@
       model.updateMatrixWorld(true);
       let gripCentre;
       if(rdl){
-        const S=shoulderAt(1),z=.25+.038*phase+(b?.48*smooth(.35,1,phase):0);
+        const S=shoulderAt(1),z=.25+.11*phase+(b?.764*smooth(.29,1,phase):0);
         const reach=2.06*rdlArm+.103;
         const dy=Math.sqrt(reach**2-(S.x-deadliftGripX)**2-(S.z-z)**2);
         gripCentre=new T.Vector3(0,S.y-dy,z);
@@ -2112,7 +2126,7 @@
         // The reference surfaces already contain the spinal curves. Carry the
         // column with the pelvis throughout the braced lifts.
         if(braced)v.q.copy(base.q);
-        else if(fittedChest)v.q.copy(v.node.quaternion).slerp(base.q,1-T.MathUtils.smoothstep(i,0,m==='rdl'?9:5));
+        else if(fittedChest)v.q.copy(v.node.quaternion).slerp(base.q,m==='rdl'?1-T.MathUtils.smoothstep(i,0,9):squatPelvisWeight(i));
         else v.q.copy(base.q).slerp(terminalFrame,i/last).multiply(stepQ.setFromAxisAngle(spineAxis,angle));
         joinLevels(axial[i-1],v,i-1,scale);
       }

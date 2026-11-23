@@ -76,8 +76,8 @@ window.azAppliedScenes.lunge={
 window.azAppliedScenes.bulgarian_split_squat={
  title:'Bulgarian Split Squat',labels:['Front Leg Loading','Offload Front Leg'],ends:['Top','Lower'],view:'oblique',
  captions:{
-  a:['Set the left foot on the bench and plant the right foot on the floor.','The front hip hikes relative to the rear hip as the torso turns slightly toward the front leg.','At depth, the front hip is higher than the rear hip and the chest is turned slightly toward the front leg.'],
-  b:['Set the left foot on the bench so it can share support with the front leg.','The rear knee bends more as the pelvis shifts back and turns toward the rear leg.','At the same depth, compare the smaller rear knee angle and the turn toward the rear support.']
+  a:['Set the left foot on the bench and plant the right foot on the floor.','Let the rear knee bend as you lower. The front hip hikes slightly and the chest turns toward the front leg.','At depth, the rear knee bends deeply and the front hip sits higher than the rear hip.'],
+  b:['Set the left foot on the bench so it can share support with the front leg.','As you lower, let the rear hip travel toward the foot on the bench. The rear knee closes as the pelvis turns toward the rear leg.','At the same depth, compare how much closer the rear hip sits to the bench and how much more the rear knee bends.']
  },
  source:'Teaching comparison showing two ways to use the elevated rear foot in a Bulgarian split squat.',
  note:'The right foot stays planted and the left foot stays on the bench in both versions. Offload Front Leg illustrates using the bench to share support. The highlighted foot indicates the intended support. Foot forces are not measured.'

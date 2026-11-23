@@ -373,7 +373,7 @@
     for(const z of [-2.70,.65]){between(flatBench,[0,.89,z],[0,.12,z],.065,.065,steel);between(flatBench,[-.85,.10,z],[.85,.10,z],.055,.055,steel);}
     const splitSquatBench=new T.Group();equipment.add(splitSquatBench);
     const splitSquatPadTop=1.18;
-    const splitSquatRearAnkleZ=-1.63;
+    const splitSquatRearAnkleZ=-1.57;
     box(splitSquatBench,[1.86,.16,1.48],[.25,splitSquatPadTop-.08,splitSquatRearAnkleZ-.87],dumbbellHeads);
     for(const offset of [-1.38,-.37]){
       const z=splitSquatRearAnkleZ+offset;
@@ -618,14 +618,15 @@
       // In this rig the model faces +Z, its right side is -X and its left is +X.
       const hipY=elevated?mix(2.87,1.98):offload?mix(2.82,2.12):mix(2.72,1.97);
       const heelDownShift=-.38-.72*phase*(1.45-.45*phase);
-      const hipZ=elevated?(rear?mix(.42,.38):mix(.42,.30))
+      // Keep the bench fixed and move the pelvis toward it as the rear knee bends.
+      const hipZ=elevated?(rear?mix(.37,-.06):mix(.32,.13))
         :rear?(offload?heelDownShift:mix(-.30,-.75)):mix(.28,.70)+(moreFront?mix(.12,.15):0);
       const hipX=rear?(offload?mix(.12,.20):.045):(moreFront?mix(-.12,-.18):-.045);
       const pelvicRoll=moreFront?mix(-.135,-.195):rear?mix(.056,.080):mix(-.070,-.100);
       const pelvicYaw=heelDown?mix(.24,.55):rear?(offload?mix(.13,.26):mix(.075,.10))
         :(moreFront?mix(-.11,-.18):mix(-.075,-.10));
       const pelvicPitch=elevated?mix(.06,.18):offload?mix(.025,.075):.025;
-      const trunkPitch=elevated?mix(.08,rear?.30:.27):rear?(offload?mix(.035,.17):mix(-.025,-.050)):mix(.055,moreFront?.195:.170);
+      const trunkPitch=elevated?mix(.08,rear?.235:.27):rear?(offload?mix(.035,.17):mix(-.025,-.050)):mix(.055,moreFront?.195:.170);
       const trunkYaw=heelDown?mix(.16,.44):moreFront?mix(-.125,-.235):pelvicYaw*.50;
       const frameQ=new T.Quaternion().setFromEuler(new T.Euler(trunkPitch,trunkYaw,pelvicRoll*.25,'XYZ'));
       const origin=new T.Vector3(hipX,hipY,hipZ);

@@ -373,7 +373,7 @@
     for(const z of [-2.70,.65]){between(flatBench,[0,.89,z],[0,.12,z],.065,.065,steel);between(flatBench,[-.85,.10,z],[.85,.10,z],.055,.055,steel);}
     const splitSquatBench=new T.Group();equipment.add(splitSquatBench);
     const splitSquatPadTop=1.18;
-    const splitSquatRearAnkleZ=-1.78;
+    const splitSquatRearAnkleZ=-1.63;
     box(splitSquatBench,[1.86,.16,1.48],[.25,splitSquatPadTop-.08,splitSquatRearAnkleZ-.87],dumbbellHeads);
     for(const offset of [-1.38,-.37]){
       const z=splitSquatRearAnkleZ+offset;

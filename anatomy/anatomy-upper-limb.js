@@ -286,7 +286,7 @@ window.azAttachUpperSkeleton = function(parts) {
   }
 
   const floorHands = new Set(['pushup', 'tension_pushup', 'tension_cat']);
-  const openHands = new Set([...floorHands, 'lunge', 'tension_pogo', 'cgoblet']);
+  const openHands = new Set([...floorHands, 'lunge', 'bulgarian_split_squat', 'tension_pogo', 'cgoblet']);
   const backSquats = new Set(['squat','cheels']);
   const joint = new T.Vector3(), target = new T.Vector3(), start = new T.Vector3(), end = new T.Vector3();
   const armAxis = new T.Vector3(), forearmAxis = new T.Vector3(), hinge = new T.Vector3(), forward = new T.Vector3();
@@ -522,7 +522,7 @@ window.azAttachUpperSkeleton = function(parts) {
       }
       if(!mobile&&scapula.visible&&torso.visible){
         // Allow the blade to wrap around the lateral ribs at full protraction.
-        const clearance=movement==='scapula'?.075:['rdl','lunge','squat','row','dips','cgoblet','cheels','csafety','tension_pogo','tension_swing','tension_cat'].includes(movement)?.095:exerciseArms.visible?.044:.073;
+        const clearance=movement==='scapula'?.075:['rdl','lunge','bulgarian_split_squat','squat','row','dips','cgoblet','cheels','csafety','tension_pogo','tension_swing','tension_cat'].includes(movement)?.095:exerciseArms.visible?.044:.073;
         // The ribs change slope appreciably in Cat-Camel. Blend their contact
         // weights over a wider band so the blade does not snap at the arch.
         const catCamel=movement==='tension_cat';

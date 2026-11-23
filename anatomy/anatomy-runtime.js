@@ -75,14 +75,15 @@ window.azAppliedScenes.lunge={
 
 const bodyTypeCaptions=[
  'Compare the four setups with the plates on the floor. The feet and bar stay in place as hip height and trunk angle change.',
- 'At the same point in the pull, compare where the bar sits beside the shins and thighs.',
+ 'As the bar leaves the floor, the knees straighten and move back to make room for the shaft.',
+ 'After the shaft passes the knees, the hips move toward the bar and the torso comes upright.',
  'At lockout, compare two builds with the same torso length. The longer arms place the bar lower on the thighs.'
 ];
 window.azAppliedScenes.deadlift_types={
  title:'Deadlift Body Types',wholeChainOnly:true,labels:['',''],ends:['Bar on floor','Lockout'],view:'side',
  captions:{a:bodyTypeCaptions,b:bodyTypeCaptions},
  source:'Four conventional deadlift examples use the same legs, bar and stance. Torso and arm lengths vary across the four builds. Each model holds its spinal curves as the hips and knees extend.',
- note:'Torso length varies by 10% and upper arm and forearm lengths by 9% around the model average. Leg lengths, grip width, plate size and starting bar position are shared. The model shows one possible setup for each build.'
+ note:'Torso length varies by 10% and upper arm and forearm lengths by 9% around the model average. Leg lengths, grip width, plate size and starting bar position are shared. The knee and hip paths are illustrative. Each build shows one possible way to pull from the floor.'
 };
 
 const squatTypeCaptions=[
@@ -123,32 +124,52 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   const fullscreenButton=document.createElement('button');
   fullscreenButton.type='button';
   fullscreenButton.className='azc-fullscreen';
-  fullscreenButton.hidden=!document.fullscreenEnabled;
+  const fullscreenDialog=document.createElement('dialog');
+  fullscreenDialog.className='azc-screen-dialog';
+  fullscreenDialog.setAttribute('aria-label','Expanded anatomy viewer');
+  fullscreenButton.hidden=!document.fullscreenEnabled&&typeof fullscreenDialog.showModal!=='function';
   fullscreenButton.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path/></svg>';
   const fullscreenIcon=fullscreenButton.querySelector('path');
   const fullscreenStatus=document.createElement('span');
   fullscreenStatus.className='azc-screen-status';
   fullscreenStatus.setAttribute('role','status');
   stageArea.prepend(fullscreenButton,fullscreenStatus);
+  const fullscreenActive=()=>document.fullscreenElement?.contains(fullscreenButton)||fullscreenDialog.open;
   function syncFullscreen(){
-    const active=document.fullscreenElement?.contains(fullscreenButton);
+    const active=fullscreenActive();
     fullscreenButton.setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');
     fullscreenIcon.setAttribute('d',active
       ?'M3 9h6V3m6 0v6h6M3 15h6v6m6 0v-6h6'
       :'M9 3H3v6m12-6h6v6M3 15v6h6m6 0h6v-6');
   }
+  function closeExpanded(){
+    const target=fullscreenDialog.firstElementChild;
+    if(!target)return;
+    fullscreenDialog.close();
+    target.classList.remove('azc-expanded');
+    fullscreenDialog.replaceWith(target);
+    fullscreenButton.focus({preventScroll:true});
+  }
   async function toggleFullscreen(){
     const target=fullscreenButton.closest('.tf-model,.azc-explorer');
     if(!target)return;
     fullscreenStatus.textContent='';
+    if(fullscreenDialog.open){closeExpanded();syncFullscreen();return;}
+    if(document.fullscreenElement===target){await document.exitFullscreen();syncFullscreen();return;}
     try{
-      if(document.fullscreenElement===target)await document.exitFullscreen();
-      else await target.requestFullscreen();
+      await target.requestFullscreen();
     }catch{
-      fullscreenStatus.textContent='Fullscreen is unavailable in this window.';
+      if(typeof fullscreenDialog.showModal==='function'&&target.isConnected){
+        target.before(fullscreenDialog);
+        fullscreenDialog.append(target);
+        target.classList.add('azc-expanded');
+        fullscreenDialog.showModal();
+        fullscreenButton.focus({preventScroll:true});
+      }else fullscreenStatus.textContent='Fullscreen is unavailable in this window.';
     }
     syncFullscreen();
   }
+  listen(fullscreenDialog,'cancel',e=>{e.preventDefault();closeExpanded();syncFullscreen();});
   syncFullscreen();
   listen(fullscreenButton,'click',toggleFullscreen);
   listen(document,'fullscreenchange',syncFullscreen);
@@ -171,7 +192,16 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   const sources=document.createElement('p'),sourceLink=document.createElement('a');
   sourceLink.target='_blank';sourceLink.rel='noreferrer';sources.append(sourceLink);
   const courseLinks=q('#azc-source-note').nextElementSibling;
-  q('#azc-source-note').after(sources);sources.hidden=true;
+  const deadliftSources=document.createElement('p');
+  for(const [name,href] of [
+    ['Conventional deadlift kinematics','https://pubmed.ncbi.nlm.nih.gov/10912892/'],
+    ['IPF equipment specifications','https://www.powerlifting.sport/rules/codes/info/technical-rules']
+  ]){
+    const link=document.createElement('a');link.textContent=name;link.href=href;link.target='_blank';link.rel='noreferrer';
+    if(deadliftSources.childNodes.length)deadliftSources.append(' · ');
+    deadliftSources.append(link);
+  }
+  q('#azc-source-note').after(sources,deadliftSources);sources.hidden=deadliftSources.hidden=true;
   function buildSelector(movement,label,builds,key){
     const group=document.createElement('div');
     group.className='azc-body-types';group.hidden=true;
@@ -210,7 +240,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     if(state.movement==='lunge'&&state.scenario==='a'&&state.frontHipHike)return direction<0?'The right front leg drives the return with the stronger hike and forward body position.':'A stronger right pelvic hike accompanies a shift of the pelvis and trunk toward the right front foot.';
     const example=exercises[state.movement];
     if(state.movement==='squat_types')return squatTypeCaptions[state.amount<.015?0:state.amount>.985?2:1];
-    if(state.movement==='deadlift_types')return bodyTypeCaptions[state.amount<.015?0:state.amount>.985?2:1];
+    if(state.movement==='deadlift_types')return bodyTypeCaptions[state.amount===0?0:state.amount===1?3:viewer?.deadliftAboveKnees?2:1];
     if(direction<0&&state.amount>.025&&state.amount<.999&&returnCaptions[state.movement])return returnCaptions[state.movement];
     if(direction<0&&state.amount>.025&&state.amount<.999){if(state.movement==='lunge')return state.scenario==='a'?'Drive the return through the right front leg while following the pelvis.':'Drive the return through the left rear leg in this selected loading strategy.';if(state.movement==='dips')return state.scenario==='b'?'The trunk opens as the arms return toward shoulder flexion.':'Shoulder flexion and elbow extension accompany the ascent.';if(state.movement==='pushup')return state.scenario==='b'?'The elbows straighten as the scapulae protract, with the pelvis kept tucked.':'The shoulders and elbows coordinate as the body rises from the fixed hands.';if(state.movement==='bench')return state.scenario==='b'?'The arms press the bar up as the feet push into the floor and the upper back stays supported.':'The upper arms move toward the starting position as the elbows straighten.';}if(example){
       if(state.movement==='squat'&&state.scenario==='a')return example.captions.a[state.amount<.15?0:viewer?.squatBelowKnees?2:1];
@@ -317,7 +347,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     q('.azc-loading-controls').hidden=wholeChainOnly()||baby;
 
     const deadlift=state.movement==='deadlift_types',squatTypes=state.movement==='squat_types';
-    sources.hidden=!special&&!deadlift&&!squatTypes;courseLinks.hidden=Boolean(special||deadlift||squatTypes);
+    sources.hidden=!special&&!deadlift&&!squatTypes;deadliftSources.hidden=!deadlift;courseLinks.hidden=Boolean(special||deadlift||squatTypes);
     if(deadlift){sourceLink.textContent='Standing shoulder, hip and knuckle heights';sourceLink.href='https://stacks.cdc.gov/view/cdc/218478/cdc_218478_DS1.pdf';}
     if(squatTypes){sourceLink.textContent='Ankle mobility, segment ratios and trunk lean in the back squat';sourceLink.href='https://pubmed.ncbi.nlm.nih.gov/28301442/';}
     if(special){sourceLink.textContent=special.link[0];sourceLink.href=special.link[1];}
@@ -377,10 +407,11 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   listen(root,'keydown',e=>{
     const menu=openViewDetails();
     if(e.key==='Escape'&&menu){
+      e.preventDefault();e.stopPropagation();
       menu.open=false;
       menu.querySelector('summary').focus({preventScroll:true});
-    }else if(e.key==='Escape'&&document.fullscreenElement?.contains(fullscreenButton)){
-      e.preventDefault();
+    }else if(e.key==='Escape'&&fullscreenActive()){
+      e.preventDefault();e.stopPropagation();
       toggleFullscreen();
     }
   });

@@ -220,11 +220,12 @@ window.azAttachUpperSkeleton = function(parts) {
   const joints = [];
   sternum.updateMatrix();
   const sternumRestInverse=sternum.matrix.clone().invert();
+  const conventionalPull=movement=>movement==='deadlift_types'||movement==='tension_deadlift';
   const shortTorsoFraction=()=>T.MathUtils.clamp((.825-torso.scale.y)/.15,0,1);
   function setClaviclePivot(side,movement){
     // Register the medial end against the upper lateral manubrium. The
     // shorter rib cage needs a higher attachment in its scaled local frame.
-    const rise=movement==='deadlift_types'?.029*shortTorsoFraction():0;
+    const rise=conventionalPull(movement)?.029*shortTorsoFraction():0;
     start.set(side*.118,.791+rise,.197);
     sternum.updateMatrix();
     start.applyMatrix4(sternumRestInverse).applyMatrix4(sternum.matrix);
@@ -481,7 +482,7 @@ window.azAttachUpperSkeleton = function(parts) {
         // glenoid at the corresponding shoulder while retaining blade rotation.
         if(!mobile||exercise.reachAdjustment>1e-10){
           torso.worldToLocal(exercise.upper.getWorldPosition(target));
-          if(movement==='deadlift_types')target.y+=.030*shortTorsoFraction();
+          if(conventionalPull(movement))target.y+=.030*shortTorsoFraction();
           scapula.position.add(target.sub(joint));
           scapula.updateMatrix();
         }
@@ -504,7 +505,7 @@ window.azAttachUpperSkeleton = function(parts) {
       arm.clavicle.position.copy(start);
       arm.clavicle.scale.y = clavicleLength;
       arm.clavicle.quaternion.setFromUnitVectors(down, end.normalize());
-      if(movement==='deadlift_types')arm.clavicle.quaternion.multiply(rotation.setFromAxisAngle(axisY,arm.side*.40*shortTorsoFraction()));
+      if(conventionalPull(movement))arm.clavicle.quaternion.multiply(rotation.setFromAxisAngle(axisY,arm.side*.40*shortTorsoFraction()));
       if(movement==='bench'||movement==='squat'){
         // Axial rotation clears the upper ribs while preserving both endpoints.
         const roll=movement==='bench'?.30:.12;

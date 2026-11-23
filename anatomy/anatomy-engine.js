@@ -31,8 +31,6 @@
     bench_b:'OfSkl5nN0Dg5NzI3DcfH',
     pushup_a:'GuDg8gMNFx8jJSAR+9/E',
     pushup_b:'be8DJiT++B88PDUT2MTEbO0CJiYC+yE8PDQP1MTEaun/JikH/yQ8PDEKzsTEauj+JioLAiU8PC4GysTEauf+JiwOBCY8OyoDyMTEauX9Ji0SByc7OicAxsTEaeP8Ji8VCig7OCT8xMTEaOH6JjEaDSo7NiH3xMTEZ9/5JzQdECw7NR3yxMTEZtz3JzYhEy48MxrtxMTEZtv2JzgkFjA8MhfpxMTEZdn1KDknGDE8MRXmxMTEZdf0KDspGjI8MBPjxMTEZNXzKD0sHTQ8LxHfxMTEY9TyKT4uHjU8Lw/dxMTEY9PxKT8vIDY8Lg7axMTEY9PxKUAwIDc8Lg3ZxMTE',
-    lunge_a:'AdzkAhslKywoIRL62sTEA9rjAhwnLS4pIRH418TEBtnhAh0oLzArIhH208TECdjhAx8qMTEsIhD0z8TEDdfgAyAsMjMtIxDyzMTEENbfAyEtNDQuIw/xycTEE9XfBCIuNTUvIw/vx8TEF9XeBCMvNjYvIw7uxcTEGtTeBCQwNzcwIw3sxMTEHtPdBSUyOTkxIwvoxMTEH8nYDDI2Ozs0JwjfxMTEGajJLlg6PDw5NP3NxMTEEpTBUW48PDw8OebGxMTEDZPBaW48PDw7OdbHxMTEDJLFbm48PDw7OdHFxMTEDJLNbm48PDw7OMvFxMTEDJLTbm48PDw7NsbExMTE',
-    lunge_b:'2+fsABAXHB0cGRED8NnE2+fsABAXHB0cGREE8NrE2ufsABAXGx0cGREE8drE2efsABAXGx0cGREE8drE2OfsABAXGx0cGREE8drE1+fsABAXGx0cGREE8drE1ubrABAXHB0cGREE8drE1ebrABAXHB4dGhIE8drE1OXrABEYHB4dGhIE8dnE0+Xq/xEYHB4dGhIE8dnE0uXq/xEYHR8dGhIE8dnE0eXq/xEYHR8dGhIE8dnE0OTq/xEYHR8eGhME8NnEz+Tq/xEYHR8eGxME8NjEzuTp/xEYHR8eGxME8NjEzePp/xEYHSAeGxME8NjEzOPp/xEZHiAeGxME8NfE',
     tension_pushup:'bfADJiT99x88PDUT2cTEbO0CJiYB+iA8PDQQ1cTEaun/JikJACQ8PC8JzcTEaeX8Ji4SByc7Oif/x8TEZ9/5JzMdECw7NR7yxMTEZdn1KDkmGDE8MRXmxMTEZNXzKT0tHTU8LxDexMTEY9PxKT8wIDY8Lg7axMTEY9PxKUAwIDc8Lg3ZxMTEY9PxKT8wIDY8Lg7axMTEZNXzKT0tHTU8LxDexMTEZdn1KDkmGDE8MRXmxMTEZ9/5JzMdECw7NR7yxMTEaeX8Ji4SByc7Oif/x8TEaun/JikJACQ8PC8JzcTEbO0CJiYB+iA8PDQQ1cTEbfADJiT99x88PDUT2cTE',
     tension_swing:'SqjJbW48PDw3K8TExMTES6TSbG48PDw5LMXExMTEQ5jgbW48PDw8LsfExMTELJ7ZV2I6Ozs5MdbLxcTEFMbbHDQuMzMvJv7nzsTE/eDnAhghJyglHhH84MfE9ePpAhYeIyQiHRL/58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQhHBIA58rE9ePpAhYeIyQiHRL/58rE/eDnAhghJyglHhH84MfEFMbbHDQuMzMvJv7nzsTELJ7ZV2I6Ozs5MdbLxcTEQ5jgbW48PDw8LsfExMTES6TSbG48PDw5LMXExMTESqjJbW48PDw3K8TExMTE',
     tension_pogo:'/e3w/AcLDhAREA0G/PDl/N7l/A8YHiEhHhYI9NzN/NXe/BUhKSwrJxsH7MvE/Nbe/BQgKCsqJhsI7c3F/OHn/A0VGx4dGxUI9uDR/e/y/QUKDQ4ODgsG/fPo/vP1/QMGCQoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw/vP1/QMGCAoKCggF//fw',
@@ -375,8 +373,10 @@
     for(const z of [-2.70,.65]){between(flatBench,[0,.89,z],[0,.12,z],.065,.065,steel);between(flatBench,[-.85,.10,z],[.85,.10,z],.055,.055,steel);}
     const splitSquatBench=new T.Group();equipment.add(splitSquatBench);
     const splitSquatPadTop=1.18;
-    box(splitSquatBench,[1.86,.16,1.48],[.25,splitSquatPadTop-.08,-2.43],dumbbellHeads);
-    for(const z of [-2.94,-1.93]){
+    const splitSquatRearAnkleZ=-1.78;
+    box(splitSquatBench,[1.86,.16,1.48],[.25,splitSquatPadTop-.08,splitSquatRearAnkleZ-.87],dumbbellHeads);
+    for(const offset of [-1.38,-.37]){
+      const z=splitSquatRearAnkleZ+offset;
       between(splitSquatBench,[.25,splitSquatPadTop-.16,z],[.25,.15,z],.065,.065,steel);
       between(splitSquatBench,[-.54,.14,z],[1.04,.14,z],.055,.055,steel);
     }
@@ -617,14 +617,14 @@
       // In this rig the model faces +Z, its right side is -X and its left is +X.
       const hipY=elevated?mix(2.87,1.98):offload?mix(2.82,2.12):mix(2.72,1.97);
       const heelDownShift=-.38-.72*phase*(1.45-.45*phase);
-      const hipZ=elevated?(rear?mix(.10,-.24):mix(.39,.65))
+      const hipZ=elevated?(rear?mix(.42,.38):mix(.47,.42))
         :rear?(offload?heelDownShift:mix(-.30,-.75)):mix(.28,.70)+(moreFront?mix(.12,.15):0);
       const hipX=rear?(offload?mix(.12,.20):.045):(moreFront?mix(-.12,-.18):-.045);
       const pelvicRoll=moreFront?mix(-.135,-.195):rear?mix(.056,.080):mix(-.070,-.100);
-      const pelvicYaw=rear?(offload?mix(.13,.26):mix(.075,.10)):(moreFront?mix(-.11,-.18):mix(-.075,-.10));
-      const pelvicPitch=elevated?mix(.06,rear?.18:.13):offload?mix(.025,.075):.025;
-      const trunkPitch=elevated?mix(.08,rear?.30:.22):rear?(offload?mix(.035,.17):mix(-.025,-.050)):mix(.055,moreFront?.195:.170);
-      const trunkYaw=moreFront?mix(-.125,-.235):pelvicYaw*.50;
+      const pelvicYaw=rear?(offload?(elevated?mix(.13,.26):mix(.17,.37)):mix(.075,.10)):(moreFront?mix(-.11,-.18):mix(-.075,-.10));
+      const pelvicPitch=elevated?mix(.06,.18):offload?mix(.025,.075):.025;
+      const trunkPitch=elevated?mix(.08,rear?.30:.32):rear?(offload?mix(.035,.17):mix(-.025,-.050)):mix(.055,moreFront?.195:.170);
+      const trunkYaw=moreFront?mix(-.125,-.235):offload?mix(.065,.13):pelvicYaw*.50;
       const frameQ=new T.Quaternion().setFromEuler(new T.Euler(trunkPitch,trunkYaw,pelvicRoll*.25,'XYZ'));
       const origin=new T.Vector3(hipX,hipY,hipZ);
       const centreAt=r=>new T.Vector3(0,r,-.14+.035*Math.sin(r/2.5*Math.PI*2)).applyQuaternion(frameQ).add(origin);
@@ -647,7 +647,7 @@
         const footQ=new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),theta);
         const rest=tensionFootPoints(l,rearForefoot),points=rest.map(p=>p.clone().applyQuaternion(footQ));
         let minY=Infinity,maxZ=-Infinity;for(const p of points){minY=Math.min(minY,p.y);maxZ=Math.max(maxZ,p.z);}
-        const footZ=front?1.18:elevated?-1.56:offload?-.73:-.94-maxZ;
+        const footZ=front?1.18:elevated?splitSquatRearAnkleZ:offload?-.73:-.94-maxZ;
         const A=new T.Vector3(l.side*.60,surface-minY,footZ),H=pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005));
         // Keep the elevated shin in a near-sagittal plane even when the rear
         // thigh approaches horizontal and the pelvis shifts across the stance.
@@ -2115,13 +2115,13 @@
         fitCostalCartilage.seatRib(i,actualFrame,ribParents[i].offset);
       }
     }
-    // Register the free shoulder girdle to T1 after the spine has articulated.
-    // Keep the same sternum-to-spine relationship as the atlas reference pose.
     const chestAtRest=torso.position.clone();
     function seatSplitStanceChest(top){
-      const offset=top.origin.clone().sub(chestAtRest).applyQuaternion(torso.quaternion);
-      const shift=top.pos.clone().sub(offset).sub(torso.position);
-      torso.position.add(shift);
+      // The arm guides already use the chest orientation. Translate them with
+      // the chest after placing the sternum and ribs on the seated vertebrae.
+      const previous=torso.position.clone();
+      seatFittedChest(top,1);
+      const shift=torso.position.clone().sub(previous);
       for(const arm of exArms){
         for(const part of [arm.upper,arm.fore,arm.hand])part.position.add(shift);
       }
@@ -2129,7 +2129,6 @@
         for(const key of ['shoulder','elbow','wrist','grip'])
           arm[key]=new T.Vector3().fromArray(arm[key]).add(shift).toArray();
       }
-      seatRibsOnSpine();
     }
     function seatFittedChest(top,scale){
       // Keep the sternum and shoulder girdle in the upper thorax frame.
@@ -2198,8 +2197,8 @@
       terminalFrame.copy(target.quaternion).multiply(stepQ.setFromAxisAngle(spineAxis,-targetPitch));
       const m=state.movement;
       const splitStance=splitStanceIds.has(m);
-      let key=splitStance?'lunge':m,phase=amount;
-      if(splitStance||['bench','pushup','row','press','dips','pullup'].includes(m))key+='_'+(state.scenario==='b'?'b':'a');
+      let key=m,phase=amount;
+      if(['bench','pushup','row','press','dips','pullup'].includes(m))key+='_'+(state.scenario==='b'?'b':'a');
       const fittedChest=m==='rdl'||m==='squat'||m==='squat_types'||m==='tension_cat';
       const braced=isConventionalPull(m);
       // The pelvis and the cervical bones retain their original dimensions.
@@ -2216,6 +2215,11 @@
         // The reference surfaces already contain the spinal curves. Carry the
         // column with the pelvis throughout the braced lifts.
         if(braced)v.q.copy(base.q);
+        else if(splitStance){
+          // Spread the hinge and twist from the pelvis through the lower
+          // thorax. The upper cage and sternum share one chest orientation.
+          v.q.copy(base.q).slerp(torso.quaternion,T.MathUtils.smoothstep(i,0,12));
+        }
         else if(fittedChest){
           v.q.copy(v.node.quaternion);
           if(m!=='tension_cat')v.q.slerp(base.q,m==='rdl'?1-T.MathUtils.smoothstep(i,0,9):squatPelvisWeight(i));
@@ -2233,8 +2237,8 @@
       joinLevels(axial[15],top,15,scale);
       for(const level of axial)seatSurface(level);
       if(splitStance)seatSplitStanceChest(top);
-      if(fittedChest)seatFittedChest(top,scale);
-      else if(splitStance||['row','dips','tension_deadlift','deadlift_types'].includes(m))carryRibsWithVertebrae();
+      else if(fittedChest)seatFittedChest(top,scale);
+      else if(['row','dips','tension_deadlift','deadlift_types'].includes(m))carryRibsWithVertebrae();
       if(!fittedChest&&!braced&&!splitStance)seatCostovertebralJoints();
       if(!skull||!neck.every(Boolean))return;
       const lower=axial[16];

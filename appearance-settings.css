@@ -16,6 +16,8 @@ html[data-lz-theme-ready] #student-learning-board :is(section,.lz-account,.athle
 html[data-lz-theme-ready] #student-learning-board :is(.day-title,.lz-editing,.tabs button[aria-selected=true]){background:var(--lz-soft);color:var(--lz-blue)}
 html[data-lz-theme-ready] #student-learning-board :is(.primary,button[aria-selected=true].primary){background:var(--lz-blue);border-color:var(--lz-blue);color:var(--lz-on-accent)}
 html[data-lz-theme-ready] #student-learning-board :is(.exercise-summary strong,.mirror-exercise strong,.summary-text){color:inherit}
+:where(html[data-lz-appearance=dark]) #student-learning-board .board-note {color:var(--lz-sub)}
+html[data-lz-appearance=dark] #student-learning-board .board-note[data-state=error] {color:var(--lz-danger)}
 /* Keep the exercise roles and floor / ceiling colors distinct. */
 html[data-lz-theme-ready] #student-learning-board :is(.role-primary,.role-secondary,.role-tertiary){background:var(--lz-paper)}
 html[data-lz-appearance=dark] #student-learning-board{--purple:#c5b3f2;--purple-soft:#3b3151;--amber:#f2ce76;--amber-soft:#453b22;--danger:#ffaaa5}
@@ -49,12 +51,20 @@ html[data-lz-theme-ready] .lz-wb :is(button.active,.wb-primary){background:var(-
 /* Paper cells and their user-selected fills remain unchanged. */
 html[data-lz-theme-ready] .lz-wb .wb-scroll{background:#fff;color:#18304c}
 html[data-lz-theme-ready] .lz-wb .wb-scroll input{color:inherit}
+html[data-lz-theme-ready] .lz-wb .wb-scroll th button {color:#304c69}
 html[data-lz-contrast=high] :is(.app-modal,.lze-tile,.lzc-card,.lzl-item,.lz-wb,.azc-explorer,.lze-guide-section,#student-learning-board section,#student-learning-board .day){box-shadow:none;border-width:2px}
 html[data-lz-contrast=high] :is(.app-breadcrumb,.app-heading p,.lze-count,.lze-muted,.summary-text){color:var(--lz-sub)}
 html[data-lz-text=large] #lz-anatomy-zone :is(#azc-play,#azc-reset,#azc-body-field,#azc-exercise-field,#azc-focus,.azc-slider-row,.azc-stage-caption,#azc-mode-hint){font-size:15px}
 html[data-lz-text=large] #lz-anatomy-zone :is(#azc-explanation,.azc-balance-legend){font-size:16px}
 html[data-lz-text=large] #lz-anatomy-zone .azc-target-label{font-size:13px}
 html[data-lz-text=large] .lz-wb :is([data-wb-sheet],[data-wb-address],[data-wb-status],.wb-row-more){font-size:15px}
+html[data-lz-text=large] .app-shell .app-nav button {font-size:var(--lz-ui-size)}
+html[data-lz-text=large] #lz-anatomy-zone :is(.azc-com-panel > p,.azc-com-legend,.azc-options > summary,
+ .azc-options-panel > label,.azc-options-panel .azc-check,.azc-textbutton,#azc-source summary,#azc-source p,
+ .azc-body-types button,.azc-hike-option,.azc-mode button,.azc-species-tag) {font-size:var(--lz-small-size)}
+html[data-lz-text=large] #lz-anatomy-zone .azc-com-panel h3 {font-size:1.0625rem}
+html[data-lz-text=large] #lz-anatomy-tension :is(summary,.tf-options label,.tf-options p,.tf-options button,
+ .tf-scale-note,.tf-legend,.tf-degree,.tf-motion label,.tf-ends,.tf-stops small,.tf-stops span) {font-size:var(--lz-small-size)}
 html[data-lz-text=large] .app-zone{font-size:17px}
 html[data-lz-text=large] :is(.lze-root,.lzcases,.lzlib,#lz-anatomy-zone){font-size:16px}
 html[data-lz-text=large] #student-learning-board{font-size:17px}

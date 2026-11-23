@@ -320,6 +320,34 @@ window.azAttachUpperSkeleton = function(parts) {
   const cupCentre = vector(0,.04,.18);
   const gripAcross = new T.Vector3(), handUp = new T.Vector3(), palmNormal = new T.Vector3();
   const wristPoint = new T.Vector3(), elbowPole = new T.Vector3(), armReach = new T.Vector3();
+  function turnRadius(fore,hand,side,pivot,spinAxis,radiusDirection){
+    const radius=fore.children[0];
+    const thumb=axisX.clone().applyQuaternion(hand.quaternion).applyQuaternion(rotation.copy(fore.quaternion).invert());
+    thumb.addScaledVector(spinAxis,-thumb.dot(spinAxis)).normalize();
+    const turn=Math.min(2.42,Math.acos(T.MathUtils.clamp(radiusDirection.dot(thumb),-1,1)));
+    radius.quaternion.setFromAxisAngle(spinAxis,-side*turn);
+    radius.position.copy(pivot).sub(probe.copy(pivot).applyQuaternion(radius.quaternion));
+    return radius;
+  }
+  function fitPogoHand(exercise){
+    const {side,fore,hand}=exercise;
+    // Let the hands hang from the forearms with the palms facing the thighs.
+    const up=handUp.subVectors(fore.position,hand.position).normalize();
+    const inward=palmNormal.set(-side,0,0).addScaledVector(up,side*up.x).normalize();
+    const across=gripAcross.crossVectors(up,inward);
+    hand.quaternion.setFromRotationMatrix(basis.makeBasis(across,up,inward));
+    hand.quaternion.multiply(palmSupports.get(side).level);
+
+    const pivot=vector(side*.065,-.053,.001);
+    const spinAxis=vector(side*.115,.935,-.001).normalize();
+    const restSide=axisX.clone().addScaledVector(spinAxis,-spinAxis.x).normalize();
+    const radius=turnRadius(fore,hand,side,pivot,spinAxis,restSide);
+    const capitate=vector(side*.014,-capitateDepth,.010);
+    wristPoint.set(capitate.x,-1-capitateDepth/fore.scale.y,capitate.z)
+      .applyQuaternion(radius.quaternion).add(radius.position).multiply(fore.scale)
+      .applyQuaternion(fore.quaternion).add(fore.position);
+    hand.position.copy(wristPoint).sub(capitate.applyQuaternion(hand.quaternion));
+  }
   function fitHand(exercise,movement) {
     const {side,upper,fore,hand,contact} = exercise;
     const radius=fore.children[0];
@@ -387,7 +415,7 @@ window.azAttachUpperSkeleton = function(parts) {
     else if(movement==='bench') pole.set(side,-.5,.60);
     else if(movement==='tension_swing') pole.set(side,0,0);
     wristPoint.copy(heldCentre);
-    const bend=new T.Vector3(),thumb=new T.Vector3(),offset=new T.Vector3();
+    const bend=new T.Vector3(),offset=new T.Vector3();
     const distalLength=foreLength+pivotDepth;
     const shoulderRest=upper.position.clone();
     for(let iteration=0;iteration<5;iteration++){
@@ -404,11 +432,7 @@ window.azAttachUpperSkeleton = function(parts) {
         .addScaledVector(bend,Math.sqrt(Math.max(0,humeral*humeral-along*along)));
       upper.scale.y=humeral;fore.scale.y=distal-pivotDepth;
       orientElbow(upper,fore,wristPoint,true);
-      thumb.copy(axisX).applyQuaternion(hand.quaternion).applyQuaternion(rotation.copy(fore.quaternion).invert());
-      thumb.addScaledVector(spinAxis,-thumb.dot(spinAxis)).normalize();
-      const turn=Math.min(2.42,Math.acos(T.MathUtils.clamp(radiusDirection.dot(thumb),-1,1)));
-      radius.quaternion.setFromAxisAngle(spinAxis,-side*turn);
-      radius.position.copy(pivot).sub(offset.copy(pivot).applyQuaternion(radius.quaternion));
+      turnRadius(fore,hand,side,pivot,spinAxis,radiusDirection);
       if(iteration<4){
         offset.copy(localCentre).applyQuaternion(radius.quaternion).add(radius.position).sub(neutralEnd);
         offset.y*=fore.scale.y;
@@ -478,6 +502,7 @@ window.azAttachUpperSkeleton = function(parts) {
         const wrist=target.copy(exercise.hand.position);
         if(exercise.carpalPivot)wrist.add(exercise.carpalOffset);
         orientElbow(exercise.upper, exercise.fore, wrist,Boolean(exercise.contact));
+        if(movement==='tension_pogo')fitPogoHand(exercise);
         // The exercise solver fixes the hands on their apparatus. Seat the
         // glenoid at the corresponding shoulder while retaining blade rotation.
         if(!mobile||exercise.reachAdjustment>1e-10){

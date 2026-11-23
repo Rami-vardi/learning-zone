@@ -13,7 +13,7 @@ window.azCleanSceneData={
 window.azAppliedScenes={
  rdl:{
   title:'Romanian Deadlift',labels:['Midfoot','Heel Bias'],ends:['Stand','Hinge'],view:'side',
-  captions:{a:['The teal arrows mark the intended midfoot pressure. Begin with the bar close to the legs.','The hips move back while the bar stays near the legs.','The shaft finishes just below the knees. The pelvis and trunk hinge together.'],b:['The teal arrows mark the intended heel pressure. Compare their position with the midfoot setup.','More knee bend and a rounded upper body develop as the bar drifts forward.','At the bottom, the back is rounder and the shaft sits below and farther in front of the knees.']},
+  captions:{a:['The teal arrows mark the intended midfoot pressure. Begin with the bar close to the legs.','The hips move back while the bar stays near the legs.','The shaft finishes just below the knees. The pelvis and trunk hinge together.'],b:['The teal arrows mark the intended heel pressure. Compare their position with the midfoot setup.','The upper back rounds, the shoulder blades wrap forward around the rib cage, and the bar drifts forward.','At the bottom, the back is rounder and the shaft sits below and farther in front of the knees.']},
   source:'Rami’s proposed hinge example. Jamie Smith’s course framework covers foot pressure, centre of mass, base of support and coordinated reorganization. Rami’s course document describes a global flexion pattern.',
   note:'The reviewed Jamie material does not directly establish this entire heel bias, rounding and bar drift sequence. This is a selected teaching strategy. The arrows illustrate the intended pressure location. Their size is fixed. The model calculates neither foot pressure nor ground reaction force.'
  },

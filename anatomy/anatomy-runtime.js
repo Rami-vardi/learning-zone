@@ -19,9 +19,9 @@ window.azAppliedScenes={
  },
  squat:{
   title:'Back Squat',labels:['Reference','Extension Bias'],ends:['Standing','Full Squat'],view:'side',
-  captions:{a:['Begin standing tall with the hips and knees extended.','The hips, knees, ankles and trunk share the descent.','The hips descend below knee level while the feet stay planted.'],b:['Start standing with a pronounced lumbar arch and anterior pelvic tilt.','Follow the lumbar arch as the pelvis begins to tuck and the trunk leans farther forward.','Compare at full depth. The pelvis has moved into posterior pelvic tilt (PPT) and the trunk leans farther forward.']},
+  captions:{a:['Begin standing tall with the hips and knees extended.','The hips, knees, ankles and trunk share the descent.','The hips descend below knee level while the feet stay planted.'],b:['Start standing with a pronounced lumbar arch.','As the knees bend, the thighs rotate forward relative to the pelvis.','The pelvis rolls back around the femoral heads. The hips gain depth as the angle between the pelvis and thigh opens slightly.']},
   source:'Jamie Smith course slides 14 and 59. Slide 59 presents butt wink as proximal reorientation and illustrates a pelvic tuck away from anterior tilt near the bottom. Updated course deck: slides 15 and 43. Knee tracking references: Does the femur roll-back with flexion? (PMID 15330038) and In vivo patellar tracking (PMID 18327809).',
-  note:'This preset uses a slightly wider stance and modest toe-out to show full squat depth, while keeping the extended setup and later posterior pelvic tilt clear. Extension Bias illustrates one possible compensation. Its lumbar arch reduces as the pelvis tucks and the trunk inclines to keep the bar balanced. Depth and the timing of the tuck vary with the task, stance, anatomy and available movement options. Watch the shin glide relative to the femur and the kneecap shift and tilt through flexion. These joint paths are illustrative.'
+  note:'In Extension Bias, follow the pelvis and thigh together near the bottom. As the knees continue bending and the hips descend, the pelvis rolls back around the femoral heads and opens the hip angle slightly. The trunk adjusts to keep the shaft over the foot. The timing and size of this motion vary with the lifter and the squat setup. These joint paths are illustrative.'
  },
  press:{
   title:'Seated Dumbbell Press',labels:['Feet on Floor','Feet on Raised Support'],ends:['Rack','Overhead'],view:'oblique',
@@ -45,9 +45,9 @@ window.azAppliedScenes={
 
 window.azAppliedScenes.dips={
  title:'Bar Dips',labels:['Arm Motion','Whole Chain'],ends:['Top','Bottom'],view:'side',
- captions:{a:['Begin supported above the bars with the feet suspended.','Shoulder extension and elbow flexion accompany the descent.','At the bottom, the shoulders are in extension and the elbows remain bent.'],b:['Begin tall above the bars, with bent knees and suspended feet.','The trunk closes as the arms move behind it into shoulder extension.','At the bottom, follow the relationship between the arms and the closed trunk.']},
- source:'McKenzie et al. (2022), Bench, Bar, and Ring Dips: Do Kinematics and Muscle Activity Differ? The study describes shoulder extension and elbow flexion on descent, then shoulder flexion and elbow extension on ascent.',
- note:'The trunk closing/opening sequence is Rami’s selected coordination example, not a directly verified Jamie demonstration. Forward lean, thoracic flexion and shoulder extension are distinct. Bottom extension means shoulder extension, not elbow lockout or mandatory maximal range.'
+ captions:{a:['Begin supported above the bars with the feet suspended.','The elbows bend as the upper arms move behind the trunk.','At the bottom, the shoulders are in extension and the elbows remain bent.'],b:['Begin tall above the bars, with bent knees and suspended feet.','The chest inclines forward as the elbows bend and the upper arms move behind the trunk.','At the bottom, the trunk leans forward and the rib cage keeps its shape.']},
+ source:'McKenzie et al. (2022), Bench, Bar, and Ring Dips: Do Kinematics and Muscle Activity Differ? The study measured thoracic lean relative to vertical, elbow flexion and shoulder extension.',
+ note:'Whole Chain illustrates a dip with greater forward lean. The rib cage and sternum move with the thoracic spine. The study measured how far the thorax leaned as a segment. The spinal motion shown here is illustrative.'
 };
 
 window.azAppliedScenes.pushup={
@@ -255,8 +255,15 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     if(state.movement==='squat_types')return squatTypeCaptions[state.amount<.015?0:state.amount>.985?2:1];
     if(state.movement==='deadlift_types')return bodyTypeCaptions[state.amount===0?0:state.amount===1?3:viewer?.deadliftAboveKnees?2:1];
     if(direction<0&&state.amount>.025&&state.amount<.999&&returnCaptions[state.movement])return returnCaptions[state.movement];
-    if(direction<0&&state.amount>.025&&state.amount<.999){if(state.movement==='lunge')return state.scenario==='a'?'The front leg supports the return.':'Follow the pelvis back toward the starting position as the knees extend.';if(state.movement==='dips')return state.scenario==='b'?'The trunk opens as the arms return toward shoulder flexion.':'Shoulder flexion and elbow extension accompany the ascent.';if(state.movement==='pushup')return state.scenario==='b'?'The elbows straighten as the scapulae protract, with the pelvis kept tucked.':'The shoulders and elbows coordinate as the body rises from the fixed hands.';if(state.movement==='bench')return state.scenario==='b'?'The arms press the bar up as the feet push into the floor and the upper back stays supported.':'The upper arms move toward the starting position as the elbows straighten.';}if(example){
-      if(state.movement==='squat')return example.captions[state.scenario][state.amount===0?0:viewer?.squatBelowKnees?2:1];
+    if(direction<0&&state.amount>.025&&state.amount<.999){if(state.movement==='lunge')return state.scenario==='a'?'The front leg supports the return.':'Follow the pelvis back toward the starting position as the knees extend.';if(state.movement==='dips')return state.scenario==='b'?'The chest comes more upright as the elbows straighten.':'Shoulder flexion and elbow extension accompany the ascent.';if(state.movement==='pushup')return state.scenario==='b'?'The elbows straighten as the scapulae protract, with the pelvis kept tucked.':'The shoulders and elbows coordinate as the body rises from the fixed hands.';if(state.movement==='bench')return state.scenario==='b'?'The arms press the bar up as the feet push into the floor and the upper back stays supported.':'The upper arms move toward the starting position as the elbows straighten.';}if(example){
+      if(state.movement==='squat'){
+        const captions=example.captions[state.scenario];
+        if(state.amount===0)return captions[0];
+        if(state.scenario==='a')return captions[viewer?.squatBelowKnees?2:1];
+        if(state.amount<.70)return captions[1];
+        if(state.amount<.84)return 'Watch the pelvis begin to roll back around the femoral heads as the hips keep lowering.';
+        return captions[2];
+      }
       if(state.movement==='row')return example.captions[state.scenario][state.amount<.15?0:viewer?.rowPastTrunk?2:1];
       const endpoint=state.movement==='pushup'?1:.75;
       const phase=state.amount<.15?0:state.amount<endpoint?1:2;

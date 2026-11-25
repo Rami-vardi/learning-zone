@@ -186,6 +186,75 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   const anatomy=window.azCleanSceneData,exercises=window.azAppliedScenes;
   viewer=window.createAnatomyViewer(q('#azc-stage'));
   const state={movement:'lunge',amount:.45,mode:'chain',scenario:'a',splitStanceOption:false,side:'right',labels:false,ghost:false,minimal:true};
+
+  const muscleLessons = new Set(['hike','tilt','hip','ribs','ribshift','scapula','foot','lunge']);
+  const muscleBar = document.createElement('div');
+  muscleBar.className = 'azc-muscle-bar';
+  const muscleTab = document.createElement('button');
+  muscleTab.type = 'button';
+  muscleTab.textContent = 'Add Muscle';
+  muscleTab.setAttribute('aria-pressed','false');
+  muscleBar.append(muscleTab);
+  const inspection = document.createElement('div');
+  inspection.className = 'azc-muscle-tools';
+  inspection.hidden = true;
+  muscleBar.append(inspection);
+  const inspectActions = [
+    ['depth','Peel muscle layer','M3 8l9-5 9 5-9 5z M3 12l9 5 9-5 M3 16l9 5 9-5'],
+    ['cutaway','Cut away nearby bones','M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z M12 8a4 4 0 0 0 0 8z'],
+    ['cycle','Isolate next muscle','M4 7v-3h4 M16 4h4v3 M20 17v3h-4 M8 20H4v-3 M9 12l3-4 3 4-3 4z'],
+    ['focus','Frame visible muscles','M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5 M9 12h6 M12 9v6']
+  ];
+  for (const [action,label,path] of inspectActions) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.setAttribute('aria-label',label);
+    if (action === 'cutaway' || action === 'depth') button.setAttribute('aria-pressed','false');
+    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
+    inspection.append(button);
+    listen(button,'click',() => {
+      const pressed = viewer?.inspectMuscle(action);
+      if (typeof pressed === 'boolean') button.setAttribute('aria-pressed',String(pressed));
+    });
+  }
+  q('#azc-stage').after(muscleBar);
+  let lensRequest = 0, lensActive = false, lensPending = false;
+  function closeMuscleLens() {
+    lensRequest++;
+    if (lensActive) viewer?.setMuscleLens(null);
+    lensPending = lensActive = false;
+    inspection.hidden = true;
+    muscleTab.setAttribute('aria-pressed','false');
+    muscleTab.removeAttribute('aria-busy');
+    muscleTab.removeAttribute('aria-label');
+    delete muscleTab.dataset.failed;
+    for (const button of inspection.querySelectorAll('[aria-pressed]')) button.setAttribute('aria-pressed','false');
+  }
+  listen(muscleTab,'click',async () => {
+    if (lensActive || lensPending) { closeMuscleLens(); return; }
+    const request = ++lensRequest, lesson = state.movement;
+    lensPending = true;
+    muscleTab.setAttribute('aria-busy','true');
+    delete muscleTab.dataset.failed;
+    try {
+      const module = await import(window.LZAnatomy.asset('muscle-lens.js'));
+      const create = await module.prepare(lesson);
+      if (request !== lensRequest || destroyed) return;
+      viewer.setMuscleLens(create);
+      lensActive = true;
+      inspection.hidden = false;
+      muscleTab.setAttribute('aria-pressed','true');
+      muscleTab.removeAttribute('aria-label');
+    } catch (error) {
+      if (request !== lensRequest || destroyed) return;
+      closeMuscleLens();
+      muscleTab.dataset.failed = 'true';
+      muscleTab.setAttribute('aria-label','Retry Add Muscle');
+      console.error('Add Muscle',error);
+    } finally {
+      if (request === lensRequest) { lensPending = false; muscleTab.removeAttribute('aria-busy'); }
+    }
+  });
   state.bodyType='longLong';state.squatBuild='shortLong';
   const {lessons,stages,babyTime,duration}=window.azDevelopmentLessons;
   const development=()=>lessons[state.movement];
@@ -349,6 +418,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   function resetCamera(){comparisonZoom=0;if(comparison())for(const item of comparisonViewers)item.viewer.resetCamera();else viewer?.resetCamera();}
   function render(){
     if(destroyed||tensionActive)return;
+    muscleBar.hidden = !muscleLessons.has(state.movement);
     if(wholeChainOnly()){state.mode='chain';state.scenario='b';}
     const special=development(),baby=state.movement==='baby',chimp=state.movement==='chimp';
     balanceLegend.hidden=!baby;
@@ -411,7 +481,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     state.amount=Math.min(1,state.amount+step);if(state.amount===1)pause();render();if(playing)frame=requestAnimationFrame(tick);return;}state.amount+=direction*dt*(applied()?.20:.28);const minimum=applied()?0:-1;if(state.amount>=1){state.amount=1;direction=-1;}else if(state.amount<=minimum){state.amount=minimum;direction=1;}render();frame=requestAnimationFrame(tick);}
   function setAmount(value){direction=value<state.amount?-1:1;pause();state.amount=Math.max(applied()||development()?0:-1,Math.min(1,value));render();}
   function defaultView(){if(development())return state.movement==='chimp'&&state.mode==='chain'?'front':'oblique';if(applied())return exercises[state.movement].view;return ['tilt','ribshift'].includes(state.movement)?'side':state.movement==='scapula'?'back':state.movement==='hip'?'oblique':state.movement==='foot'?(state.mode==='chain'?'front':'oblique'):'front';}
-  function selectMovement(value){if(value==='tension'){openTension();return;}if(!anatomy[value]&&!exercises[value]&&!lessons[value])return;leaveTension();pause();direction=1;state.splitStanceOption=false;state.movement=value;state.amount=comparison()?1:value==='squat'||value==='rdl'||selectors.some(s=>s.movement===value)?0:applied()?.12:0;if(!applied())state.mode=value==='chain'?'chain':'local';if(applied()){state.mode='chain';state.scenario=wholeChainOnly()||['pullup','dips'].includes(state.movement)?'b':'a';state.ghost=false;q('#azc-ghost').checked=false;}q('#azc-body-movement').value=applied()?'':value;q('#azc-exercise').value=applied()?value:'';const view=defaultView();q('#azc-camera').value=view;render();setCamera(view);}
+  function selectMovement(value){closeMuscleLens();if(value==='tension'){openTension();return;}if(!anatomy[value]&&!exercises[value]&&!lessons[value])return;leaveTension();pause();direction=1;state.splitStanceOption=false;state.movement=value;state.amount=comparison()?1:value==='squat'||value==='rdl'||selectors.some(s=>s.movement===value)?0:applied()?.12:0;if(!applied())state.mode=value==='chain'?'chain':'local';if(applied()){state.mode='chain';state.scenario=wholeChainOnly()||['pullup','dips'].includes(state.movement)?'b':'a';state.ghost=false;q('#azc-ghost').checked=false;}q('#azc-body-movement').value=applied()?'':value;q('#azc-exercise').value=applied()?value:'';const view=defaultView();q('#azc-camera').value=view;render();setCamera(view);}
   listen(q('#azc-body-movement'),'change',e=>selectMovement(e.target.value));listen(q('#azc-exercise'),'change',e=>selectMovement(e.target.value));
   all('[data-azc-mode]').forEach(b=>listen(b,'click',()=>{if(wholeChainOnly())return;if(state.movement==='chimp'){pause();state.amount=0;state.mode=b.dataset.azcMode;render();const view=defaultView();q('#azc-camera').value=view;setCamera(view);return;}if(applied()){const next=b.dataset.azcMode==='local'?'a':'b';if(next!==state.scenario)state.splitStanceOption=false;state.scenario=next;state.mode='chain';}else state.mode=b.dataset.azcMode;render();if(state.movement==='foot'){const view=defaultView();q('#azc-camera').value=view;setCamera(view);}}));
   listen(q('#azc-split-stance-option'),'click',()=>{if(state.movement!=='lunge')return;state.splitStanceOption=!state.splitStanceOption;render();});

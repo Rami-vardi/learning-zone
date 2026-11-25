@@ -1060,6 +1060,7 @@
         if(!a.visible||(!sideOn&&Math.hypot(a.x-b.x,a.y-b.y)>12))label(points[1].name,points[1].p,(front?'azc-front-mark':'azc-rear-mark')+' azc-far-mark');
       }
     }
+    let muscleLens = null;
     let renderer,canvas,ctx;
     const canvasEvents=[];
     const pixelRatio=Math.min(window.devicePixelRatio||1,2);
@@ -1152,6 +1153,7 @@
         if(!drag||e.pointerId!==drag.id)return;
         const tap=e.type==='pointerup'&&!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5;
         drag=null;canvas.style.cursor='grab';
+        if(tap && muscleLens?.pick(e,canvas,camera)) { render(); return; }
         if(tap&&helmetAt(e))toggleHelmet();
       };
       onCanvas('pointerup',end);onCanvas('pointercancel',end);onCanvas('lostpointercapture',end);
@@ -1427,6 +1429,7 @@
       const tag=document.createElement('span');tag.className='azc-species-tag';tag.textContent=name;
       tag.hidden=true;labelLayer.appendChild(tag);return tag;
     });
+    function drawSkeleton(){ if(renderer) renderer.render(scene,camera); else fallbackDraw(); }
     function render(){if(disposed)return;cameraUpdate();camera.updateMatrixWorld(true);
       guide.hidden=state.movement!=='baby';
       if(isDevelopment()){
@@ -1445,7 +1448,8 @@
         return;
       }
       for(const tag of speciesTags)tag.hidden=true;
-      if(renderer)renderer.render(scene,camera);else fallbackDraw();
+      if(muscleLens) muscleLens.draw(camera, drawSkeleton);
+      else drawSkeleton();
       fixedTargetLabel.hidden=!previewEquipment.visible;
       if(previewEquipment.visible){
         const base=balanceLine.localToWorld(new T.Vector3(0,-.5,0)).project(camera);
@@ -2331,6 +2335,7 @@
       // Seat the proximal shank surfaces in the kneeling pose with the ankle fixed.
       const shankFit=state.movement==='tension_cat'?1.045:1;
       for(const leg of legs) leg.fitPatella?.(shankFit);
+      muscleLens?.update(state);
     }
     function footGroundFrame(l,amount){
       l.poseFootArch(amount);
@@ -2610,6 +2615,31 @@
     const ro=new ResizeObserver(resize);ro.observe(container);
     focus();applyPose();resize();
     return {
+      setMuscleLens(create) {
+        muscleLens?.dispose();
+        muscleLens = null;
+        if (create) {
+          muscleLens = create({T,scene,pelvis,legs,ribs,scapulae,axial,neck,sternum,floor});
+          muscleLens.update(state);
+        }
+        render();
+      },
+      inspectMuscle(action) {
+        if (!muscleLens) return;
+        if (action === 'focus') {
+          const bounds = muscleLens.bounds();
+          if (!bounds.isEmpty()) {
+            bounds.getCenter(target);
+            const radius = bounds.getSize(new T.Vector3()).length() * .5;
+            distance = T.MathUtils.clamp(radius * 1.15 / (halfFovTan * Math.min(1,perspective.aspect)), 1.3, 50);
+          }
+        } else {
+          const active = muscleLens[action]();
+          render();
+          return active;
+        }
+        render();
+      },
       debugPoseSnapshot:capturePose,
       zoomCamera,
       setOrbit(newYaw,newPitch){yaw=newYaw;pitch=newPitch;render();},
@@ -2625,7 +2655,7 @@
       setView(name){closeHelmet();if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=isDeadlift(state.movement)?0:.04;}else{yaw=isDevelopment()?(state.movement==='baby'?1.22:-1.12):tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:['squat','squat_types'].includes(state.movement)?.75:state.movement==='bench'?1.10:splitStanceIds.has(state.movement)?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='baby'?.29:state.movement==='chimp'?.14:state.movement==='bench'?.42:splitStanceIds.has(state.movement)?.12:.10;}render();},
       resetCamera(){closeHelmet();yaw=0;pitch=.04;focus();render();},resize,
       dispose(){
-        if(disposed)return;disposed=true;cancelAnimationFrame(helmetFrame);fitShoulderGirdle?.dispose();drag=null;ro.disconnect();
+        if(disposed)return;disposed=true;muscleLens?.dispose();muscleLens=null;cancelAnimationFrame(helmetFrame);fitShoulderGirdle?.dispose();drag=null;ro.disconnect();
         clearCanvasEvents();
         const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,...tensionSpineMaterials.values(),steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
         for(const activeScene of [scene,developmentModel?.scene].filter(Boolean))activeScene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});

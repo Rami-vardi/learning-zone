@@ -187,7 +187,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   viewer=window.createAnatomyViewer(q('#azc-stage'));
   const state={movement:'lunge',amount:.45,mode:'chain',scenario:'a',splitStanceOption:false,side:'right',labels:false,ghost:false,minimal:true};
 
-  const muscleLessons = new Set(['hike','tilt','hip','ribs','ribshift','scapula','foot','lunge']);
+  const muscleLessons = new Set([...Object.keys(anatomy), ...Object.keys(exercises)]);
   const muscleBar = document.createElement('div');
   muscleBar.className = 'azc-muscle-bar';
   const muscleTab = document.createElement('button');
@@ -213,15 +213,20 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
     button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
     inspection.append(button);
     listen(button,'click',() => {
-      const pressed = viewer?.inspectMuscle(action);
+      const results = lensViewers().map(model => model.inspectMuscle(action));
+      const pressed = results[0];
       if (typeof pressed === 'boolean') button.setAttribute('aria-pressed',String(pressed));
     });
   }
   q('#azc-stage').after(muscleBar);
   let lensRequest = 0, lensActive = false, lensPending = false;
+  function lensViewers() {
+    if (comparison()) return comparisonViewers.map(item => item.viewer);
+    return viewer ? [viewer] : [];
+  }
   function closeMuscleLens() {
     lensRequest++;
-    if (lensActive) viewer?.setMuscleLens(null);
+    if (lensActive) for (const model of lensViewers()) model.setMuscleLens(null);
     lensPending = lensActive = false;
     inspection.hidden = true;
     muscleTab.setAttribute('aria-pressed','false');
@@ -240,8 +245,8 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
       const module = await import(window.LZAnatomy.asset('muscle-lens.js'));
       const create = await module.prepare(lesson);
       if (request !== lensRequest || destroyed) return;
-      viewer.setMuscleLens(create);
       lensActive = true;
+      for (const model of lensViewers()) model.setMuscleLens(create);
       inspection.hidden = false;
       muscleTab.setAttribute('aria-pressed','true');
       muscleTab.removeAttribute('aria-label');
@@ -385,6 +390,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
             if(comparisonZoom)model.zoomCamera(1.2**comparisonZoom);
             comparisonViewers.push({id,viewer:model});
             if(index<ids.length)comparisonFrame=requestAnimationFrame(createNext);
+            else muscleTab.disabled = false;
           }catch(error){
             disposeComparison();pause();const notice=document.createElement('p');notice.setAttribute('role','alert');notice.className='azc-com-error';notice.textContent='The squat comparison could not load. Choose another movement and reopen it to retry.';q('#azc-com-grid').appendChild(notice);
           }
@@ -419,6 +425,7 @@ window.LZAnatomyRuntime={modelCredits,mount(host,opts={}){
   function render(){
     if(destroyed||tensionActive)return;
     muscleBar.hidden = !muscleLessons.has(state.movement);
+    muscleTab.disabled = comparison() && comparisonViewers.length !== 3;
     if(wholeChainOnly()){state.mode='chain';state.scenario='b';}
     const special=development(),baby=state.movement==='baby',chimp=state.movement==='chimp';
     balanceLegend.hidden=!baby;

@@ -15,6 +15,41 @@ const profiles = {
   ribs: [['diaphragm', 'intercostals'], ['diaphragm']],
   foot: [['longus', 'brevis'], ['posterior']]
 };
+
+// Shared selections apply to every supported body build and stance in the lesson.
+const squat = {
+  families: ['gluteal','thigh','trunk'],
+  layers: [['maximus','rectusFemoris','lateralis','medialis','erectors'],['medius','intermedius','adductor','semimembranosus']]
+};
+const hinge = {
+  families: ['gluteal','thigh','trunk'],
+  layers: [['maximus','bicepsFemoris','semitendinosus','erectors'],['semimembranosus','adductor','multifidus']]
+};
+const press = {
+  families: ['shoulder','arm','scapular'],
+  layers: [['anteriorDeltoid','middleDeltoid','upperTrap','tricepsLong','tricepsLateral'],['serratus','supraspinatus','tricepsMedial']]
+};
+const horizontalPress = {
+  families: ['shoulder','arm','scapular'],
+  layers: [['sternalPec','clavicularPec','anteriorDeltoid','tricepsLong','tricepsLateral'],['serratus','tricepsMedial']]
+};
+const pull = {
+  families: ['shoulder','arm','scapular'],
+  layers: [['latissimus','rearDeltoid','trapezius','bicepsLong','bicepsShort'],['major','minor','teresMajor','brachialis','infraspinatus']]
+};
+const exercises = {
+  chain: {families: ['trunk','scapular'], layers: profiles.ribshift},
+  squat, squat_types: squat, squatcom: squat, bulgarian_split_squat: squat,
+  rdl: hinge,
+  deadlift_types: {families: hinge.families, layers: [
+    [...hinge.layers[0],'lateralis','medialis'],hinge.layers[1]
+  ]},
+  press, row: pull, pullup: pull, dips: horizontalPress, bench: horizontalPress, pushup: horizontalPress
+};
+for (const [id, lesson] of Object.entries(exercises)) {
+  families[id] = lesson.families;
+  profiles[id] = lesson.layers;
+}
 const cache = new Map();
 function loadFamily(family) {
   if (!cache.has(family)) {
@@ -35,7 +70,7 @@ export async function prepare(movement) {
   return context => createLayer(context, movement, assets);
 }
 
-function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, sternum, floor, software }, movement, assets) {
+function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, sternum, floor, software, arms, exArms }, movement, assets) {
   const nodes = new Map();
   for (const mesh of pelvis.children) nodes.set(mesh.name.replace('BodyParts3D ', ''), mesh);
   for (const section of [...axial, ...neck]) {
@@ -44,13 +79,20 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
   nodes.set('sternum', sternum);
   for (const leg of legs) {
     const side = leg.side < 0 ? 'R' : 'L';
-    for (const bone of ['femur', 'tibia', 'fibula']) {
+    for (const bone of ['femur', 'tibia', 'fibula', 'patella']) {
       nodes.set(side + bone, leg.root.getObjectByName('BodyParts3D ' + bone));
     }
     for (const bone of leg.footBones) nodes.set(side + bone.name, bone.children[0]);
   }
   ribs.forEach((rib, i) => nodes.set((i % 2 ? 'L' : 'R') + 'rib' + (1 + (i >> 1)), rib.children[0]));
   for (const blade of scapulae) nodes.set((blade.side < 0 ? 'R' : 'L') + 'scapula', blade.node.children[0]);
+
+  for (const arm of exArms) {
+    const side = arm.side < 0 ? 'R' : 'L';
+    nodes.set(side + 'humerus', arm.upper.getObjectByName('BodyParts3D humerus'));
+    for (const bone of ['radius','ulna']) nodes.set(side + bone, arm.fore.getObjectByName('BodyParts3D ' + bone));
+    nodes.set(side + 'clavicle', arms.find(item => item.side === arm.side).clavicle);
+  }
 
   const faded = new Map();
   const group = new T.Group();
@@ -59,7 +101,7 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
   const material = new T.MeshStandardMaterial({vertexColors: true, roughness: .84, side: T.DoubleSide});
   const parts = [], bindings = [];
   const eligible = new Set(profiles[movement].flat());
-  if (movement === 'ribshift') profiles.scapula.flat().forEach(name => eligible.add(name));
+  if (movement === 'ribshift' || movement === 'chain') profiles.scapula.flat().forEach(name => eligible.add(name));
   for (const asset of assets) {
     const matrices = asset.bones.map((key, i) => {
       const binding = {node: nodes.get(key), inverse: new T.Matrix4().fromArray(asset.inverseBind[i]), world: new T.Matrix4()};
@@ -95,7 +137,7 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
   function update(state) {
     current = state;
     const names = profiles[movement][Number(deep)];
-    const chainScapula = movement === 'ribshift' && state.mode === 'chain';
+    const chainScapula = (movement === 'ribshift' || movement === 'chain') && state.mode === 'chain';
     const side = state.side === 'right' ? 'R' : 'L';
     for (const part of parts) {
       part.available = (names.includes(part.name) || (chainScapula && profiles.scapula[Number(deep)].includes(part.name)))
@@ -161,7 +203,8 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
       return true;
     },
     draw(camera, drawScene) {
-      const localContext = current.mode === 'local' && (movement === 'tilt' || (movement === 'hike' && deep));
+      const tilt = movement === 'tilt' || movement === 'chain';
+      const localContext = current.mode === 'local' && (tilt || (movement === 'hike' && deep));
       if (!cut && !localContext) { drawScene(); return; }
       const restore = [];
       function visibility(node, visible) {
@@ -188,7 +231,6 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
       }
       try {
         if (localContext) {
-          const tilt = movement === 'tilt';
           const thorax = ribs[0].parent;
           const show = new Set(tilt ? [sternum, ...ribs.slice(8)] : ribs.slice(22));
           visibility(thorax, true);
@@ -201,11 +243,13 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
             const prefix = current.side === 'right' ? 'R' : 'L';
             visibility(floor, false);
             for (const key of ['tibia','fibula','Talus','Calcaneus','Cuboid']) fade(nodes.get(prefix + key));
-          } else if (['hike','hip','lunge'].includes(movement)) {
+          } else if (['hike','hip','lunge','squat','squat_types','squatcom','bulgarian_split_squat','rdl','deadlift_types'].includes(movement)) {
+            if (exercises[movement]) fade(nodes.get(side + 'femur'));
             fade(nodes.get(side === 'R' ? 'rightHip' : 'leftHip'));
           } else {
             for (let i = 1; i <= 12; i++) fade(nodes.get(side + 'rib' + i));
             fade(nodes.get(side + 'scapula'));
+            if (exercises[movement]) fade(nodes.get(side + 'humerus'));
           }
         }
         drawScene();

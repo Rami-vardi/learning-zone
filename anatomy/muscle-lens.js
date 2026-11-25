@@ -35,7 +35,7 @@ export async function prepare(movement) {
   return context => createLayer(context, movement, assets);
 }
 
-function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, sternum, floor }, movement, assets) {
+function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, sternum, floor, software }, movement, assets) {
   const nodes = new Map();
   for (const mesh of pelvis.children) nodes.set(mesh.name.replace('BodyParts3D ', ''), mesh);
   for (const section of [...axial, ...neck]) {
@@ -74,7 +74,9 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
       const positions = new T.BufferAttribute(rest.slice(), 3).setUsage(T.DynamicDrawUsage);
       const geo = new T.BufferGeometry();
       geo.setAttribute('position', positions);
-      geo.setIndex(new T.BufferAttribute(array(Uint16Array, 'index', item.triangles * 3), 1));
+      const index = software ? 'softwareIndex' : 'index';
+      const triangles = software ? item.softwareTriangles : item.triangles;
+      geo.setIndex(new T.BufferAttribute(array(Uint16Array, index, triangles * 3), 1));
       const tone = array(Uint8Array, 'tendon', n), colors = new Float32Array(n * 3);
       const paint = new T.Color();
       for (let i = 0; i < n; i++) paint.copy(muscle).lerp(tendon, tone[i] / 255).toArray(colors, 3 * i);
@@ -126,7 +128,7 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
         out[v + 2] = pz;
       }
       positions.needsUpdate = true;
-      part.mesh.geometry.computeVertexNormals();
+      if (!software) part.mesh.geometry.computeVertexNormals();
       part.mesh.geometry.computeBoundingSphere();
     }
   }

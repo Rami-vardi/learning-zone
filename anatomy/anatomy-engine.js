@@ -2619,7 +2619,7 @@
         muscleLens?.dispose();
         muscleLens = null;
         if (create) {
-          muscleLens = create({T,scene,pelvis,legs,ribs,scapulae,axial,neck,sternum,floor});
+          muscleLens = create({T,scene,pelvis,legs,ribs,scapulae,axial,neck,sternum,floor,software:!renderer});
           muscleLens.update(state);
         }
         render();

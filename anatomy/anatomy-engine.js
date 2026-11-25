@@ -615,19 +615,21 @@
       const mix=(top,bottom)=>T.MathUtils.lerp(top,bottom,phase);
       // In this rig the model faces +Z, its right side is -X and its left is +X.
       // Both bench variations share the same depth and clear the floor.
-      const hipY=elevated?mix(2.87,1.98)+.15*phase**4:offload?mix(2.82,2.12):mix(2.72,1.97);
+      const topExtension=(heelDown?.13:.16)*(1-phase)**2;
+      const hipY=(elevated?mix(2.87,1.98)+.15*phase**4:offload?mix(2.82,2.12):mix(2.72,1.97))+topExtension;
       const heelDownShift=-.38-.72*phase*(1.45-.45*phase);
       // Bring the rear hip farther toward the fixed bench near the bottom.
       const benchOffloadShift=mix(.37,-.06)-.56*phase*phase;
       const hipZ=elevated?(rear?benchOffloadShift:mix(.32,.13))
         :rear?(offload?heelDownShift:mix(-.30,-.75)):mix(.28,.70)+(moreFront?mix(.12,.15):0);
       const hipX=rear?(offload?mix(.12,.20):.045):(moreFront?mix(-.12,-.18):-.045);
-      const pelvicRoll=moreFront?mix(-.135,-.195):rear?mix(.056,.080):mix(-.070,-.100);
+      const pelvicRoll=moreFront?(elevated?mix(-.135,-.195):mix(-.148,-.204))
+        :rear?mix(.056,.080):mix(-.070,-.100);
       const pelvicYaw=heelDown?mix(.24,.55):rear?(offload?mix(.13,.26):mix(.075,.10))
         :(moreFront?mix(-.11,-.18):mix(-.075,-.10));
       const pelvicPitch=elevated?mix(.06,.18):offload?mix(.025,.075):.025;
       const trunkPitch=elevated?mix(.08,rear?.235:.27):rear?(offload?mix(.035,.17):mix(-.025,-.050)):mix(.055,moreFront?.195:.170);
-      const trunkYaw=heelDown?mix(.16,.44):moreFront?mix(-.125,-.235):pelvicYaw*.50;
+      const trunkYaw=heelDown?mix(.16,.44):moreFront?pelvicYaw-mix(.095,.155):pelvicYaw*.50;
       const frameQ=new T.Quaternion().setFromEuler(new T.Euler(trunkPitch,trunkYaw,pelvicRoll*.25,'XYZ'));
       const origin=new T.Vector3(hipX,hipY,hipZ);
       const centreAt=r=>new T.Vector3(0,r,-.14+.035*Math.sin(r/2.5*Math.PI*2)).applyQuaternion(frameQ).add(origin);
@@ -999,7 +1001,7 @@
         const material=new T.MeshBasicMaterial({color:0x378f9e,transparent:true,opacity:.34,depthWrite:false,side:T.DoubleSide});material.userData.azStudyAlpha=true;
         const n=mesh(new T.CircleGeometry(1,40),material,g);n.rotation.x=-Math.PI/2;patches[name]=n;
       }
-      patches.heel.position.set(0,0,-.13);patches.heel.scale.set(.074,.105,1);
+      patches.heel.scale.set(.067,.074,1);
       patches.forefoot.position.set(-l.side*.005,0,.414);patches.forefoot.scale.set(.146,.062,1);
       patches.lateral.position.set(l.side*.091,0,.170);patches.lateral.scale.set(.032,.190,1);
       patches.medial.position.set(-l.side*.052,.001,.180);patches.medial.scale.set(.033,.133,1);
@@ -1494,6 +1496,7 @@
         const leg=legs[state.side==='right'?0:1], landmarks=leg.footLandmarks;
         const at=(node,x,y,z)=>node.localToWorld(new T.Vector3(leg.side*x,y,z));
         if(landmarks){
+          label('Talus',landmarks.talus.getWorldPosition(new T.Vector3()));
           label('Calcaneus',landmarks.calcaneus.getWorldPosition(new T.Vector3()));
           label('Medial arch',landmarks.navicular.getWorldPosition(new T.Vector3()));
         }else{
@@ -2329,6 +2332,80 @@
       const shankFit=state.movement==='tension_cat'?1.045:1;
       for(const leg of legs) leg.fitPatella?.(shankFit);
     }
+    function footGroundFrame(l,amount){
+      l.poseFootArch(amount);
+      const points=tensionFootPoints(l,true),q=new T.Quaternion(),p=new T.Vector3();
+      const heel=new T.Vector3(),ball=new T.Vector3();
+      function supportPoints(){
+        heel.y=ball.y=Infinity;
+        let minimum=Infinity;
+        for(const vertex of points){
+          p.copy(vertex).applyQuaternion(q);
+          if(vertex.z<0&&p.y<heel.y)heel.copy(p);
+          if(vertex.z>.26&&p.y<ball.y)ball.copy(p);
+          minimum=Math.min(minimum,p.y);
+        }
+        return minimum;
+      }
+      q.setFromAxisAngle(new T.Vector3(0,0,1),l.side*amount*.055);
+      supportPoints();
+      // Bring the heel and ball close to their respective contact patches.
+      // A shallow offset represents the space occupied by the heel pad.
+      const pitch=Math.atan2(ball.y+.007-heel.y,ball.z-heel.z);
+      q.premultiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),pitch));
+      return {quaternion:q,minimum:supportPoints(),heel};
+    }
+    function poseFootLesson(amount,selectedSide,chain){
+      const floorY=.08,boneClearance=.006,ankleSeat=.021;
+      const femurAtRest=new T.Vector3(0,-1.63,0),shinAtRest=new T.Vector3(0,-1.31,.04);
+      const shinLength=shinAtRest.length();
+      floor.visible=true;
+      floor.scale.set(chain?1.15:.42,chain?.65:.55,1);
+      floor.position.x=chain?0:selectedSide*.61;
+      floor.position.z=.23;
+      if(chain){
+        pelvis.position.set(-selectedSide*amount*.025,3.245-.012*Math.abs(amount),0);
+        pelvis.rotation.set(0,-selectedSide*amount*.045,selectedSide*amount*.015);
+        pelvis.updateMatrixWorld(true);
+      }
+      for(const l of legs){
+        const selected=l.side===selectedSide;
+        if(!chain&&!selected)continue;
+        const t=selected?amount:0;
+        const {quaternion,minimum,heel}=footGroundFrame(l,t);
+        const ankle=new T.Vector3(l.side*.61,floorY+boneClearance-minimum,chain?.045:.05);
+        if(chain){
+          // The stance keeps a small knee excursion while the heel everts
+          // relative to both the talus and the shank.
+          femurAtRest.x=l.side*.10;
+          const hip=pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005));
+          const shankEnd=ankle.clone().add(new T.Vector3(0,-ankleSeat,0));
+          const knee=twoJoint(hip,shankEnd,femurAtRest.length(),shinLength,new T.Vector3(-l.side*t*.23,0,1));
+          const thigh=knee.clone().sub(hip).normalize(),shank=shankEnd.sub(knee).normalize();
+          l.root.position.copy(hip);
+          l.femur.quaternion.setFromUnitVectors(femurAtRest.clone().normalize(),thigh);
+          l.femur.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(thigh,l.side*t*.26));
+          l.shin.position.copy(knee).sub(hip);
+          l.shin.quaternion.setFromUnitVectors(shinAtRest.clone().normalize(),shank);
+          l.shin.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(shank,l.side*t*.20));
+          l.foot.position.copy(l.shin.worldToLocal(ankle.clone()));
+          l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(quaternion);
+        }else{
+          l.foot.position.y+=ankleSeat;
+          l.root.position.y+=ankle.y-l.foot.getWorldPosition(new T.Vector3()).y;
+          l.foot.quaternion.copy(quaternion);
+        }
+        const {node,patches}=pressureMarks.find(mark=>mark.side===l.side);
+        node.visible=true;
+        const sole=l.footRegistration||new T.Vector3();
+        node.position.copy(sole).applyQuaternion(quaternion).add(ankle).setY(floorY+.004);
+        patches.heel.position.set(ankle.x+heel.x-node.position.x,0,ankle.z+heel.z-node.position.z);
+        patches.medial.scale.x=.033+.027*t;
+        patches.medial.material.opacity=.27+.17*t;
+        patches.forefoot.scale.x=.146+.012*t;
+        patches.lateral.scale.x=.032-.004*t;
+      }
+    }
     function blendLumbar(){
       pelvis.updateMatrix();torso.updateMatrix();
       for(let i=0;i<5;i++){
@@ -2394,7 +2471,6 @@
       }
       if(m==='ribshift'){torso.position.z=-a*.19;if(chain){scap(a);spine(a*.7);pelvis.rotation.x=-a*.10;}}
       if(m==='scapula'){scap(a);if(chain){torso.position.z=-a*.15;spine(a*.5);}}
-      if(m==='foot'){const l=legs.find(l=>l.side===selectedSide);l.foot.rotation.z=l.side*a*.055;l.poseFootArch(a);if(chain){l.shin.rotation.y=-l.side*a*.16;l.femur.rotation.y=-l.side*a*.11;pelvis.rotation.y=-selectedSide*a*.045;}}
       if(m==='chain'&&chain){pelvis.rotation.x=-a*.17;pelvis.position.z=-a*.07;torso.position.z=-a*.19;torso.rotation.x=a*.055;scap(a);spine(a*.85);}
       if(['ribs','ribshift','scapula','chain'].includes(m)||m==='hike'&&chain){
         // The rib heads and thoracic vertebrae belong to the same moving cage.
@@ -2435,46 +2511,8 @@
           leg.shin.position.copy(leg.root.worldToLocal(knee));
         }
       }
-      if(m==='foot'&&chain){
-        // A mildly flexed loaded-leg example. Axial rotation and adduction are
-        // independent joint motions, rather than one rigid leg rotation.
-        pelvis.position.y=3.3-.055-.012*Math.abs(a);pelvis.position.x=-selectedSide*a*.025;pelvis.rotation.y=-selectedSide*a*.045;pelvis.rotation.z=selectedSide*a*.015;pelvis.updateMatrixWorld(true);
-        const L1=Math.hypot(.10,1.63),L2=Math.hypot(1.31,.04);
-        for(const l of legs){
-          const selected=l.side===selectedSide,desiredFoot=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),selected?l.side*a*.055:0);
-          l.poseFootArch(selected?a:0);model.updateMatrixWorld(true);
-          const inverse=l.foot.matrixWorld.clone().invert();let minY=Infinity;
-          l.foot.traverse(o=>{if(!o.isMesh)return;const transform=inverse.clone().multiply(o.matrixWorld),v=new T.Vector3(),p=o.geometry.attributes.position;for(let i=0;i<p.count;i++)minY=Math.min(minY,v.fromBufferAttribute(p,i).applyMatrix4(transform).applyQuaternion(desiredFoot).y);});
-          const H=pelvis.localToWorld(new T.Vector3(l.side*.51,-.17,.005)),A=new T.Vector3(l.side*.61,.092-minY,.045),D=A.clone().sub(H),d=Math.min(L1+L2-.001,D.length()),axis=D.clone().normalize();
-          const along=(L1*L1-L2*L2+d*d)/(2*d),radius=Math.sqrt(Math.max(0,L1*L1-along*along));
-          const bend=new T.Vector3(selected?-l.side*a*.95:0,0,1);bend.addScaledVector(axis,-bend.dot(axis)).normalize();
-          const K=H.clone().addScaledVector(axis,along).addScaledVector(bend,radius),femDir=K.clone().sub(H),shinDir=A.clone().sub(K);
-          l.root.position.copy(H);l.femur.quaternion.setFromUnitVectors(new T.Vector3(l.side*.10,-1.63,0).normalize(),femDir.clone().normalize());
-          const femTwist=new T.Quaternion().setFromAxisAngle(femDir.clone().normalize(),selected?l.side*a*.26:0);l.femur.quaternion.premultiply(femTwist);
-          l.shin.position.copy(K).sub(H);l.shin.quaternion.setFromUnitVectors(new T.Vector3(0,-1.31,.04).normalize(),shinDir.clone().normalize());
-          const tibTwist=new T.Quaternion().setFromAxisAngle(shinDir.clone().normalize(),selected?l.side*a*.20:0);l.shin.quaternion.premultiply(tibTwist);
-          l.foot.quaternion.copy(l.shin.quaternion).invert().multiply(desiredFoot);
-          l.poseFootArch(selected?a:0);
-        }
-      }
+      if(m==='foot')poseFootLesson(a,selectedSide,chain);
       if(m==='foot'&&chain||m==='tilt'||m==='chain'&&!chain)blendLumbar();
-      if(m==='foot'){
-        floor.visible=true;floor.scale.set(chain?1.15:.42,chain?.65:.55,1);floor.position.x=chain?0:selectedSide*.61;floor.position.z=.23;
-        model.updateMatrixWorld(true);
-        for(const l of legs){
-          if(!chain&&l.side!==selectedSide)continue;
-          const clearance=.012,dy=.08+clearance-footWorldMinimum(l);
-          // Translate the isolated shank as a unit. Chain mode already solves
-          // the ankle height before positioning the knee and the connected shin.
-          if(!chain)l.root.position.y+=dy;
-          const p=pressureMarks.find(p=>p.side===l.side),selected=l.side===selectedSide,t=selected?a:0;
-          p.node.visible=true;
-          const sole=l.foot.localToWorld((l.footRegistration||new T.Vector3()).clone());
-          p.node.position.set(sole.x,.084,sole.z);
-          p.patches.medial.scale.x=.033+.031*t;p.patches.medial.material.opacity=.25+.22*t;
-          p.patches.forefoot.scale.x=.146+.012*t;p.patches.lateral.scale.x=.032-.004*t;
-        }
-      }else{floor.position.x=0;floor.position.z=0;}
       const active=m==='hike'||m==='tilt'?'pelvis':m==='hip'?'femur':m==='ribs'||m==='ribshift'?'thorax':m==='scapula'?'scapula':m==='foot'?'foot':'all';
       for(const key in regionMaterials){const material=regionMaterials[key];let color=palettes[key]||palettes.ivory;if(key==='ivory'||key==='context')color=key==='context'?palettes.context:palettes.ivory;else if(active!=='all'&&key!==active&&!(key==='femur'&&['hike','hip'].includes(m)))color=palettes.ivory;material.color.setHex(color);}
       for(const l of legs){const selected=l.side===selectedSide,linked=m==='foot'&&chain;

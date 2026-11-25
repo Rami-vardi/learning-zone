@@ -457,7 +457,9 @@ function attachAtlasFeet(T, legs, remove) {
       navicular.position.x -= side * Math.max(0,amount) * .010;
       navicular.rotation.y = side * amount * .036;
       navicular.rotation.x = -amount * .036;
-      cuboid.position.y -= amount * .004;
+      // Carry the cuboid with the calcaneus at their shared joint.
+      cuboid.quaternion.copy(calcaneus.quaternion);
+      cuboid.position.sub(subtalarPivot).applyQuaternion(cuboid.quaternion).add(subtalarPivot);
       for (const [index, bone] of cuneiforms.entries()) {
         bone.position.y -= amount * (.017 - index * .004);
         bone.position.z += Math.abs(amount) * .010;

@@ -1060,7 +1060,7 @@
         if(!a.visible||(!sideOn&&Math.hypot(a.x-b.x,a.y-b.y)>12))label(points[1].name,points[1].p,(front?'azc-front-mark':'azc-rear-mark')+' azc-far-mark');
       }
     }
-    let muscleLens = null;
+    let muscleLens = null, muscleFrame = null, onMuscleSelection = null;
     let renderer,canvas,ctx;
     const canvasEvents=[];
     const pixelRatio=Math.min(window.devicePixelRatio||1,2);
@@ -1153,7 +1153,11 @@
         if(!drag||e.pointerId!==drag.id)return;
         const tap=e.type==='pointerup'&&!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5;
         drag=null;canvas.style.cursor='grab';
-        if(tap && muscleLens?.pick(e,canvas,camera)) { render(); return; }
+        if(tap && muscleLens?.pick(e,canvas,camera)) {
+          render();
+          onMuscleSelection?.(muscleLens.selection());
+          return;
+        }
         if(tap&&helmetAt(e))toggleHelmet();
       };
       onCanvas('pointerup',end);onCanvas('pointercancel',end);onCanvas('lostpointercapture',end);
@@ -1183,6 +1187,7 @@
       const previous=renderer;
       if(!softwareCanvas())return;
       renderer=null;
+      muscleLens?.useSoftwareRenderer();
       releaseRenderer(previous);
       render();
     }
@@ -2560,7 +2565,14 @@
       return {movement:state.movement,amount:state.amount,mode:state.mode,side:state.side,nodes,limb,tensionEmphasis:tensionDebug?.tensionEmphasis||0};
     }
     if(!isDevelopment()){applyPose(0);rebuildGhost();}
+    function fitMuscleFrame(){
+      if (!muscleFrame) { focus(); return; }
+      muscleFrame.getCenter(target);
+      const radius = muscleFrame.getSize(new T.Vector3()).length() * .5;
+      distance = T.MathUtils.clamp(radius * 1.15 / (halfFovTan * Math.min(1,perspective.aspect)),1.3,50);
+    }
     function focus(){
+      muscleFrame = null;
       const m=state.movement,chain=state.mode==='chain';
       // Reserve the full horizontal motion envelope when the viewport narrows.
       function frame(x,y,z,verticalDistance,horizontalSpan){
@@ -2597,12 +2609,12 @@
     function resize(){
       if(disposed)return;
       const currentDistance=distance;
-      focus();
+      fitMuscleFrame();
       const userZoom=currentDistance/distance;
       width=Math.max(150,container.clientWidth);
       height=Math.max(200,container.clientHeight||500);
       perspective.aspect=width/height;
-      focus();
+      fitMuscleFrame();
       distance=T.MathUtils.clamp(distance*userZoom,1.3,50);
       if(renderer)renderer.setSize(width,height,false);
       else{
@@ -2615,26 +2627,29 @@
     const ro=new ResizeObserver(resize);ro.observe(container);
     focus();applyPose();resize();
     return {
-      setMuscleLens(create) {
+      setMuscleLens(create, onSelection) {
+        onMuscleSelection = onSelection;
+        if (!create) muscleFrame = null;
         muscleLens?.dispose();
         muscleLens = null;
         if (create) {
-          muscleLens = create({T,scene,pelvis,legs,ribs,scapulae,axial,neck,sternum,floor,arms,exArms,software:!renderer});
+          muscleLens = create({T,scene,pelvis,legs,ribs,scapulae,axial,neck,sternum,floor,floorRing,pressureMarks,arms,exArms,software:!renderer});
           muscleLens.update(state);
         }
         render();
       },
-      inspectMuscle(action) {
+      inspectMuscle(action, value) {
         if (!muscleLens) return;
+        if (action === 'bounds') return muscleLens.bounds();
+        if (action === 'selection') return muscleLens.selection();
         if (action === 'focus') {
-          const bounds = muscleLens.bounds();
+          const bounds = value || muscleLens.bounds();
           if (!bounds.isEmpty()) {
-            bounds.getCenter(target);
-            const radius = bounds.getSize(new T.Vector3()).length() * .5;
-            distance = T.MathUtils.clamp(radius * 1.15 / (halfFovTan * Math.min(1,perspective.aspect)), 1.3, 50);
+            muscleFrame = bounds;
+            fitMuscleFrame();
           }
         } else {
-          const active = muscleLens[action]();
+          const active = muscleLens[action](value);
           render();
           return active;
         }

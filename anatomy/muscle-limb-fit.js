@@ -1,3 +1,12 @@
+export function limbPoseKey(state, lesson) {
+  const movement = state.movement || lesson;
+  if (movement === 'squat_types') return movement + ':' + (state.squatBuild || 'shortLong');
+  if (movement === 'deadlift_types') return movement + ':' + (state.bodyType || 'longLong');
+  if (lesson === 'squatcom') return movement + ':b';
+  const option = movement === 'lunge' && state.splitStanceOption ? ':turn' : '';
+  return movement + ':' + (state.scenario || 'a') + option;
+}
+
 // Clear the proximal thigh in the posed bone coordinates, including the
 // interior of the broad atlas triangles that can bridge the hip in deep flexion.
 export function createLimbCorrection(T, nodes, assets, _software, sampleClearance) {

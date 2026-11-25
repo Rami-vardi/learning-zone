@@ -9,10 +9,10 @@ const profiles = {
   hike: [['medius'], ['minimus', 'quadratus']],
   lunge: [['maximus', 'medius', 'rectusFemoris', 'lateralis', 'medialis'], ['minimus', 'quadratus', 'intermedius']],
   hip: [['maximus', 'medius', 'tensor', 'tract'], ['minimus', 'piriformis']],
-  tilt: [['rectus', 'oblique', 'erectors'], ['multifidus', 'transversus']],
-  ribshift: [['rectus', 'oblique', 'erectors'], ['multifidus', 'transversus']],
+  tilt: [['rectus', 'oblique', 'erectors'], ['multifidus', 'internalOblique', 'transversus']],
+  ribshift: [['rectus', 'oblique', 'erectors'], ['multifidus', 'internalOblique', 'transversus']],
   scapula: [['serratus', 'trapezius'], ['major', 'minor', 'serratus']],
-  ribs: [['diaphragm', 'intercostals'], ['diaphragm']],
+  ribs: [['diaphragm', 'intercostals'], ['internalIntercostals','diaphragm']],
   foot: [['longus', 'brevis'], ['posterior']]
 };
 
@@ -54,6 +54,7 @@ const muscleNames = {
   maximus: 'gluteus maximus', medius: 'gluteus medius', minimus: 'gluteus minimus',
   quadratus: 'quadratus lumborum', tensor: 'tensor fasciae latae', tract: 'iliotibial tract',
   rectus: 'rectus abdominis', oblique: 'external oblique', erectors: 'iliocostalis lumborum',
+  internalOblique: 'internal oblique', internalIntercostals: 'internal intercostals',
   transversus: 'transversus abdominis', serratus: 'serratus anterior',
   trapezius: 'middle trapezius', intercostals: 'external intercostals',
   bicepsFemoris: 'biceps femoris, long head', major: 'rhomboid major', minor: 'rhomboid minor',
@@ -64,6 +65,27 @@ const muscleNames = {
   tricepsLong: 'triceps brachii, long head', tricepsLateral: 'triceps brachii, lateral head',
   tricepsMedial: 'triceps brachii, medial head', bicepsLong: 'biceps brachii, long head',
   bicepsShort: 'biceps brachii, short head', latissimus: 'latissimus dorsi'
+};
+// Same-side structures to expose when the user peels a particular surface.
+const beneath = {
+  maximus: ['medius','minimus','piriformis','adductor','semimembranosus'],
+  medius: ['minimus','quadratus'], tensor: ['minimus'], tract: ['minimus'],
+  rectusFemoris: ['intermedius'], lateralis: ['intermedius'], medialis: ['intermedius'],
+  bicepsFemoris: ['semimembranosus','adductor'], semitendinosus: ['semimembranosus','adductor'],
+  erectors: ['multifidus'], oblique: ['internalOblique'], internalOblique: ['transversus'],
+  rectus: ['transversus'], intercostals: ['internalIntercostals'],
+  trapezius: ['major','minor','serratus'], longus: ['posterior'], brevis: ['posterior'],
+  anteriorDeltoid: ['supraspinatus','serratus'], middleDeltoid: ['supraspinatus'],
+  upperTrap: ['supraspinatus','serratus'], rearDeltoid: ['infraspinatus','teresMajor'],
+  tricepsLong: ['tricepsMedial'], tricepsLateral: ['tricepsMedial'],
+  sternalPec: ['serratus'], clavicularPec: ['serratus'],
+  latissimus: ['infraspinatus','teresMajor','major','minor'], bicepsLong: ['brachialis'], bicepsShort: ['brachialis']
+};
+const layerBone = {
+  scapula:'scapula', press:'scapula', row:'scapula', pullup:'scapula',
+  dips:'humerus', bench:'humerus', pushup:'humerus', ribs:'rib6', ribshift:'rib6', chain:'rib6',
+  foot:'Talus', rdl:'hip', deadlift_types:'hip', lunge:'hip', hike:'hip', hip:'hip', tilt:'hip',
+  squat:'hip', squat_types:'hip', squatcom:'hip', bulgarian_split_squat:'hip'
 };
 const cache = new Map();
 const retryFamilies = new Set();
@@ -195,18 +217,33 @@ function correctionLoader(file) {
 }
 const loadHipFootModule = correctionLoader('muscle-hip-foot.js');
 const loadLimbModule = correctionLoader('muscle-limb-fit.js');
+const loadPoseModule = correctionLoader('muscle-pose-correction.js');
+const loadDepthModule = correctionLoader('muscle-software-depth.js');
 
 export async function prepare(movement) {
   const list = families[movement];
-  const [assets, hipFoot, limb] = await Promise.all([
+  const [assets, hipFoot, limb, poseModule, depthModule] = await Promise.all([
     Promise.all(list.map(loadFamily)),
     list.includes('gluteal') || list.includes('ankle') ? loadHipFootModule() : null,
-    list.includes('thigh') ? loadLimbModule() : null
+    list.includes('thigh') ? loadLimbModule() : null,
+    list.includes('shoulder') || list.includes('thigh') ? loadPoseModule() : null,
+    loadDepthModule()
   ]);
-  return context => createLayer(context, movement, assets, hipFoot, limb);
+  if (poseModule) {
+    for (const asset of assets) {
+      try {
+        poseModule.validatePoseAsset(asset);
+      } catch (error) {
+        cache.delete(asset.family);
+        retryFamilies.add(asset.family);
+        throw error;
+      }
+    }
+  }
+  return context => createLayer(context, movement, assets, hipFoot, limb, poseModule, depthModule);
 }
 
-function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, sternum, floor, floorRing, pressureMarks = [], software, arms, exArms }, movement, assets, hipFoot, limb) {
+function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, sternum, floor, floorRing, pressureMarks = [], ghost, inspectionSupports = [], software, arms, exArms }, movement, assets, hipFoot, limb, poseModule, depthModule) {
   const nodes = new Map();
   for (const mesh of pelvis.children) nodes.set(mesh.name.replace('BodyParts3D ', ''), mesh);
   for (const section of [...axial, ...neck]) {
@@ -232,7 +269,8 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
 
   const correctHipFoot = hipFoot?.createHipFootCorrection(T, nodes, assets, software);
   const correctLimb = limb?.createLimbCorrection(T, nodes, assets, software, hipFoot.sampleClearance);
-  const faded = new Map();
+  const correctPose = poseModule?.createPoseCorrection(assets, movement, limb?.limbPoseKey);
+  const highlightedMaterials = new Map();
   const group = new T.Group();
   group.name = 'Muscle lens';
   const muscle = new T.Color(0xa14b41), tendon = new T.Color(0xe0c6a5);
@@ -278,24 +316,108 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
     }
   }
   scene.add(group);
-  let deep = false, cut = false, selected = null, current = null;
+  const keyed = new Map(parts.map(p => [p.mesh.name,p]));
+  const boneKeys = new Map([...nodes].filter(([,n]) => n?.isMesh).map(([key,node]) => [node,key]));
   const ray = new T.Raycaster(), pointer = new T.Vector2(), cameraForward = new T.Vector3();
+  const peeled = new Set();
+  let deep = false, selected = null, highlighted = null, inspection = [], current = null;
+  let chosenBone = null, hiddenBone = null, activeSide = null;
+  function keyState() {
+    return {peeled:[...peeled],highlight:highlighted?.mesh.name || null,inspection:[...inspection],
+      chosenBone,hiddenBone};
+  }
   function selection() {
-    if (!selected) return {key: null, label: 'All muscles in this layer'};
-    const side = selected.side === 'R' ? 'Right ' : selected.side === 'L' ? 'Left ' : '';
-    const name = muscleNames[selected.name] || selected.name.replace(/([A-Z])/g, ' $1').toLowerCase();
-    return {key: selected.mesh.name, label: side + name};
+    const item = selected || highlighted || keyed.get(inspection[0]);
+    const focused = Boolean(item?.available);
+    const side = item?.side === 'R' ? 'Right ' : item?.side === 'L' ? 'Left ' : '';
+    const name = item && (muscleNames[item.name] || item.name.replace(/([A-Z])/g,' $1').toLowerCase());
+    const label = focused ? side + name : 'Muscle layer';
+    return {key:keyState(),focused,label:hiddenBone ? label + ', bone hidden' : label};
+  }
+  function defaultBone() {
+    const partSide = highlighted?.side || keyed.get(inspection[0])?.side;
+    const side = partSide === 'L' || ((!partSide || partSide === 'both') && current.side === 'left') ? 'L' : 'R';
+    const name = layerBone[movement];
+    return name === 'hip' ? (side==='R' ? 'rightHip' : 'leftHip') : side+name;
+  }
+  // In inspection mode remove only supports between the camera and the tissue.
+  // Test the individual pad or rail so the rest of the apparatus stays in context.
+  const supportMeshes = [];
+  for (const support of inspectionSupports) {
+    support.traverse(node => { if (node.isMesh) supportMeshes.push(node); });
+  }
+  const supportRay = new T.Raycaster(), sample = new T.Vector3(), direction = new T.Vector3();
+  const cameraOrigin = new T.Vector3(), supportHits = [];
+  function obstructingSupports(camera) {
+    const blocked = new Set(), candidates = supportMeshes.filter(mesh => {
+      for (let parent = mesh; parent; parent = parent.parent) if (!parent.visible) return false;
+      return true;
+    });
+    if (!candidates.length) return blocked;
+    camera.getWorldPosition(cameraOrigin);
+    const focused = highlighted ? [highlighted.mesh.name] : inspection;
+    for (const part of parts) {
+      if (!part.mesh.visible || (focused.length && !focused.includes(part.mesh.name))) continue;
+      const step = Math.max(1,Math.floor(part.positions.count / 12));
+      for (let i = 0; i < part.positions.count; i += step) {
+        sample.fromBufferAttribute(part.positions,i).applyMatrix4(part.mesh.matrixWorld);
+        direction.subVectors(sample,cameraOrigin);
+        supportRay.far = direction.length() - .001;
+        supportRay.set(cameraOrigin,direction.normalize());
+        supportHits.length = 0;
+        for (const mesh of candidates) {
+          if (blocked.has(mesh)) continue;
+          mesh.raycast(supportRay,supportHits);
+          if (supportHits.length) {
+            blocked.add(mesh);
+            supportHits.length = 0;
+          }
+        }
+      }
+    }
+    return blocked;
+  }
+  function clearPeel() {
+    peeled.clear(); highlighted = selected = null; inspection = []; deep = false;
+  }
+  function reveal(part) {
+    if (!part) { clearPeel(); update(current); return true; }
+    const next = under(part);
+    if (next.length) {
+      peeled.add(part.mesh.name);
+      inspection = next.map(p => p.mesh.name);
+    } else {
+      inspection = [part.mesh.name];
+    }
+    highlighted = selected = null;
+    update(current);
+    return true;
+  }
+  function under(part) {
+    const names = beneath[part.name] || [];
+    return parts.filter(p => p.side === part.side && names.includes(p.name) && p !== part);
   }
   function update(state) {
+    if (activeSide !== null && activeSide !== state.side) {
+      clearPeel(); chosenBone = hiddenBone = null;
+    }
+    activeSide = state.side;
     current = state;
     const names = profiles[movement][Number(deep)];
     const chainScapula = (movement === 'ribshift' || movement === 'chain') && state.mode === 'chain';
     const side = state.side === 'right' ? 'R' : 'L';
+    const revealed = new Set();
+    for (const key of peeled) {
+      const source = keyed.get(key);
+      if (source) for (const child of under(source)) revealed.add(child);
+    }
     for (const part of parts) {
-      part.available = (names.includes(part.name) || (chainScapula && profiles.scapula[Number(deep)].includes(part.name)))
-        && (movement !== 'foot' || part.side === side);
+      part.available = (names.includes(part.name) || revealed.has(part) ||
+        (chainScapula && profiles.scapula[Number(deep)].includes(part.name))) &&
+        !peeled.has(part.mesh.name) && (movement !== 'foot' || part.side === side);
     }
     if (!selected?.available) selected = null;
+    if (!highlighted?.available) highlighted = null;
     for (const binding of bindings) {
       binding.node.updateWorldMatrix(true, false);
       binding.world.multiplyMatrices(binding.node.matrixWorld, binding.inverse);
@@ -322,29 +444,44 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
         out[v + 2] = pz;
       }
       correctHipFoot?.(part, software);
-      correctLimb?.(part, software);
+      if (!correctPose?.(part, state)) correctLimb?.(part, software);
       positions.needsUpdate = true;
       if (!software) part.mesh.geometry.computeVertexNormals();
       part.mesh.geometry.computeBoundingSphere();
     }
   }
+  let depthRenderer = null;
   return {
     update,
+    canvasDepth(ctx, width, height) {
+      if (!depthRenderer) depthRenderer = depthModule.createDepthRenderer();
+      return depthRenderer.begin(ctx,width,height) ? depthRenderer : null;
+    },
     useSoftwareRenderer() {
       if (software) return;
       software = true;
       for (const part of parts) configureSurface(part);
       if (current) update(current);
     },
-    depth() { deep = !deep; selected = null; update(current); return deep; },
-    cutaway() { cut = !cut; return cut; },
+    // The full-depth view is also used for release geometry checks.
+    depth() { const next = !deep; clearPeel(); deep = next; update(current); return deep; },
+    cutaway() {
+      hiddenBone = hiddenBone ? null : (chosenBone || defaultBone());
+      return Boolean(hiddenBone);
+    },
     selection,
     select(key) {
-      const next = parts.find(p => p.available && p.mesh.name === key) || null;
-      if (selected !== next) {
-        selected = next;
-        update(current);
+      if (typeof key === 'string' || key === null) {
+        selected = keyed.get(key) || null;
+      } else if (key) {
+        clearPeel();
+        for (const name of key.peeled) if (keyed.has(name)) peeled.add(name);
+        inspection = key.inspection.filter(name => keyed.has(name));
+        highlighted = keyed.get(key.highlight) || null;
+        chosenBone = nodes.has(key.chosenBone) ? key.chosenBone : null;
+        hiddenBone = nodes.has(key.hiddenBone) ? key.hiddenBone : null;
       }
+      update(current);
     },
     cycle() {
       const choices = parts.filter(p => p.available);
@@ -352,12 +489,27 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
       update(current);
       return selection();
     },
-    bounds() {
+    bounds(focusTarget = false) {
       const box = new T.Box3(), currentBounds = new T.Box3();
-      for (const {mesh, positions} of parts) if (mesh.visible) {
-        box.union(currentBounds.setFromBufferAttribute(positions));
+      const targets = highlighted ? [highlighted.mesh.name] : inspection;
+      for (const p of parts) {
+        if (p.mesh.visible && (!focusTarget || !targets.length || targets.includes(p.mesh.name))) {
+          box.union(currentBounds.setFromBufferAttribute(p.positions));
+        }
       }
       return box;
+    },
+    keyboard(key) {
+      if (key === 'Escape') return reveal(null);
+      const choices = parts.filter(p => p.mesh.visible);
+      if (!choices.length) return false;
+      if (key === ' ' || key === 'Enter') return reveal(highlighted || choices[0]);
+      if (!['ArrowRight','ArrowLeft','ArrowUp','ArrowDown'].includes(key)) return false;
+      const forward = key==='ArrowRight' || key==='ArrowDown';
+      const start = highlighted ? choices.indexOf(highlighted) : (forward ? -1 : 0);
+      highlighted = choices[(start + (forward ? 1 : -1) + choices.length) % choices.length];
+      inspection = [];
+      return true;
     },
     pick(event, canvas, camera) {
       const rect = canvas.getBoundingClientRect();
@@ -367,8 +519,6 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
       ray.near = camera.near / forward;
       ray.far = camera.far / forward;
       const hit = ray.intersectObjects(parts.filter(p => p.mesh.visible).map(p => p.mesh), false)[0];
-      if (!hit) return false;
-      // Use the same visible bones and opaque equipment as the rendered frame.
       const occluders = [];
       this.draw(camera, () => {
         scene.traverseVisible(object => {
@@ -376,40 +526,26 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
               (!object.material.transparent || object.material.opacity >= .99)) occluders.push(object);
         });
       });
-      ray.far = Math.max(0, hit.distance - .0001);
-      if (occluders.some(object => ray.intersectObject(object, false).length)) return false;
-      const part = parts.find(p => p.mesh === hit.object);
-      selected = selected === part ? null : part;
-      update(current);
-      return true;
+      ray.far = hit ? Math.max(0,hit.distance - .0001) : ray.far;
+      const front = ray.intersectObjects(occluders,false)[0];
+      if (front && boneKeys.has(front.object)) {
+        if (!hiddenBone) chosenBone = boneKeys.get(front.object);
+        return true;
+      }
+      if (!hit || front) return reveal(null);
+      return reveal(keyed.get(hit.object.name));
     },
     draw(camera, drawScene) {
       const tilt = movement === 'tilt' || movement === 'chain';
-      const localContext = current.mode === 'local' && (tilt || (movement === 'hike' && deep));
-      const showPlantarSurface = movement === 'foot' && (cut || camera.position.y < floor.position.y);
-      if (!cut && !localContext && !showPlantarSurface) { drawScene(); return; }
+      const localContext = current.mode === 'local' && (tilt || (movement === 'hike' && (deep || peeled.size)));
+      const showPlantarSurface = movement === 'foot' && (hiddenBone || camera.position.y < floor.position.y);
+      if (!hiddenBone && !localContext && !showPlantarSurface && !highlighted) { drawScene(); return; }
       const restore = [];
       function visibility(node, visible) {
         if (node && node.visible !== visible) {
           restore.push([node, 'visible', node.visible]);
           node.visible = visible;
         }
-      }
-      function fade(mesh) {
-        if (!mesh?.isMesh) return;
-        // A translucent landmark keeps the hidden structure in context from
-        // either renderer. It is used only while drawing the optional lens.
-        let faint = faded.get(mesh.material);
-        if (!faint) {
-          faint = mesh.material.clone();
-          faint.transparent = true;
-          faint.opacity = .16;
-          faint.depthWrite = false;
-          faded.set(mesh.material, faint);
-        }
-        faint.color.copy(mesh.material.color);
-        restore.push([mesh, 'material', mesh.material]);
-        mesh.material = faint;
       }
       try {
         if (showPlantarSurface) {
@@ -424,19 +560,29 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
           for (const child of thorax.children) visibility(child, show.has(child));
           for (const section of axial.slice(0, tilt ? 13 : 6)) visibility(section.node, true);
         }
-        if (cut) {
-          const side = selected && selected.side !== 'both' ? selected.side : camera.position.x < 0 ? 'R' : 'L';
-          if (movement === 'foot') {
-            const prefix = current.side === 'right' ? 'R' : 'L';
-            for (const key of ['tibia','fibula','Talus','Calcaneus','Cuboid']) fade(nodes.get(prefix + key));
-          } else if (['hike','hip','lunge','squat','squat_types','squatcom','bulgarian_split_squat','rdl','deadlift_types'].includes(movement)) {
-            if (exercises[movement] || movement === 'lunge') fade(nodes.get(side + 'femur'));
-            fade(nodes.get(side === 'R' ? 'rightHip' : 'leftHip'));
-          } else {
-            for (let i = 1; i <= 12; i++) fade(nodes.get(side + 'rib' + i));
-            fade(nodes.get(side + 'scapula'));
-            if (exercises[movement]) fade(nodes.get(side + 'humerus'));
+        if (hiddenBone) {
+          const node = nodes.get(hiddenBone);
+          visibility(node,false);
+          for (const line of ghost?.children || []) {
+            if (line.userData.lensSource === node) visibility(line,false);
           }
+          if (['press','row','bench'].includes(movement)) {
+            for (const mesh of obstructingSupports(camera)) visibility(mesh,false);
+          }
+        }
+        if (highlighted?.mesh.visible) {
+          const mesh = highlighted.mesh, original = mesh.material;
+          let highlight = highlightedMaterials.get(original);
+          if (!highlight) {
+            highlight = original.clone();
+            highlight.onBeforeCompile = original.onBeforeCompile;
+            highlight.customProgramCacheKey = original.customProgramCacheKey.bind(original);
+            highlight.color.setHex(0xffcb8f);
+            highlight.emissive.setHex(0x532b06);
+            highlightedMaterials.set(original,highlight);
+          }
+          restore.push([mesh,'material',original]);
+          mesh.material = highlight;
         }
         drawScene();
       } finally {
@@ -452,7 +598,7 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
       scene.remove(group);
       parts.forEach(part => part.mesh.geometry.dispose());
       material.dispose();
-      for (const faint of faded.values()) faint.dispose();
+      for (const highlight of highlightedMaterials.values()) highlight.dispose();
     }
   };
 }

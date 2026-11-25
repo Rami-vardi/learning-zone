@@ -1011,7 +1011,7 @@
     const ghost=new T.Group();scene.add(ghost);const ghostMaterial=new T.LineBasicMaterial({color:0x6f92bd,transparent:true,opacity:.15});
     function rebuildGhost(){
       ghost.children.slice().forEach(o=>{ghost.remove(o);if(o.geometry)o.geometry.dispose();});
-      model.updateMatrixWorld(true);model.traverseVisible(o=>{if(!o.isMesh||o.material===ctxM)return;for(let ancestor=o.parent;ancestor;ancestor=ancestor.parent)if(ancestor===head)return;const line=new T.LineSegments(new T.EdgesGeometry(o.geometry,28),ghostMaterial);line.matrixAutoUpdate=false;line.matrix.copy(o.matrixWorld);ghost.add(line);});
+      model.updateMatrixWorld(true);model.traverseVisible(o=>{if(!o.isMesh||o.material===ctxM)return;for(let ancestor=o.parent;ancestor;ancestor=ancestor.parent)if(ancestor===head)return;const line=new T.LineSegments(new T.EdgesGeometry(o.geometry,28),ghostMaterial);line.userData.lensSource=o;line.matrixAutoUpdate=false;line.matrix.copy(o.matrixWorld);ghost.add(line);});
     }
     const labelLayer=document.createElement('div');Object.assign(labelLayer.style,{position:'absolute',inset:'0',pointerEvents:'none',overflow:'hidden'});container.style.position='relative';container.appendChild(labelLayer);
     const labelNodes=new Map(), occupied=[];
@@ -1061,6 +1061,11 @@
       }
     }
     let muscleLens = null, muscleFrame = null, onMuscleSelection = null;
+    let savedSkeletonCamera = null, muscleZoom = 1, sharedFrameAspect = null;
+    let useMuscleAngle = false, explicitMuscleFrame = false, preserveEntryFrame = false;
+    let skeletonPreset = initial.view || 'front';
+    const stageRole = container.getAttribute('role');
+    const frameSize = new T.Vector3();
     let renderer,canvas,ctx;
     const canvasEvents=[];
     const pixelRatio=Math.min(window.devicePixelRatio||1,2);
@@ -1121,11 +1126,34 @@
       });
       return !blockers.some(h=>h.distance<nearest-.004);
     }
+    function configureMuscleInput(){
+      if(muscleLens){
+        if(stageRole==='img')container.setAttribute('role','group');
+        canvas.tabIndex=0;
+        canvas.setAttribute('role','application');
+        canvas.setAttribute('aria-label','Muscle model. Click a muscle to peel it. Use the arrow keys to choose, Enter or Space to peel, Escape to restore, and Shift with arrow keys to rotate.');
+        canvas.setAttribute('aria-keyshortcuts','ArrowLeft ArrowRight ArrowUp ArrowDown Enter Space Escape Shift+ArrowLeft Shift+ArrowRight Shift+ArrowUp Shift+ArrowDown');
+      }else{
+        if(stageRole==='img')container.setAttribute('role',stageRole);
+        canvas.removeAttribute('tabindex');
+        canvas.removeAttribute('aria-keyshortcuts');
+        canvas.setAttribute('role','img');
+        canvas.setAttribute('aria-label',canvasLabel);
+      }
+    }
+    function reportOrbit(){
+      controls.onOrbit?.(yaw,pitch);
+      if(muscleLens)controls.onMuscleOrbit?.();
+    }
+    function selectionChanged(){
+      explicitMuscleFrame=false;
+      if(!controls.sharedMuscleCamera||!onMuscleSelection){refreshMuscleFrame();render();}
+      onMuscleSelection?.(muscleLens.selection());
+    }
     function configureCanvas(){
       clearCanvasEvents();
       drag=null;
-      canvas.setAttribute('aria-label',canvasLabel);
-      canvas.setAttribute('role','img');
+      configureMuscleInput();
       canvas.setAttribute('data-renderer',ctx?'canvas':'webgl');
       Object.assign(canvas.style,{display:'block',width:'100%',height:'100%',touchAction:'none',cursor:'grab'});
       container.insertBefore(canvas,labelLayer);
@@ -1135,6 +1163,7 @@
       }
       onCanvas('pointerdown',e=>{
         if(drag||e.button!==0)return;
+        if(muscleLens)canvas.focus({preventScroll:true});
         drag={id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:false};
         canvas.setPointerCapture(e.pointerId);
         canvas.style.cursor='grabbing';
@@ -1142,40 +1171,60 @@
       onCanvas('pointermove',e=>{
         if(!drag||e.pointerId!==drag.id)return;
         if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5)return;
-        drag.moved=true;
+        drag.moved=true;useMuscleAngle=false;
+        if(!muscleLens)skeletonPreset=null;
         yaw-=(e.clientX-drag.x)*.008;
         pitch=T.MathUtils.clamp(pitch+(e.clientY-drag.y)*.006,-Math.PI/2,Math.PI/2);
         drag.x=e.clientX;drag.y=e.clientY;
-        controls.onOrbit?.(yaw,pitch);
+        reportOrbit();
         render();
       });
       const end=e=>{
         if(!drag||e.pointerId!==drag.id)return;
         const tap=e.type==='pointerup'&&!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5;
         drag=null;canvas.style.cursor='grab';
-        if(tap && muscleLens?.pick(e,canvas,camera)) {
-          render();
-          onMuscleSelection?.(muscleLens.selection());
+        if(tap&&muscleLens){
+          if(muscleLens.pick(e,canvas,camera))selectionChanged();
           return;
         }
         if(tap&&helmetAt(e))toggleHelmet();
       };
       onCanvas('pointerup',end);onCanvas('pointercancel',end);onCanvas('lostpointercapture',end);
+      onCanvas('keydown',e=>{
+        if(!muscleLens||e.altKey||e.ctrlKey||e.metaKey)return;
+        if(e.shiftKey&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
+          const step=Math.PI/16;
+          useMuscleAngle=false;
+          if(e.key==='ArrowLeft')yaw-=step;
+          if(e.key==='ArrowRight')yaw+=step;
+          if(e.key==='ArrowUp')pitch=Math.min(Math.PI/2,pitch+step);
+          if(e.key==='ArrowDown')pitch=Math.max(-Math.PI/2,pitch-step);
+          reportOrbit();render();
+        }else if(muscleLens.keyboard(e.key,camera))selectionChanged();
+        else return;
+        e.preventDefault();e.stopPropagation();
+      });
       onCanvas('wheel',e=>{
         e.preventDefault();
         const factor=e.deltaY>0?1.06:1/1.06;
         if(controls.onZoom)controls.onZoom(factor);else zoomCamera(factor);
       },{passive:false});
     }
-    function zoomCamera(factor){distance=Math.max(1.3,Math.min(50,distance*factor));render();}
+    function zoomCamera(factor){
+      const nextDistance=T.MathUtils.clamp(distance*factor,1.3,50);
+      if(muscleLens)muscleZoom*=nextDistance/distance;
+      distance=nextDistance;render();
+    }
     function softwareCanvas(){
       const element=document.createElement('canvas');
       const context=element.getContext('2d');
       if(!context)return false;
+      const hadFocus=canvas&&document.activeElement===canvas;
       if(canvas)canvas.remove();
       canvas=element;
       ctx=context;
       configureCanvas();
+      if(hadFocus&&muscleLens)canvas.focus({preventScroll:true});
       canvas.width=width*pixelRatio;
       canvas.height=height*pixelRatio;
       ctx.setTransform(pixelRatio,0,0,pixelRatio,0,0);
@@ -1215,6 +1264,7 @@
       activeScene.updateMatrixWorld(true);
       camera.updateMatrixWorld(true);
       const triangles=[];
+      const depthFrame=activeScene===scene&&muscleLens?.canvasDepth?.(ctx,width,height);
       const projection=new T.Matrix4().multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
       activeScene.traverseVisible(mesh=>{
         if(mesh===balanceLine||mesh===comDot)return;
@@ -1268,6 +1318,13 @@
             }else displayColor.multiplyScalar(.64+.36*diffuse);
           }
           displayColor.convertLinearToSRGB();
+          if(depthFrame){
+            const order=material.userData.groundSurface?-1:material.depthTest===false?mesh.renderOrder:0;
+            depthFrame.triangle(ax,ay,az,bx,by,bz,cx,cy,cz,
+              Math.round(displayColor.r*255),Math.round(displayColor.g*255),Math.round(displayColor.b*255),
+              material.opacity,order);
+            continue;
+          }
           // Canvas antialiases individual paths against their background.
           // Overlap opaque facets by a fraction of a pixel to close hairline seams.
           if(material.opacity===1){
@@ -1285,6 +1342,7 @@
             opacity:material.opacity,order:material.userData.groundSurface?-1:material.depthTest===false?mesh.renderOrder:0});
         }
       });
+      if(depthFrame)depthFrame.paint(ctx);
       triangles.sort((a,b)=>a.order-b.order||b.z-a.z);
       for(const t of triangles){
         ctx.beginPath();
@@ -1329,6 +1387,7 @@
       ctx.lineWidth=1;
       ctx.beginPath();
       for(const line of ghost.children){
+        if(!line.visible)continue;
         const vertices=line.geometry.attributes.position;
         cameraModel.multiplyMatrices(projection,line.matrixWorld);
         for(let i=0;i<vertices.count;i+=2){
@@ -1356,13 +1415,13 @@
         const horizontal=x*c+z*s;
         const vertical=y*Math.abs(Math.cos(pitch))+(x*s+z*c)*Math.abs(Math.sin(pitch));
         radius*=Math.max(vertical,horizontal/perspective.aspect);
-      }else if(camera===deadliftCamera){
+      }else if(camera===deadliftCamera&&!muscleFrame){
         const span=Math.hypot(8.85*Math.cos(yaw),4.15*Math.sin(yaw));
         const widthScale=1/(2*halfFovTan*perspective.aspect);
         const baseDistance=state.movement==='tension_deadlift'?11.7:13.1;
         radius*=Math.max(baseDistance,span*widthScale)/Math.max(baseDistance,4.15*widthScale);
       }
-      if(helmetProgress&&head.visible&&!isDevelopment()){
+      if(!muscleLens&&helmetProgress&&head.visible&&!isDevelopment()){
         const t=helmetProgress*helmetProgress*(3-2*helmetProgress);
         const point=skull.localToWorld(new T.Vector3(0,.28,.01));
         centre=centre.clone().lerp(point,t);azimuth+=helmetYaw*t;
@@ -2565,19 +2624,74 @@
       return {movement:state.movement,amount:state.amount,mode:state.mode,side:state.side,nodes,limb,tensionEmphasis:tensionDebug?.tensionEmphasis||0};
     }
     if(!isDevelopment()){applyPose(0);rebuildGhost();}
+    const regionalMuscleViews=new Set(['hike','tilt','hip','ribs','ribshift','scapula','foot','chain']);
+    function trackingBounds(){
+      if(!muscleLens)return null;
+      const focused=muscleLens.selection().focused===true;
+      if(preserveEntryFrame){
+        if(!focused&&!explicitMuscleFrame)return null;
+        preserveEntryFrame=false;muscleZoom=1;
+      }
+      if(!focused&&!explicitMuscleFrame&&!(state.mode==='local'&&regionalMuscleViews.has(state.movement)))return null;
+      return muscleLens.bounds(focused);
+    }
     function fitMuscleFrame(){
-      if (!muscleFrame) { focus(); return; }
-      muscleFrame.getCenter(target);
-      const radius = muscleFrame.getSize(new T.Vector3()).length() * .5;
-      distance = T.MathUtils.clamp(radius * 1.15 / (halfFovTan * Math.min(1,perspective.aspect)),1.3,50);
+      if(muscleFrame){
+        muscleFrame.getCenter(target);
+        const radius=muscleFrame.getSize(frameSize).length()*.5;
+        const aspect=Math.min(1,perspective.aspect,sharedFrameAspect||Infinity);
+        distance=radius*1.15/(halfFovTan*aspect);
+      }else focus();
+      if(muscleLens){
+        // Keep the user's zoom relative to the neutral fit as the tissue moves.
+        const fittedDistance=T.MathUtils.clamp(distance,1.3,50);
+        distance=T.MathUtils.clamp(fittedDistance*muscleZoom,1.3,50);
+      }
+    }
+    function refreshMuscleFrame(bounds=trackingBounds(),aspect=null){
+      muscleFrame=bounds&&!bounds.isEmpty()?bounds:null;
+      sharedFrameAspect=aspect;
+      fitMuscleFrame();
+    }
+    function setCameraAngle(name){
+      const movement=state.movement;
+      if(name==='top'||name==='bottom'){
+        yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;
+      }else if(name==='front'||name==='back'){
+        yaw=name==='front'?0:Math.PI;pitch=.04;
+      }else if(name==='side'){
+        yaw=Math.PI/2;pitch=isDeadlift(movement)?0:.04;
+      }else{
+        yaw=.45;pitch=.10;
+        if(movement==='baby'){yaw=1.22;pitch=.29;}
+        else if(movement==='chimp'){yaw=-1.12;pitch=.14;}
+        else if(tensionIds.has(movement))yaw=1.00;
+        else if(previewIds.has(movement)&&movement[0]==='c')yaw=1.05;
+        else if(movement==='squat'||movement==='squat_types')yaw=.75;
+        else if(movement==='bench'){yaw=1.10;pitch=.42;}
+        else if(splitStanceIds.has(movement)){yaw=.90;pitch=.12;}
+        else if(movement==='foot')yaw=state.side==='right'?.95:-.95;
+        else if(movement==='hip')yaw=state.side==='right'?-.45:.45;
+      }
+    }
+    function setMuscleAngle(){
+      useMuscleAngle=true;
+      switch(state.movement){
+        case 'lunge': yaw=-2.55;pitch=.12;break;
+        case 'foot': yaw=state.side==='right'?-.95:.95;pitch=.10;break;
+        case 'row': yaw=Math.PI;pitch=.04;break;
+        case 'press': yaw=0;pitch=.04;break;
+        default: return false;
+      }
+      return true;
     }
     function focus(){
-      muscleFrame = null;
       const m=state.movement,chain=state.mode==='chain';
       // Reserve the full horizontal motion envelope when the viewport narrows.
       function frame(x,y,z,verticalDistance,horizontalSpan){
         target.set(x,y,z);
-        const widthDistance=horizontalSpan/(2*halfFovTan*perspective.aspect);
+        const aspect=Math.min(perspective.aspect,sharedFrameAspect||Infinity);
+        const widthDistance=horizontalSpan/(2*halfFovTan*aspect);
         distance=Math.max(verticalDistance,widthDistance);
       }
       if(m==='baby'){
@@ -2623,55 +2737,101 @@
         ctx.setTransform(pixelRatio,0,0,pixelRatio,0,0);
       }
       render();
+      if(muscleLens)controls.onMuscleResize?.();
     }
     const ro=new ResizeObserver(resize);ro.observe(container);
     focus();applyPose();resize();
     return {
-      setMuscleLens(create, onSelection) {
-        onMuscleSelection = onSelection;
-        if (!create) muscleFrame = null;
+      setMuscleLens(create, onSelection, initialView) {
+        onMuscleSelection=onSelection;
+        if(create&&!savedSkeletonCamera){
+          const entryDistance=distance,entryTarget=target.clone();
+          focus();
+          savedSkeletonCamera={yaw,pitch,distance:entryDistance,target:entryTarget,zoom:entryDistance/distance,width,height,mode:state.mode,side:state.side};
+          distance=entryDistance;target.copy(entryTarget);
+        }
         muscleLens?.dispose();
-        muscleLens = null;
-        if (create) {
-          muscleLens = create({T,scene,pelvis,legs,ribs,scapulae,axial,neck,sternum,floor,floorRing,pressureMarks,arms,exArms,software:!renderer});
+        muscleLens=null;muscleFrame=null;sharedFrameAspect=null;explicitMuscleFrame=false;preserveEntryFrame=false;muscleZoom=1;
+        if(create){
+          const inspectionSupports=[seat,pressChair,flatBench,splitSquatBench,seatedFloor,footrest,rowUpright];
+          muscleLens=create({T,scene,model,ghost,equipment,inspectionSupports,pelvis,legs,ribs,scapulae,axial,neck,sternum,floor,floorRing,pressureMarks,arms,exArms,software:!renderer});
           muscleLens.update(state);
-        }
-        render();
-      },
-      inspectMuscle(action, value) {
-        if (!muscleLens) return;
-        if (action === 'bounds') return muscleLens.bounds();
-        if (action === 'selection') return muscleLens.selection();
-        if (action === 'focus') {
-          const bounds = value || muscleLens.bounds();
-          if (!bounds.isEmpty()) {
-            muscleFrame = bounds;
-            fitMuscleFrame();
+          // A teacher may already have composed a shot before comparing it with muscle.
+          preserveEntryFrame=skeletonPreset===null || (initialView && skeletonPreset!==initialView) || Math.abs(savedSkeletonCamera.zoom-1)>.001;
+          if(preserveEntryFrame){
+            useMuscleAngle=false;muscleZoom=savedSkeletonCamera.zoom;
+          }else if(!setMuscleAngle()&&initialView)setCameraAngle(initialView);
+          refreshMuscleFrame();
+        }else if(savedSkeletonCamera){
+          const saved=savedSkeletonCamera;
+          yaw=saved.yaw;pitch=saved.pitch;
+          if(state.side!==saved.side&&skeletonPreset==='oblique'&&['foot','hip'].includes(state.movement)){
+            setCameraAngle(skeletonPreset);
           }
-        } else {
-          const active = muscleLens[action](value);
-          render();
-          return active;
+          const regionChanged=state.mode!==saved.mode||(state.movement==='foot'&&state.side!==saved.side);
+          if(!regionChanged&&width===saved.width&&height===saved.height){
+            distance=saved.distance;target.copy(saved.target);
+          }else{
+            focus();distance=T.MathUtils.clamp(distance*saved.zoom,1.3,50);
+            if(!regionChanged)target.copy(saved.target);
+          }
+          savedSkeletonCamera=null;useMuscleAngle=false;
         }
-        render();
+        configureMuscleInput();render();
+        if(create&&preserveEntryFrame)return {preset:skeletonPreset};
+      },
+      inspectMuscle(action,value,deferRender=false){
+        if(!muscleLens)return;
+        if(action==='selection')return muscleLens.selection();
+        if(action==='bounds')return muscleLens.bounds();
+        if(action==='trackingBounds')return {bounds:trackingBounds(),aspect:perspective.aspect};
+        if(action==='track'){
+          refreshMuscleFrame(value.bounds,value.aspect);render();return;
+        }
+        if(action==='focus'){
+          explicitMuscleFrame=true;muscleZoom=1;
+          refreshMuscleFrame(value||trackingBounds());render();return;
+        }
+        const result=muscleLens[action](value);
+        if(!deferRender){refreshMuscleFrame();render();}
+        return result;
       },
       debugPoseSnapshot:capturePose,
       zoomCamera,
-      setOrbit(newYaw,newPitch){yaw=newYaw;pitch=newPitch;render();},
+      setOrbit(newYaw,newPitch){useMuscleAngle=false;if(!muscleLens)skeletonPreset=null;yaw=newYaw;pitch=newPitch;render();},
       get ribWidth(){return ribPoint().x-otherRib.localToWorld(new T.Vector3().fromBufferAttribute(otherPoints,oppositeVertex)).x;},
       get deadliftAboveKnees(){return tensionDebug?.bar?.[1]>tensionDebug?.legs[0].knee[1];},
       get squatBelowKnees(){return state.movement==='squat'&&exerciseDebug.legs.every(leg=>leg.kneeAboveHip>0);},
       get pogoInContact(){return tensionDebug?.contact;},
       get rowPastTrunk(){return state.movement==='row'&&exerciseDebug.arms.every(arm=>arm.humeralSagittal<0);},
       debugCamera:()=>({yaw,pitch,distance,target:target.toArray()}),
-      update(next){
-        if((next.movement&&next.movement!==state.movement)||(next.mode&&next.mode!==state.mode))closeHelmet();
-        const previous=state.movement,side=state.side,mode=state.mode;state=Object.assign({},state,next);if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){focus();if(!isDevelopment()){applyPose(0);rebuildGhost();}}applyPose();render();},
-      setView(name){closeHelmet();if(name==='top'||name==='bottom'){yaw=0;pitch=name==='top'?Math.PI/2:-Math.PI/2;}else if(name==='front'){yaw=0;pitch=.04;}else if(name==='back'){yaw=Math.PI;pitch=.04;}else if(name==='side'){yaw=Math.PI/2;pitch=isDeadlift(state.movement)?0:.04;}else{yaw=isDevelopment()?(state.movement==='baby'?1.22:-1.12):tensionIds.has(state.movement)?1.00:previewIds.has(state.movement)&&state.movement[0]==='c'?1.05:['squat','squat_types'].includes(state.movement)?.75:state.movement==='bench'?1.10:splitStanceIds.has(state.movement)?.90:state.movement==='foot'?(state.side==='right'?.95:-.95):state.movement==='hip'?(state.side==='right'?-.45:.45):.45;pitch=state.movement==='baby'?.29:state.movement==='chimp'?.14:state.movement==='bench'?.42:splitStanceIds.has(state.movement)?.12:.10;}render();},
-      resetCamera(){closeHelmet();yaw=0;pitch=.04;focus();render();},resize,
+      update(next,deferRender=false){
+        const previous=state.movement,side=state.side,mode=state.mode;
+        state=Object.assign({},state,next);
+        if(previous!==state.movement||mode!==state.mode)closeHelmet();
+        if(muscleLens&&useMuscleAngle&&side!==state.side&&state.movement==='hip')setCameraAngle('oblique');
+        if(previous!==state.movement||mode!==state.mode||(side!==state.side&&state.movement==='foot')){
+          if(!muscleLens)focus();
+          else if(useMuscleAngle&&state.movement==='foot')setMuscleAngle();
+          if(!isDevelopment()){applyPose(0);rebuildGhost();}
+        }
+        applyPose();
+        if(!deferRender){if(muscleLens)refreshMuscleFrame();render();}
+      },
+      setView(name){closeHelmet();useMuscleAngle=false;if(!muscleLens)skeletonPreset=name;setCameraAngle(name);render();},
+      resetCamera(defaultView){
+        closeHelmet();
+        if(muscleLens){
+          muscleZoom=1;explicitMuscleFrame=false;preserveEntryFrame=false;
+          if(!setMuscleAngle())setCameraAngle(defaultView||state.view||'front');
+          refreshMuscleFrame();
+        }else{skeletonPreset='front';yaw=0;pitch=.04;focus();}
+        render();
+      },resize,
       dispose(){
         if(disposed)return;disposed=true;muscleLens?.dispose();muscleLens=null;cancelAnimationFrame(helmetFrame);fitShoulderGirdle?.dispose();drag=null;ro.disconnect();
         clearCanvasEvents();
+        if(stageRole==='img')container.setAttribute('role','img');
         const geometries=new Set(),materials=new Set([...Object.values(regionMaterials),studyPadMat,studyRibMat,studyScapMat,studyBenchScapMat,...tensionSpineMaterials.values(),steel,seatMat,dumbbellHeads,landmarkM,cavityM,floorMat,ghostMaterial]);
         for(const activeScene of [scene,developmentModel?.scene].filter(Boolean))activeScene.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const material of Array.isArray(o.material)?o.material:[o.material])materials.add(material);if(o.userData.azOriginalMaterial)materials.add(o.userData.azOriginalMaterial);});
         for(const geometry of geometries)geometry.dispose();

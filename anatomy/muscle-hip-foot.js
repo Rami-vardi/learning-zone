@@ -22,8 +22,11 @@ export function sampleClearance(field, x, y, z, gradient) {
 // rest surface, so a previous frame or camera angle cannot change its shape.
 export function createHipFootCorrection(T, nodes, assets, software = false) {
   const bySide = {R: [], L: []};
-  const profiles = new Map();
+  const profiles = new Map(), femoralBindings = new WeakMap();
   for (const asset of assets) {
+    for (const item of asset.meshes) {
+      if(item.name==='maximus')femoralBindings.set(item,asset.bones.indexOf(item.side+'femur'));
+    }
     for (const field of asset.clearanceFields || []) {
       const [nx, ny, nz] = field.shape;
       const side = field.bone === 'rightHip' || field.bone.startsWith('R') ? 'R' : 'L';
@@ -59,9 +62,21 @@ export function createHipFootCorrection(T, nodes, assets, software = false) {
       const j = i * 3, x = Math.abs(part.rest[j]), y = part.rest[j+1], z = part.rest[j+2];
       // Maximus runs obliquely toward the lateral thigh. Medius and minimus
       // fan towards the trochanter. These bands illustrate regional direction.
-      const c = part.name === 'maximus'
-        ? ((y - 3.1) + .98*x - .24*z + .08*x*x) * 6.3
-        : Math.atan2(z + .055 + .08*(x-.68), Math.max(.065,y-2.99)) * 4.2;
+      let c;
+      if (part.item.bundleGuides) {
+        const along=(x-.40)-.75*(y-3.40)+.32*(z+.25);
+        const across=(y-3.40)+.75*(x-.40)-.30*(z+.25);
+        const [upper,middle,lower]=part.item.bundleGuides;
+        const at=k=>(k[0]*along+k[1])*along+k[2];
+        const mid=at(middle),spacing=across>mid ? at(upper)-mid : mid-at(lower);
+        c=2.15*(across-mid)/Math.max(.13,spacing);
+      } else if(part.item.bundleInsertion) {
+        const [ix,iy,iz]=part.item.bundleInsertion;
+        const radial=Math.max(.075,Math.hypot(x-ix,y-iy));
+        c=4.2*Math.atan2(z-iz,radial);
+      } else {
+        c=((y-3.1)+.98*x-.24*z+.08*x*x)*6.3;
+      }
       coords[i] = c;
       if (useCanvas) {
         const tone = .97 + .115*Math.cos(c*Math.PI*2);
@@ -118,10 +133,14 @@ export function createHipFootCorrection(T, nodes, assets, software = false) {
       if (!ids.has(key)) { ids.set(key, source.length); source.push(i); }
       uniqueIds[i] = ids.get(key);
     }
-    const faces = [];
+    const faces = [], connected = new Set();
     const index = geo.index.array, rest = part.rest;
     for (let i = 0; i < index.length; i += 3) {
       const a = index[i]*3, b = index[i+1]*3, c = index[i+2]*3;
+      for (let f=0;f<3;f++) {
+        const v=uniqueIds[index[i+f]], w=uniqueIds[index[i+(f+1)%3]];
+        if(v!==w)connected.add(Math.min(v,w)*65536+Math.max(v,w));
+      }
       // Fine atlas facets conform to the sampled envelope at their vertices.
       // Test the centers and edges of coarser facets that can bridge a ridge.
       const edge = (j,k) => Math.hypot(rest[j]-rest[k],rest[j+1]-rest[k+1],rest[j+2]-rest[k+2]);
@@ -131,7 +150,25 @@ export function createHipFootCorrection(T, nodes, assets, software = false) {
       if (Math.max(edge(a,b),edge(b,c),edge(a,c)) < (plantarTendon ? .009 : .044)) continue;
       faces.push(uniqueIds[index[i]],uniqueIds[index[i+1]],uniqueIds[index[i+2]]);
     }
-    const cached = {uniqueIds, source, faces: Uint16Array.from(faces),
+    const edges=new Uint16Array(connected.size*2);
+    let e=0;
+    for(const id of [...connected].sort((a,b)=>a-b)){edges[e++]=Math.floor(id/65536);edges[e++]=id%65536;}
+    const materialFaces=Uint16Array.from(index,i=>uniqueIds[i]),restArea=new Float32Array(index.length/3),footprint=new Uint8Array(index.length/3);
+    for(let f=0;f<restArea.length;f++){
+      const a=3*index[3*f],b=3*index[3*f+1],c=3*index[3*f+2];
+      const ux=rest[b]-rest[a],uy=rest[b+1]-rest[a+1],uz=rest[b+2]-rest[a+2];
+      const vx=rest[c]-rest[a],vy=rest[c+1]-rest[a+1],vz=rest[c+2]-rest[a+2];
+      restArea[f]=Math.hypot(uy*vz-uz*vy,uz*vx-ux*vz,ux*vy-uy*vx);
+      if(part.name==='maximus' && Math.abs((rest[a]+rest[b]+rest[c])/3)>.57 &&
+          (rest[a+1]+rest[b+1]+rest[c+1])/3<3.05 && (rest[a+2]+rest[b+2]+rest[c+2])/3>-.17){
+        let femoralWeight=0;
+        for(let v=0;v<3;v++)for(let k=4*index[3*f+v],n=k+4;k<n;k++){
+          if(part.bone[k]===femoralBindings.get(part.item))femoralWeight+=part.weight[k];
+        }
+        footprint[f]=femoralWeight>3*255*.92;
+      }
+    }
+    const cached = {uniqueIds, source, materialFaces,restArea,footprint, edges, edgeCosts: new Float32Array(connected.size), faces: Uint16Array.from(faces),
       points: new Float32Array(source.length*3), shifts: new Float32Array(source.length)};
     contactMeshes.set(geo,cached);
     return cached;
@@ -147,6 +184,28 @@ export function createHipFootCorrection(T, nodes, assets, software = false) {
     return Math.max(0,unit*((1-w)*near+w*far)+clearance-normal[0]*x-normal[1]*y-normal[2]*z);
   }
 
+  // Spread a contact displacement across the connected belly. An isolated
+  // projected vertex otherwise stretches or flattens a whole coarse facet.
+  function spreadContact(surface, slope) {
+    const {points, shifts, edges, edgeCosts} = surface;
+    for (let e=0; e<edges.length; e+=2) {
+      const a=edges[e]*3,b=edges[e+1]*3;
+      const dx=points[a]-points[b],dy=points[a+1]-points[b+1],dz=points[a+2]-points[b+2];
+      edgeCosts[e/2]=slope*Math.sqrt(dx*dx+dy*dy+dz*dz);
+    }
+    for (let pass=0;pass<6;pass++) {
+      let changed=false;
+      const forward=pass%2===0;
+      for(let e=forward?0:edges.length-2;forward?e<edges.length:e>=0;e+=forward?2:-2) {
+        const a=edges[e],b=edges[e+1],cost=edgeCosts[e/2];
+        const diff=shifts[a]-shifts[b];
+        if(diff>cost+.00002) {shifts[b]=shifts[a]-cost;changed=true;}
+        else if(diff < -cost-.00002) {shifts[a]=shifts[b]-cost;changed=true;}
+      }
+      if(!changed)break;
+    }
+  }
+
   function followSurface(part, field) {
     const isHip = Boolean(field.muscles), world = field.node.matrixWorld, a = part.positions.array;
     inv.copy(world).invert();
@@ -155,12 +214,11 @@ export function createHipFootCorrection(T, nodes, assets, software = false) {
     for (let i = 0; i < source.length; i++) {
       const j = source[i]*3;
       shifts[i] = 0;
+      local.fromArray(a,j).applyMatrix4(inv).toArray(points,i*3);
       if (!isHip && (part.rest[j+1] > .19 || part.rest[j+2] < .035)) continue;
-      local.fromArray(a,j).applyMatrix4(inv);
       shifts[i] = requiredShift(local.x,local.y,local.z,field,clearance);
-      local.toArray(points,i*3);
     }
-    if (part.name === 'maximus' || part.name === 'piriformis' || part.name === 'longus') {
+    if (part.name === 'maximus' || part.name === 'piriformis' || part.name === 'quadratus' || part.name === 'longus') {
       for (let i = 0; i < faces.length; i += 3) {
         const a=faces[i], b=faces[i+1], c=faces[i+2];
         const j=a*3, k=b*3, l=c*3;
@@ -175,6 +233,7 @@ export function createHipFootCorrection(T, nodes, assets, software = false) {
         }
       }
     }
+    spreadContact(contactMesh(part), isHip ? .16 : .36);
     for (let i=0;i<uniqueIds.length;i++) {
       const id=uniqueIds[i], j=i*3;
       let offset=shifts[id];
@@ -191,43 +250,47 @@ export function createHipFootCorrection(T, nodes, assets, software = false) {
     }
   }
 
-  function clearIliacOrigin(part, field) {
-    const world=field.node.matrixWorld, a=part.positions.array;
-    const {uniqueIds, source, faces, points, shifts}=contactMesh(part);
-    // The quadratus lumborum footprint lies along the inner lip of the crest.
-    // Correct only contact at the origin, in a superomedial direction.
-    const dx=part.side==='R'?.68:-.68, dy=.70, dz=-.22;
-    inv.copy(world).invert();
-    function travel(x,y,z) {
-      let offset=0;
-      for (let pass=0;pass<12;pass++) {
-        const distance=sampleClearance(field,x+dx*offset,y+dy*offset,z+dz*offset,gradient);
-        if(distance>=.002) break;
-        offset+=Math.max(.004,.003-distance);
+  // The atlas surface is a material sheet. Prevent a contacting sheet from
+  // folding into a sliver or spanning a gap with a single enlarged triangle.
+  // Corrections act on shared vertices and conserve each unconstrained
+  // triangle's center instead of rescaling the whole muscle.
+  function retainSurfaceArea(part) {
+    const {source,uniqueIds,materialFaces,restArea,footprint,points}=contactMesh(part);
+    const output=part.positions.array;
+    for(let i=0;i<source.length;i++) {
+      const j=3*source[i],k=3*i;
+      points[k]=output[j];points[k+1]=output[j+1];points[k+2]=output[j+2];
+    }
+    let changed=false;
+    for(let pass=0;pass<5;pass++){
+      let active=false;
+      for(let f=0;f<restArea.length;f++){
+        if(restArea[f]<.00005)continue;
+        const j=3*materialFaces[3*f],k=3*materialFaces[3*f+1],l=3*materialFaces[3*f+2];
+        const ux=points[k]-points[j],uy=points[k+1]-points[j+1],uz=points[k+2]-points[j+2];
+        const vx=points[l]-points[j],vy=points[l+1]-points[j+1],vz=points[l+2]-points[j+2];
+        let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;
+        const area=Math.sqrt(nx*nx+ny*ny+nz*nz);
+        const lo=footprint[f] ? .94 : .65, hi=footprint[f] ? 1.12 : 2.15;
+        const target=Math.min(hi*restArea[f],Math.max(lo*restArea[f],area));
+        if(Math.abs(target-area)<.000025 || area<1e-10)continue;
+        nx/=area;ny/=area;nz/=area;
+        const bx=vy*nz-vz*ny,by=vz*nx-vx*nz,bz=vx*ny-vy*nx;
+        const cx=ny*uz-nz*uy,cy=nz*ux-nx*uz,cz=nx*uy-ny*ux;
+        const ax=-bx-cx,ay=-by-cy,az=-bz-cz;
+        const divisor=ax*ax+ay*ay+az*az+bx*bx+by*by+bz*bz+cx*cx+cy*cy+cz*cz;
+        if(divisor<1e-12)continue;
+        const s=(target-area)/divisor;
+        points[j]+=s*ax;points[j+1]+=s*ay;points[j+2]+=s*az;
+        points[k]+=s*bx;points[k+1]+=s*by;points[k+2]+=s*bz;
+        points[l]+=s*cx;points[l+1]+=s*cy;points[l+2]+=s*cz;
+        active=true;
       }
-      return offset;
+      if(!active)break;
+      changed=true;
     }
-    for (let i=0;i<source.length;i++) {
-      const j=source[i]*3;
-      local.fromArray(a,j).applyMatrix4(inv).toArray(points,3*i);
-      shifts[i]=part.rest[j+1]<3.97 ? travel(local.x,local.y,local.z) : 0;
-    }
-    for (let i=0;i<faces.length;i+=3) {
-      const a=faces[i], b=faces[i+1], c=faces[i+2], j=3*a,k=3*b,l=3*c;
-      if (Math.min(part.rest[3*source[a]+1],part.rest[3*source[b]+1],part.rest[3*source[c]+1])>3.94) continue;
-      const center=travel((points[j]+points[k]+points[l])/3,(points[j+1]+points[k+1]+points[l+1])/3,(points[j+2]+points[k+2]+points[l+2])/3);
-      shifts[a]=Math.max(shifts[a],center);shifts[b]=Math.max(shifts[b],center);shifts[c]=Math.max(shifts[c],center);
-      for(let edge=0;edge<3;edge++) {
-        const f=faces[i+edge],g=faces[i+(edge+1)%3],m=f*3,n=g*3;
-        const mid=travel((points[m]+points[n])/2,(points[m+1]+points[n+1])/2,(points[m+2]+points[n+2])/2);
-        shifts[f]=Math.max(shifts[f],mid);shifts[g]=Math.max(shifts[g],mid);
-      }
-    }
-    for(let i=0;i<uniqueIds.length;i++) {
-      const id=uniqueIds[i],delta=shifts[id];
-      if(!delta)continue;
-      local.fromArray(points,id*3);local.x+=dx*delta;local.y+=dy*delta;local.z+=dz*delta;
-      local.applyMatrix4(world).toArray(a,i*3);
+    if(changed)for(let i=0;i<uniqueIds.length;i++){
+      const j=3*i,k=3*uniqueIds[i];output[j]=points[k];output[j+1]=points[k+1];output[j+2]=points[k+2];
     }
   }
 
@@ -241,13 +304,8 @@ export function createHipFootCorrection(T, nodes, assets, software = false) {
     }
     const fields = profiles.get(part.side + part.name);
     if (fields) for (const field of fields) followSurface(part, field);
-    if (part.name === 'quadratus') {
-      const ilium = bySide[part.side].find(field => field.bone.endsWith('Hip'));
-      if (ilium) {
-        clearIliacOrigin(part, ilium);
-        clearIliacOrigin(part, ilium);
-      }
-    } else if (hipMuscles.has(part.name) || part.name === 'piriformis') {
+    if(part.name==='maximus')retainSurfaceArea(part);
+    if (hipMuscles.has(part.name) || part.name === 'piriformis') {
       for (const field of bySide[part.side]) clearBone(part, field);
     }
   }

@@ -370,3 +370,48 @@
     grid-template-rows: auto minmax(210px, 1fr) auto auto;
   }
 }
+
+#lz-anatomy-zone .azc-muscle-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+#lz-anatomy-zone .azc-muscle-tools { display: inline-flex; gap: 3px; }
+#lz-anatomy-zone .azc-muscle-bar[hidden],
+#lz-anatomy-zone .azc-muscle-tools[hidden] { display: none; }
+#lz-anatomy-zone .azc-muscle-bar button {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 4px 10px;
+  background: var(--azc-paper,white);
+  border: 1px solid var(--azc-line,#cdd6df);
+  border-radius: 7px;
+  color: var(--azc-ink,#233649);
+  cursor: pointer;
+  font: inherit;
+  font-size: .875rem;
+}
+#lz-anatomy-zone .azc-muscle-tools button { display: grid; place-items: center; padding: 3px; }
+#lz-anatomy-zone .azc-muscle-bar button[aria-pressed="true"] { background: var(--azc-blue); color: var(--lz-on-accent,white); border-color: var(--azc-blue); }
+#lz-anatomy-zone .azc-muscle-bar button[aria-busy="true"] { cursor: progress; opacity: .7; }
+#lz-anatomy-zone .azc-muscle-bar button[data-failed] { border-color: #a44834; border-style: dashed; }
+#lz-anatomy-zone .azc-muscle-bar button[data-failed]::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-inline-end: 5px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3'%3E%3Cpath d='M20 4v6h-6M20 10a8 8 0 1 0 0 6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+#lz-anatomy-zone .azc-muscle-bar button:focus-visible { outline: 3px solid var(--lz-focus,#3155a1); outline-offset: 2px; }
+@container anatomy (max-width: 720px) {
+  #lz-anatomy-zone .azc-muscle-bar button { min-width: 44px; min-height: 44px; }
+}
+@media (pointer: coarse) {
+  #lz-anatomy-zone .azc-muscle-bar button { min-width: 44px; min-height: 44px; }
+}
+#lz-anatomy-zone .azc-muscle-tools svg { width: 19px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }

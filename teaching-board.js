@@ -7,12 +7,12 @@
   document.body.append(panel);
   const host = panel.querySelector('.teaching-host');
   const expand = panel.querySelector('[data-expand]');
-  let editor, actor, pending, returnField, selection, focusBeforeButton, sequence = 0;
+  let editor, actor, pending, returnField, returnScope, returnSelector, selection, focusBeforeButton, sequence = 0;
   const context = () => window.LZStudent?.context();
   const inBuilder = () => context()?.member?.role === 'teacher' && !document.querySelector('#student-learning-board')?.hidden && document.querySelector('[data-nav="programs"]')?.getAttribute('aria-current') === 'page';
   const prefKey = () => 'learning-zone:teaching-display:' + actor;
   function saveSize() {
-    if (!panel.open || !actor) return;
+    if (!panel.open || !actor || matchMedia('(max-width:700px)').matches) return;
     const full = panel.dataset.expanded === 'true';
     try {
       const old = JSON.parse(localStorage.getItem(prefKey()) || '{}');
@@ -42,11 +42,14 @@
     const id=context().member.id;
     if (actor && actor!==id) resetOwner();
     actor=id;returnField=focusBeforeButton?.isConnected?focusBeforeButton:button;focusBeforeButton=null;
+    returnScope=returnField.closest('dialog')||document.querySelector('#student-learning-board');
+    const identity=[...returnField.attributes].filter(a=>a.name.startsWith('data-')||a.name==='name'||a.name==='id');
+    returnSelector=identity.length?returnField.localName+identity.map(a=>'['+CSS.escape(a.name)+'="'+CSS.escape(a.value)+'"]').join(''):'';
     try {selection=[returnField.selectionStart,returnField.selectionEnd,returnField.selectionDirection];} catch {selection=null;}
     try {
       const size=JSON.parse(localStorage.getItem(prefKey()) || '{}');
-      panel.style.width=size.width ? Math.min(innerWidth,size.width)+'px' : '';
-      panel.style.height=size.height ? Math.min(innerHeight,size.height)+'px' : '';
+      panel.style.width=size.width ? size.width+'px' : '';
+      panel.style.height=size.height ? size.height+'px' : '';
       maximize(!!size.full);
     } catch {maximize(false);}
     panel.showModal();panel.querySelector('[data-return]').focus({preventScroll:true});
@@ -71,17 +74,19 @@
     try {await editor?.finishTeaching();} catch(e) {
       const p=host.querySelector('[data-wb-message]');if(p){p.hidden=false;p.textContent=e.message+' ';const b=document.createElement('button');b.textContent='Export recovery copy';b.onclick=()=>editor.exportTeaching();p.append(b);}return;
     }
-    saveSize();panel.close();if(returnField?.isConnected){
+    saveSize();panel.close();
+    if(!returnField?.isConnected && returnSelector)returnField=returnScope?.querySelector(returnSelector);
+    if(returnField?.isConnected){
       returnField.focus({preventScroll:true});if(selection && typeof selection[0]==='number')try{returnField.setSelectionRange(...selection);}catch{}
     }
   }
   panel.querySelector('[data-return]').onclick=close;
-  panel.addEventListener('cancel',e=>{e.preventDefault();close();});
-  const symbol='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17H3V4h18v5M8 21l2-4m7 4-2-4m-1-2 5.7-5.7 2 2L16 17l-3 1z"/></svg>';
+  panel.addEventListener('cancel',e=>{if(e.target===panel){e.preventDefault();close();}});
+  const symbol='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 19H3V4h17v6M3 9h17M3 14h8M9 4v15m4-2 6.5-6.5 2 2L15 19l-3 1z"/></svg>';
   function install(parent,first=false) {
     if(!parent||parent.querySelector(':scope > [data-teaching-launch]'))return;
     const button=document.createElement('button');button.type='button';button.dataset.teachingLaunch='';
-    button.title='Teaching whiteboard';button.setAttribute('aria-label',button.title);button.setAttribute('aria-haspopup','dialog');button.innerHTML=symbol;
+    button.title='Teaching whiteboard';button.setAttribute('aria-label',button.title);button.setAttribute('aria-haspopup','dialog');button.innerHTML=symbol+'<span>Whiteboard</span>';
     button.onpointerdown=e=>{if(e.button===0){focusBeforeButton=document.activeElement;e.preventDefault();}};
     button.onclick=()=>open(button);if(first)parent.prepend(button);else parent.append(button);
   }
@@ -91,10 +96,13 @@
       document.querySelectorAll('[data-teaching-launch]').forEach(b=>b.remove());
       if(actor && !panel.open && !pending)resetOwner();return;
     }
-    install(document.querySelector('.app-topbar'));
+    const bar=document.querySelector('#student-learning-board [data-account-bar] .actions');
+    const top=document.querySelector('.app-topbar');
+    if(bar)top?.querySelector('[data-teaching-launch]')?.remove();
+    install(bar||top,true);
     document.querySelectorAll('dialog[open]').forEach(d=>{
-      if(d===panel||panel.contains(d)||d.id==='lz-appearance-dialog'||d.id==='help-dialog')return;
-      if(!d.closest('#student-learning-board'))d.dataset.builderFloating='';
+      if(d===panel||panel.contains(d))return;
+      if(!d.closest('#student-learning-board') && d.id!=='lz-appearance-dialog' && d.id!=='help-dialog')d.dataset.builderFloating='';
       install(d,true);
     });
   }

@@ -57,3 +57,73 @@
   .app-shell .app-sidebar[data-mobile-menu=open] .app-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
   .app-shell .app-sidebar[data-mobile-menu=open] .app-nav button { width: 100%; min-height: 44px; }
 }
+
+#student-learning-board .builder-account-owner {min-width:0;max-width:100%;overflow-wrap:anywhere;font-size:13px;display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;}
+#student-learning-board .builder-account-owner strong {color:var(--lz-blue);}
+@container (max-width:700px) {
+  #student-learning-board .builder-account-owner {display:grid;line-height:1.2;}
+  #student-learning-board .builder-account-owner:has(strong) > span {display:none;}
+}
+/* Keep the account controls available while leaving room to teach from a laptop. */
+#student-learning-board [data-account-bar] {container-type:inline-size;background:var(--lz-paper);}
+#student-learning-board [data-account-bar] .lz-account {padding:5px 10px;min-height:0;gap:6px;margin:0;align-items:center;}
+#student-learning-board [data-account-bar] .actions {flex-wrap:wrap;gap:4px;margin:0;}
+#student-learning-board [data-account-bar] :is(button,.save-status) {min-height:32px;height:auto;padding:4px 8px;font-size:14px;}
+#student-learning-board main {padding-block:12px;gap:12px;}
+#student-learning-board main > section {padding:14px;}
+#student-learning-board .athlete-goals {container:goals / inline-size;}
+#student-learning-board .athlete-goals .section-head {margin-bottom:8px;gap:6px;}
+#student-learning-board .athlete-goals .section-head p {margin:2px 0 0;}
+#student-learning-board .athlete-goals .table-wrap {margin:0;width:100%;min-width:0;}
+#student-learning-board table.athlete-goals-table {width:100%;min-width:0;table-layout:fixed;}
+#student-learning-board .athlete-goals-table .goal-order-column {width:34px;}
+#student-learning-board .athlete-goals-table .goal-exercise-column {width:22%;}
+#student-learning-board .athlete-goals-table .goal-priority-column {width:96px;}
+#student-learning-board .athlete-goals-table .goal-remove-column {width:66px;}
+#student-learning-board .athlete-goals-table :is(th,td) {padding:4px;line-height:1.2;}
+#student-learning-board table.athlete-goals-table .goal-edit-cell :is(input,textarea,select) {box-sizing:border-box;min-width:0;width:100%;margin:0;padding:6px 8px;min-height:34px;font-size:15px;line-height:20px;}
+#student-learning-board .athlete-goals-table .remove {min-width:34px;min-height:34px;padding:5px;}
+#student-learning-board .goal-name-editor, #student-learning-board .goal-value-editor {display:grid;min-width:0;align-items:stretch;}
+#student-learning-board .goal-name-editor > *, #student-learning-board .goal-value-editor > *, #student-learning-board .goal-value-editor::after {grid-area:1/1;}
+#student-learning-board .goal-name-editor span, #student-learning-board .goal-value-editor::after {
+  box-sizing:border-box;min-width:0;align-self:center;padding:6px 8px;border:1px solid transparent;
+  font-size:15px;line-height:20px;overflow-wrap:anywhere;white-space:pre-wrap;pointer-events:none;
+}
+#student-learning-board .goal-name-editor span {text-align:left;font-weight:650;position:relative;}
+#student-learning-board .goal-name-editor input:not(:focus) {color:transparent!important;}
+#student-learning-board .goal-name-editor input:not(:focus)::placeholder {color:transparent;}
+#student-learning-board .goal-name-editor:focus-within span {visibility:hidden;}
+#student-learning-board .goal-value-editor::after {content:attr(data-value) ' ';visibility:hidden;}
+#student-learning-board .goal-value-editor textarea {display:block;height:100%;resize:none;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;text-align:center;}
+#student-learning-board .goal-floor .goal-value-editor textarea {background:#f5fcf6;border-color:#c8decf;color:#244c35;}
+#student-learning-board .goal-ceiling .goal-value-editor textarea {background:#fffbee;border-color:#e8dab0;color:#664d1f;}
+@container (max-width:700px) {
+  #student-learning-board [data-account-bar] .lz-account {flex-wrap:nowrap;}
+  #student-learning-board [data-account-bar] .actions {justify-content:flex-end;}
+  #student-learning-board [data-account-bar] .actions button:has(svg) {position:relative;min-width:36px;min-height:36px;padding:5px;}
+  #student-learning-board [data-account-bar] .actions button:has(svg) span {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+}
+@container goals (max-width:790px) {
+  #student-learning-board .athlete-goals .table-wrap {overflow:visible;}
+  #student-learning-board .athlete-goals-table, #student-learning-board .athlete-goals-table tbody {display:block;width:100%;}
+  #student-learning-board .athlete-goals-table colgroup {display:none;}
+  #student-learning-board .athlete-goals-table thead {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+  #student-learning-board .athlete-goals-table tbody tr {
+    display:grid;grid-template-columns:28px repeat(2,minmax(0,1fr)) 34px;
+    gap:5px;align-items:center;border:1px solid var(--lz-line);border-radius:8px;margin-top:6px;padding:6px;
+  }
+  #student-learning-board .athlete-goals-table tbody td {display:block;border:0;padding:0;background:transparent;width:auto;}
+  #student-learning-board .athlete-goals-table .goal-drag-cell {grid-area:1/1;padding:0!important;}
+  #student-learning-board .athlete-goals-table td:nth-child(2) {grid-area:1/2/2/4;}
+  #student-learning-board .athlete-goals-table td:nth-child(3) {grid-area:2/1/3/3;}
+  #student-learning-board .athlete-goals-table td:nth-child(4) {grid-area:2/3/3/5;}
+  #student-learning-board .athlete-goals-table td:nth-child(5) {grid-area:3/1/4/3;}
+  #student-learning-board .athlete-goals-table td:nth-child(6) {grid-area:3/3/4/5;}
+  #student-learning-board .athlete-goals-table .goal-delete-cell {grid-area:1/4;}
+  #student-learning-board .athlete-goals-table .goal-field-label {display:block;text-align:left;font-size:12px;font-weight:600;line-height:1.3;margin:0 0 3px;}
+  #student-learning-board .athlete-goals-table td:nth-child(2) .goal-field-label {display:none;}
+  #student-learning-board .goal-value-editor textarea {text-align:left;}
+}
+
+html[data-lz-appearance=dark] #student-learning-board tr.goal-floor textarea {background:#19392d;border-color:#80b796;color:#d4f0df;}
+html[data-lz-appearance=dark] #student-learning-board tr.goal-ceiling textarea {background:#3b311b;border-color:#bba365;color:#f2ddb0;}

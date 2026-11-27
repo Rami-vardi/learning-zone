@@ -104,7 +104,7 @@
     document.querySelectorAll('dialog[open]').forEach(d=>{
       if(d===panel||panel.contains(d))return;
       if(!d.closest('#student-learning-board') && d.id!=='lz-appearance-dialog' && d.id!=='help-dialog')d.dataset.builderFloating='';
-      install(d,true);
+      install(d.querySelector('.progression-header-actions')||d,true);
     });
   }
   new MutationObserver(refresh).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open','aria-current','hidden']});

@@ -2096,7 +2096,7 @@ async function open(){
 window.LZMigration={preview,run,open};
 })();
 </script>
-<script src="athlete-spreadsheet.js?v=alternatives4"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
+<script src="athlete-spreadsheet.js?v=ordered5"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
 'use strict';
 const formats = ['fixed', 'range', 'top'];
 const text = value => String(value ?? '');
@@ -2165,8 +2165,9 @@ function setWeeks(p, weeks) {
   return ensure(p);
 }
 
-function trackName(track) {
-  return track.id ? 'Alternative '+(track.id+1) : 'Main Progression';
+function trackName(alternatives, id) {
+  const position = id === 'new' ? alternatives.length : alternatives.findIndex(track => track.id === id);
+  return position < 0 ? 'Main Progression' : 'Alternative ' + (position + 2);
 }
 
 function addAlternative(p) {
@@ -2835,13 +2836,15 @@ let progressionClosing=false,progressionTimer=null,progressionSaving=null,progre
 function activeProgression() {
   return progressionTrackId ? progressionDraft.alternatives.find(track => track.id===progressionTrackId) : progressionDraft;
 }
-function progressionGoal(e) {
+function progressionGoal(e, compact=false) {
   if (!isGoalExercise(e) || !e.name.trim()) return '';
   const identity = exerciseIdentity(e);
   const goal = current.goals.find(entry => (entry.exerciseId || entry.name.trim()) && exerciseIdentity(entry) === identity);
-  const values = goal ? [goal.ceiling, goal.floor, goal.goal].filter(value => String(value ?? '').trim()) : [];
-  if (!values.length) return '';
-  return `<div class="progression-goal"><strong>Goal</strong><div class="progression-goal-values">${values.map(value => `<span>${esc(value)}</span>`).join('')}</div></div>`;
+  if(!goal)return '';
+  const values=[['Ceiling',goal.ceiling],['Floor',goal.floor],['Target',goal.goal]].filter(([,value])=>String(value??'').trim());
+  if(!values.length)return '';
+  const fields=values.map(([label,value])=>`<span>${compact?`<small>${label}</small> `:''}${esc(value)}</span>`).join('');
+  return `<div class="progression-goal"><strong>Goal</strong><div class="progression-goal-values">${fields}</div></div>`;
 }
 function progressionRows(track) {
   LZProgression.ensure(track);
@@ -2853,15 +2856,13 @@ function progressionRows(track) {
   }).join('');
 }
 function progressionTable() {
-  return `<table class="progression-table" aria-label="${esc(LZProgression.trackName(activeProgression()))}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${progressionRows(activeProgression())}</tbody></table>`;
+  return `<table class="progression-table" aria-label="${esc(LZProgression.trackName(progressionDraft.alternatives,progressionTrackId))}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${progressionRows(activeProgression())}</tbody></table>`;
 }
-function progressionComparison(p, selected=0) {
+function progressionComparison(p) {
   const tracks = [p, ...p.alternatives];
-  const active = tracks.findIndex(track=>track.id===selected);
-  if(active>1) tracks.splice(1, 0, tracks.splice(active,1)[0]);
   return `<div class="progression-comparisons">${tracks.map(track=>{
     LZProgression.ensure(track);
-    const name = LZProgression.trackName(track);
+    const name = LZProgression.trackName(p.alternatives,track.id);
     const heading = tracks.length > 1 ? `<h4>${esc(name)}</h4>` : '';
     return `<div class="progression-comparison">${heading}<div class="table-wrap"><table class="progression-comparison-table" aria-label="${esc(name)}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${track.rows.slice(0,track.weeks).map((week,index)=>`<tr><th scope="row">Week ${index+1}</th><td class="progression-plan-text">${esc(LZProgression.describe(track,index))}</td><td class="actual-results progression-plan-text ${week.actual.trim()?'progression-results-entered':''}">${esc(week.actual.trim()?week.actual:'Not entered')}</td></tr>`).join('')}</tbody></table></div></div>`;
   }).join('')}</div>`;
@@ -2870,14 +2871,14 @@ function progressComparisonPanel() {
   const panel = progressionDialog.querySelector('[data-progression-comparison]');
   if (!panel) return;
   panel.hidden = !progressionDraft.alternatives.length;
-  panel.innerHTML = panel.hidden ? '' : `<h3>Compare Progressions</h3>${progressionComparison(progressionDraft, progressionTrackId)}`;
+  panel.innerHTML = panel.hidden ? '' : `<h3>Compare Progressions</h3>${progressionComparison(progressionDraft)}`;
 }
 function updateProgressionTable() {
   progressionDialog.querySelector('[data-progress-table]').innerHTML = progressionTable();
 }
 function updateProgressionEditor() {
   const track = activeProgression();
-  const buttons = [progressionDraft, ...progressionDraft.alternatives].map(item=>`<button type="button" data-progression-track="${item.id || 0}" aria-pressed="${item===track}">${esc(LZProgression.trackName(item))}</button>`);
+  const buttons = [progressionDraft, ...progressionDraft.alternatives].map(item=>`<button type="button" data-progression-track="${item.id || 0}" aria-pressed="${item===track}">${esc(LZProgression.trackName(progressionDraft.alternatives,item.id))}</button>`);
   const tabs = progressionDialog.querySelector('[data-progression-tabs]');
   tabs.innerHTML = buttons.join('');
   tabs.hidden = buttons.length === 1;
@@ -2896,16 +2897,16 @@ function openProgression(id, newAlternative = false) {
   if(newAlternative)progressionTrackId=LZProgression.addAlternative(progressionDraft).id;
   progressionDialog.setAttribute('aria-labelledby','progression-title');
   progressionDialog.innerHTML=`<form><header>
-    <div><span class="eyebrow">Exercise Progression</span>${exerciseNumberLabel(e)}<h2 id="progression-title">${esc(e.name||'Exercise')}</h2><p>${esc(current.name)}</p></div>
-    <div class="progression-header-actions"><button class="progression-alt-add" type="button" data-progression-add>${icon('plus')}<span>Add Alternative Progression</span></button><button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></div>
+    <div class="progression-identity"><h2 id="progression-title">${esc(e.name||'Exercise')}</h2><p><span>Exercise Progression</span><span>${esc(current.name)}</span>${exerciseNumberLabel(e)}</p></div>
+    <div class="progression-header-actions"><button class="progression-alt-add" type="button" data-progression-add aria-label="Add Alternative Progression">${icon('plus')}<span>Add Alternative</span></button><button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></div>
   </header>
   <div class="progression-content">
-    ${progressionGoal(e)}
-    <div class="progression-tabs" role="group" aria-label="Progression to edit" data-progression-tabs hidden></div>
+    ${progressionGoal(e,true)}
+    <div class="progression-toolbar"><div class="progression-tabs" role="group" aria-label="Progression to edit" data-progression-tabs hidden></div>
     <div class="progression-config">
-      <div class="progression-controls"><label class="weeks-label">How many weeks? <input type="text" inputmode="numeric" data-progression-weeks></label></div>
+      <div class="progression-controls"><label class="weeks-label">Weeks <input type="text" inputmode="numeric" data-progression-weeks></label></div>
       <div class="progression-actions"><span class="progression-autosave-status" data-progression-save-status role="status" aria-live="polite">Saving…</span><button type="button" data-progression-retry hidden>Retry Saving</button><button type="button" data-progression-keep-draft hidden>Keep Draft and Close</button><button class="progression-delete" type="button" data-progression-delete hidden>Delete Alternative</button></div>
-    </div>
+    </div></div>
     <div class="table-wrap" data-progress-table></div>
     <p data-progression-error role="alert"></p>
   </div>
@@ -3023,12 +3024,17 @@ progressionDialog.addEventListener('click', async event=>{
   }else if(event.target.closest('[data-progression-delete]')){
     const token=progressionToken, track=activeProgression();
     if(!track?.id)return;
-    const choice=await askProgressionChoice('Delete '+LZProgression.trackName(track)+'?', 'This permanently deletes its planned prescriptions and actual results.', [['keep','Cancel'],['delete','Delete Alternative']]);
+    const choice=await askProgressionChoice('Delete '+LZProgression.trackName(progressionDraft.alternatives,track.id)+'?', 'This permanently deletes its planned prescriptions and actual results.', [['keep','Cancel'],['delete','Delete Alternative']]);
     if(choice!=='delete'||token!==progressionToken||!progressionEntry())return;
-    progressionDraft.alternatives=progressionDraft.alternatives.filter(item=>item.id!==track.id);
-    progressionTrackId=0;
+    const alternatives=progressionDraft.alternatives;
+    const index=alternatives.findIndex(item=>item.id===track.id);
+    alternatives.splice(index,1);
+    const drafts=progressionEntry().sheetDrafts;
+    if(drafts)delete drafts['alt'+track.id];
+    progressionTrackId=(alternatives[index]||alternatives[index-1])?.id||0;
     updateProgressionEditor();
-    progressionDialog.querySelector('[data-progression-add]').focus();
+    const nextFocus=progressionTrackId?`[data-progression-track="${progressionTrackId}"]`:'[data-progression-add]';
+    progressionDialog.querySelector(nextFocus).focus();
     queueProgressionAutosave(true);
   }
 });
@@ -3138,4 +3144,4 @@ window.addEventListener('lz-cloud-import-complete',async()=>{try{await closeCont
 window.LZShell={navigate,refreshAccount,showMessage,flushContent,closeContent};refreshAccount();if(LZStudent.context().admin&&!LZStudent.context().owner)dashboardChrome();iconify();
 })();
 </script><script src="appearance-settings.js?v=20261127-builder-fit2"></script>
-<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=athlete-compact"></script><link rel="stylesheet" href="athlete-program.css?v=studio3"></body></html>
+<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=progress-dialog5"></script><link rel="stylesheet" href="athlete-program.css?v=progress-dialog5"></body></html>

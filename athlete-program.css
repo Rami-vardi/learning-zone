@@ -236,3 +236,65 @@ html:has(#student-learning-board:not([hidden]) .athlete-program){--lz-fit-scale:
  #student-learning-board .athlete-program table.goal-comparison{min-width:calc(60px + var(--mirror-days)*145px)}
  #student-learning-board .athlete-program table.goal-comparison>thead>tr>th:first-child{width:60px}
 }
+
+/* Exercise progression editor */
+#student-learning-board .progression-dialog header {
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:4px 12px;padding:8px 12px 4px;
+}
+#student-learning-board .progression-dialog .progression-identity {
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px;min-width:0;overflow-wrap:anywhere;
+}
+#student-learning-board .progression-dialog header h2 {margin:0;font-size:1.25rem}
+#student-learning-board .progression-dialog .progression-identity p {
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;margin:0;
+  color:var(--lz-sub);font-size:var(--lz-small-size);line-height:1.35;
+}
+#student-learning-board .progression-dialog .progression-identity p>* {display:inline;margin:0;font:inherit}
+#student-learning-board .progression-dialog .progression-identity p>*+*::before {content:"·";margin-right:6px}
+#student-learning-board .progression-dialog .progression-header-actions {gap:4px}
+#student-learning-board .progression-dialog :is(button,.weeks-label input) {min-height:30px;padding:3px 8px;line-height:1.3}
+#student-learning-board .progression-dialog .progression-content {padding:4px 12px 8px}
+#student-learning-board .progression-dialog .progression-goal {
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;
+  min-width:0;max-width:100%;margin:0 auto 5px;padding:3px 8px;
+  font-size:var(--lz-ui-size);line-height:1.35;text-align:start;
+  border-radius:6px;color:light-dark(#195b40,#b2e5c8);
+  border-color:light-dark(#bdd7c7,#486b58);background:light-dark(#edf7f0,#21392d);
+}
+#student-learning-board .progression-dialog .progression-goal-values {
+  display:flex;flex:1 1 auto;align-items:baseline;justify-content:flex-start;flex-wrap:wrap;
+  gap:2px 7px;min-width:0;margin:0;font-size:inherit;
+}
+#student-learning-board .progression-dialog .progression-goal-values span {min-width:0;max-width:100%}
+#student-learning-board .progression-dialog .progression-goal-values small {font-size:var(--lz-small-size)}
+#student-learning-board .progression-dialog .progression-toolbar {
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:4px 10px;margin-bottom:4px;
+}
+#student-learning-board .progression-dialog .progression-tabs {gap:3px;margin:0;border:0}
+#student-learning-board .progression-dialog .progression-tabs button {border:1px solid var(--lz-line);border-radius:6px}
+#student-learning-board .progression-dialog .progression-config {flex:auto;gap:4px 8px;margin:0}
+#student-learning-board .progression-dialog .weeks-label input {width:3.6em}
+#student-learning-board .progression-dialog .progression-table :is(td,th) {padding:3px 5px}
+#student-learning-board .progression-dialog table.progression-table textarea {min-height:30px;padding:3px 6px;line-height:1.35}
+html[data-lz-theme-ready] #student-learning-board .progression-dialog .progression-comparison-section {padding:6px 12px 9px}
+#student-learning-board .progression-dialog .progression-comparison-section h3 {margin:0 0 4px;font-size:1rem}
+#student-learning-board .progression-dialog .progression-comparisons {gap:5px;max-width:none}
+#student-learning-board .progression-dialog .progression-comparison h4 {padding:3px 6px}
+#student-learning-board .progression-dialog .progression-comparison-table :is(th,td) {padding:3px 5px}
+@media(max-width:550px){
+  #student-learning-board .progression-dialog header {padding:6px 7px 3px}
+  #student-learning-board .progression-dialog .progression-content {padding:3px 7px 6px}
+  #student-learning-board .progression-dialog .progression-goal {margin-inline:0}
+  html[data-lz-theme-ready] #student-learning-board .progression-dialog .progression-comparison-section {padding-inline:7px}
+}
+@media(pointer:coarse){
+  #student-learning-board .progression-dialog :is(button,.weeks-label input) {min-height:44px}
+}
+@media(max-width:450px){
+  #student-learning-board .progression-dialog .progression-header-actions [data-teaching-launch] span {display:none}
+  #student-learning-board .progression-dialog .progression-header-actions [data-teaching-launch] {min-width:36px}
+  #student-learning-board .progression-dialog .progression-config .weeks-label {gap:4px}
+  #student-learning-board .progression-dialog .progression-actions {gap:4px}
+}

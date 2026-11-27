@@ -6,7 +6,11 @@
   // Sheet cells and the progression dialog use the same planned and actual rows.
   function sheetExercise(exercise,api){
     const model=window.LZProgression;
-    let altId=exercise.selectedAlternativeId??exercise.progression?.alternatives?.[0]?.id;
+    function alternatives(){
+      return exercise.progression?.alternatives?.length?model.forExercise(exercise).alternatives:[];
+    }
+    const initial=alternatives();
+    let altId=(initial.find(track=>track.id===Number(exercise.selectedAlternativeId))||initial[0])?.id;
     function track(key,write=false){
       const main=model.forExercise(exercise);
       if(write)exercise.progression=main;
@@ -74,9 +78,8 @@
 
       get weeks(){return read('weeks');},set weeks(value){write('weeks',value);},
       get alternative(){return read('alternative');},set alternative(value){write('alternative',value);},
-      get alternatives(){return exercise.progression?.alternatives||[];},
+      get alternatives(){return alternatives();},
       get alternativeId(){return altId;},
-      get nextAlternativeId(){return model.forExercise(exercise).nextAlternative;},
       selectAlternative(id){
         if(id==='new'){
           const main=model.forExercise(exercise);
@@ -234,8 +237,8 @@ class AthleteSpreadsheet extends HTMLElement {
       chooser.hidden=!tracks.length;
       if(chooser.hidden)return;
       chooser.replaceChildren();
-      for(const track of tracks)chooser.add(new Option(window.LZProgression.trackName(track),String(track.id)));
-      chooser.add(new Option('Add '+window.LZProgression.trackName({id:e.nextAlternativeId}),'new'));
+      for(const track of tracks)chooser.add(new Option(window.LZProgression.trackName(tracks,track.id),String(track.id)));
+      chooser.add(new Option('Add '+window.LZProgression.trackName(tracks,'new'),'new'));
       chooser.value=String(e.alternativeId);
     }
     function focusText(){
@@ -275,7 +278,7 @@ class AthleteSpreadsheet extends HTMLElement {
     if(!workouts[d].length){part.append(addExercise);return part;}
     if(mode==='cards'){
       workouts[d].forEach(e=>{const card=el('div','wp-card'),name=el('div','wp-card-name');card.dataset.row=e.id;
-        if(e.goal)card.dataset.goal='';name.append(grip(e.id),document.createTextNode(e.name));card.append(name,el('p','',e.weeks),el('p','',e.alternativeId?window.LZProgression.trackName({id:e.alternativeId})+'\n'+e.alternative:''));part.append(card);});part.append(addExercise);return part;
+        if(e.goal)card.dataset.goal='';name.append(grip(e.id),document.createTextNode(e.name));card.append(name,el('p','',e.weeks),el('p','',e.alternativeId?window.LZProgression.trackName(e.alternatives,e.alternativeId)+'\n'+e.alternative:''));part.append(card);});part.append(addExercise);return part;
     }
     const plus=button('+ Week',()=>weekAction(d,true)),minus=button('Remove week',()=>weekAction(d,false));
     plus.dataset.add='';minus.dataset.remove='';tools.append(el('span','wp-target'),plus,minus);
@@ -320,7 +323,7 @@ class AthleteSpreadsheet extends HTMLElement {
         const progress=window.LZProgression.forExercise(e.source);
         for(const track of progress.alternatives){
           const text=Array.from({length:track.weeks},(_,i)=>'Week '+(i+1)+': '+track.rows[i].planned).join('\n');
-          c.append(el('small','',window.LZProgression.trackName(track)),el('p','',text));
+          c.append(el('small','',window.LZProgression.trackName(progress.alternatives,track.id)),el('p','',text));
         }
         wrap.append(c);}
       if(!items.length)wrap.append(el('p','wp-empty','No exercises'));comp.append(wrap);

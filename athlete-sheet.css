@@ -78,10 +78,28 @@
 #workout-sheet .wp-filters{min-height:34px}
 #workout-sheet [data-workouts]{clear:both}
 #workout-sheet .wp-box{font-size:14px}
-#workout-sheet .wp-load label{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px;padding:1px 3px;font-size:11px}
-#workout-sheet .wp-load input{font:inherit;font-size:13px;color:inherit;background:transparent;border:0;border-bottom:1px solid var(--line);width:100%;min-width:0}
 #workout-sheet .wp-alt-select{max-width:100%;font-size:11px}
 #workout-sheet .wp-box:has([aria-invalid=true]){outline:2px solid #b64236}
 #workout-sheet .wp-warning{display:block;color:var(--ink);font-size:12px}
 @media(max-width:550px){#workout-sheet .wp-nav{float:none}#workout-sheet .wp-box{font-size:13px}}
 #workout-sheet .wp-add-exercise{margin:2px 4px;font-size:12px}
+#workout-sheet{
+ font-family:var(--builder-font,system-ui,sans-serif);border-radius:10px;
+ border-color:var(--card-border,var(--line));box-shadow:var(--card-shadow);background:var(--paper);
+}
+#workout-sheet .wp-switch{border-radius:7px}
+#workout-sheet .wp-switch button[aria-pressed=true]{background:#304f78;color:#fff}
+#workout-sheet .wp-comparebar{background:var(--band);border-block:1px solid var(--line)}
+#workout-sheet .wp-filters{border-top:0}
+#workout-sheet [data-filters] button{border-radius:20px}
+#workout-sheet .wp-tools{padding:3px 5px;border:0}
+#workout-sheet .wp-tools h3{font-size:14px;letter-spacing:-.02em}
+#workout-sheet .wp-tools button{border-radius:5px}
+#workout-sheet table th{font-size:12px;line-height:1.3;font-weight:600}
+#workout-sheet .wp-name{background:var(--band);color:var(--ink)}
+#workout-sheet [data-goal] .wp-name{background:var(--green);color:#fff}
+#workout-sheet .wp-box:focus-within{box-shadow:inset 0 0 0 2px var(--focus);border-radius:2px}
+#workout-sheet textarea:focus-visible{outline:none}
+#workout-sheet :is(.wp-filters,.wp-comparebar)>b{display:inline-flex;gap:5px;align-items:center}
+#workout-sheet .wp-add-exercise{border-color:transparent;background:transparent;color:var(--focus);font-weight:600}
+#workout-sheet .wp-comparebar svg,#workout-sheet .wp-filters svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}

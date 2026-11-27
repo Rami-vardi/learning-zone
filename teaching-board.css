@@ -7,20 +7,17 @@ button[data-teaching-launch], #student-learning-board .actions button[data-teach
   min-width:40px; min-height:38px; padding:6px 10px; border:1px solid transparent;
   border-radius:8px; font-weight:600; cursor:pointer;
 }
-/* Keep both whiteboard entry points identifiable across themes and builder dialogs. */
+/* Keep the teaching shortcut identifiable inside the builder and its dialogs. */
 :root {
   --lz-whiteboard-green:#187443;
   --lz-whiteboard-green-hover:#115b34;
   --lz-whiteboard-green-border:#105b34;
 }
-:is(#workspace-navigation, #student-learning-board, .app-topbar, dialog) button:is([data-nav="whiteboard"], [data-teaching-launch]) {
+:is(#student-learning-board, .app-topbar, dialog) button[data-teaching-launch] {
   background:var(--lz-whiteboard-green); color:#fff; border-color:var(--lz-whiteboard-green-border);
 }
-:is(#workspace-navigation, #student-learning-board, .app-topbar, dialog) button:is([data-nav="whiteboard"], [data-teaching-launch]):is(:hover,:active) {
+:is(#student-learning-board, .app-topbar, dialog) button[data-teaching-launch]:is(:hover,:active) {
   background:var(--lz-whiteboard-green-hover); color:#fff;
-}
-#workspace-navigation button[data-nav="whiteboard"][aria-current="page"] {
-  box-shadow:inset 3px 0 0 #b6f5cc; font-weight:650;
 }
 [data-teaching-launch] svg {width:20px;height:20px;flex:none;}
 [data-teaching-launch]:focus-visible, .teaching-dialog button:focus-visible {outline:3px solid var(--lz-focus,#2455a4);outline-offset:2px;}

@@ -79,3 +79,160 @@ html:has(#student-learning-board:not([hidden]) .athlete-program){--lz-fit-scale:
  #student-learning-board .athlete-program [data-teaching-launch] span{display:none}
  #student-learning-board .athlete-program [data-teaching-launch]{min-width:32px;min-height:32px}
 }
+
+@font-face {
+  font-family: "Builder Inter";
+  src: url("assets/fonts/inter-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+#student-learning-board .athlete-program {
+  --builder-font: "Builder Inter", system-ui, sans-serif;
+  --card-border: light-dark(#cfdae6,#3a4d65);
+  --card-shadow: 0 1px 2px #142b4314, 0 4px 12px -5px #122f4f3d;
+  --nav-ink: light-dark(#303f5d,#d7e4f4);
+  --well: light-dark(#edf2f8,#1a293c);
+  --card-top: light-dark(#eaf1fb,#24344c);
+  --leaf: light-dark(#116443,#93e2b9);
+  font-family:var(--builder-font);
+  border-radius:12px;
+  background:var(--lz-bg);
+}
+#student-learning-board .athlete-program :is(button,select,input,textarea){font-family:var(--builder-font)}
+#student-learning-board .athlete-program .athlete-bar {
+  color:#f5f8ff;
+  background:linear-gradient(104deg,#162940,#233d59 68%,#1d344d);
+  padding:5px 10px;
+  border:1px solid #354d68;
+  border-radius:11px;
+  box-shadow:0 2px 6px #10253f26;
+}
+#student-learning-board .athlete-program .athlete-identity{align-items:center;gap:7px}
+#student-learning-board .athlete-program .athlete-identity strong{font-weight:690;letter-spacing:-.035em;color:#fff}
+#student-learning-board .athlete-program .athlete-identity span{color:#d2deef}
+#student-learning-board .athlete-program .athlete-mark {
+  width:27px;height:27px;display:inline-grid;place-items:center;flex:none;
+  border:1px solid #6887a4;border-radius:8px;background:#3a5776;
+}
+#student-learning-board .athlete-program .athlete-mark svg{width:17px;height:17px}
+#student-learning-board .athlete-program [data-goals-toggle] {
+  display:inline-flex;align-items:center;gap:6px;color:#f4f8ff;
+  background:#ffffff12;border:1px solid #8092a6;border-radius:20px;
+}
+#student-learning-board .athlete-program [data-goals-toggle] b{color:#fff;background:#ffffff29;border-radius:20px}
+#student-learning-board .athlete-program .athlete-whiteboard button{border-radius:8px;box-shadow:0 1px 3px #0003}
+#student-learning-board .athlete-program .athlete-training{background:transparent;padding:0 3px 5px;border-radius:0}
+#student-learning-board .athlete-program .athlete-nav{gap:6px;padding:3px 0}
+#student-learning-board .athlete-program .athlete-nav .athlete-views {
+  border-radius:9px;padding:1px;gap:1px;background:var(--well);border:1px solid var(--card-border);
+}
+#student-learning-board .athlete-program .athlete-views button {
+  color:var(--nav-ink);background:transparent;border:1px solid transparent;border-radius:7px;font-weight:550;gap:4px;
+}
+#student-learning-board .athlete-program .athlete-views button[aria-selected=true] {
+  color:#fff;background:#304f78;border-color:#304f78;box-shadow:0 1px 3px #0d233d38;
+}
+#student-learning-board .athlete-program .athlete-days button{border-radius:20px;padding-inline:8px;color:var(--nav-ink)}
+#student-learning-board .athlete-program .athlete-days button[aria-selected=true]{color:var(--lz-blue);border-color:var(--lz-blue);background:var(--lz-soft)}
+#student-learning-board .athlete-program .athlete-nav [data-action=add-day]{background:var(--lz-paper);color:var(--lz-blue);border-color:var(--card-border);box-shadow:0 1px 2px #142b4314;border-radius:7px}
+#student-learning-board .athlete-program .athlete-nav button:hover:not([aria-selected=true]){background:var(--lz-soft);color:var(--lz-blue)}
+#student-learning-board .athlete-program :is(.day,.mirror-workout,.goal-progression-card,.goal-comparison) {
+  border:1px solid var(--card-border);border-radius:10px;background:var(--lz-paper);box-shadow:var(--card-shadow);
+}
+#student-learning-board .athlete-program .day{background:var(--card-top);overflow:hidden}
+#student-learning-board .athlete-program .day-title{padding:4px 6px;background:transparent}
+#student-learning-board .athlete-program .day-title input{background:transparent;border-color:transparent;box-shadow:none}
+#student-learning-board .athlete-program .day-title input:focus-visible{outline:2px solid var(--lz-blue);outline-offset:-2px;background:var(--lz-paper)}
+#student-learning-board .athlete-program :is(.day-title,.mirror-workout>h3)>svg{color:var(--lz-blue)}
+#student-learning-board .athlete-program .day-tools{background:transparent}
+#student-learning-board .athlete-program .day-tools select{font-weight:550;color:var(--nav-ink);border-radius:6px;border-color:var(--card-border);background:var(--lz-paper)}
+#student-learning-board .athlete-program .day-tools [data-remove-day]{background:transparent;border-color:transparent}
+#student-learning-board .athlete-program .day-tools [data-remove-day]:hover{background:var(--lz-paper);border-color:var(--card-border)}
+#student-learning-board .athlete-program .workout-scroll{padding:1px 1px 7px}
+#student-learning-board .athlete-program .day-body>.exercise{background:var(--lz-paper)}
+#student-learning-board .athlete-program .day-body>.exercise[data-athlete-goal=true]{background:linear-gradient(90deg,light-dark(#eaf7ef,#223e36),var(--lz-paper) 57%);box-shadow:inset 3px 0 var(--leaf)}
+#student-learning-board .athlete-program .role-badge{border-radius:12px;font-weight:560;line-height:1.35}
+#student-learning-board .athlete-program .day-body>[data-add-ex]{background:transparent;color:var(--lz-blue);border-color:transparent;font-weight:600;gap:4px}
+#student-learning-board .athlete-program .day-body>[data-add-ex]:hover{background:var(--lz-soft)}
+#student-learning-board .athlete-program .day-body .summary-toggle{border-radius:50%;color:var(--lz-sub);background:transparent;border-color:transparent}
+#student-learning-board .athlete-program .day-body .summary-toggle:hover{color:var(--lz-blue);background:var(--well)}
+#student-learning-board .athlete-program .exercise-title-toggle{font-weight:660;letter-spacing:-.018em}
+#student-learning-board .athlete-program .day-body .scheme{color:var(--lz-sub)}
+
+#student-learning-board .athlete-program :is(.comparison-controls,.mirror-filter-bar) {
+  display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;
+  gap:4px 9px;margin:0 0 4px;padding:0;border:0;background:transparent;
+}
+#student-learning-board .athlete-program .mirror-filter-bar>.comparison-controls{margin:0}
+#student-learning-board .athlete-program .comparison-controls label {
+  display:inline-flex;align-items:center;min-width:0;gap:4px;margin:0;
+  color:var(--lz-sub);font-size:12px;line-height:1.3;
+}
+#student-learning-board .athlete-program .comparison-controls :is(select,button) {
+  width:auto;max-width:100%;min-height:25px;margin:0;padding:2px 5px;font-size:12px;
+  background:var(--lz-paper);color:var(--lz-ink);border:1px solid var(--card-border);border-radius:6px;
+}
+#student-learning-board .athlete-program .comparison-controls .check-label{font-weight:550}
+#student-learning-board .athlete-program .check-label input[type=checkbox]{margin:0;width:14px;height:14px;min-height:0;accent-color:var(--lz-blue)}
+#student-learning-board .athlete-program [data-entry-picker]{margin:0;padding:0;min-width:0;font-size:12px}
+#student-learning-board .athlete-program [data-entry-picker] summary{color:var(--lz-blue);cursor:pointer}
+#student-learning-board .athlete-program [data-entry-picker][open]{flex-basis:100%}
+#student-learning-board .athlete-program .entry-picker{display:flex;flex-wrap:wrap;gap:3px 8px;margin:3px 0;padding:4px}
+#student-learning-board .athlete-program .mirror-block{margin:4px 0 7px;padding:0;min-width:0}
+#student-learning-board .athlete-program :is(.mirror-block>h3,.mirror-pattern h3,.mirror-workout>h3,.goal-progress-title h3){margin:0;font-size:15px;line-height:1.25;font-weight:650;letter-spacing:-.02em}
+#student-learning-board .athlete-program .mirror-block>h3{margin:0 0 3px}
+#student-learning-board .athlete-program .mirror-block .day-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:6px;max-width:none}
+#student-learning-board .athlete-program .mirror-workout{padding:0;overflow:hidden}
+#student-learning-board .athlete-program .mirror-workout>h3{padding:6px 8px;background:var(--card-top);border-bottom:1px solid var(--card-border)}
+#student-learning-board .athlete-program .mirror-entry,#student-learning-board .athlete-program table.mirror-table td .mirror-entry {
+  border:0;border-radius:0;background:transparent;box-shadow:none;min-width:0;
+  padding:4px 7px;margin:0;display:block;text-align:left;
+}
+#student-learning-board .athlete-program .mirror-entry+.mirror-entry{border-top:1px solid var(--card-border)}
+#student-learning-board .athlete-program .mirror-entry-title{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px}
+#student-learning-board .athlete-program .mirror-entry-title strong{font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+#student-learning-board .athlete-program [data-athlete-goal=true] .mirror-entry-title strong{color:var(--leaf)}
+#student-learning-board .athlete-program .mirror-prescription{color:var(--lz-sub);font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+#student-learning-board .athlete-program .mirror-prescription>span{font-size:11px;font-weight:600;margin-left:3px}
+#student-learning-board .athlete-program :is(.mirror-sets,.mirror-weeks){display:block;margin:1px 0 0;padding:0;border:0;min-width:0}
+#student-learning-board .athlete-program :is(.mirror-sets,.mirror-weeks)>summary{font-size:12px;line-height:1.4;color:var(--lz-blue);cursor:pointer}
+#student-learning-board .athlete-program .mirror-pattern{display:flex;align-items:center;flex-wrap:wrap;gap:3px 9px;margin:2px 0}
+#student-learning-board .athlete-program .mirror-pattern span{display:inline-flex;align-items:center;gap:4px;color:var(--leaf);font-size:12px}
+#student-learning-board .athlete-program .mirror-pattern span svg{width:13px;height:13px}
+#student-learning-board .athlete-program .mirror-block>.table-wrap{padding:0 1px 6px}
+#student-learning-board .athlete-program table.goal-comparison{min-width:min(100%,calc(70px + var(--mirror-days)*155px));width:100%;max-width:none;overflow:hidden;border-collapse:separate;border-spacing:0}
+#student-learning-board .athlete-program table.goal-comparison>thead>tr>th:first-child{width:80px}
+#student-learning-board .athlete-program table.goal-comparison>thead>tr>th{padding:4px 7px;background:var(--card-top);font-size:13px}
+#student-learning-board .athlete-program table.goal-comparison>tbody>tr>td{padding:1px 2px;font-size:12px;border-color:var(--card-border);vertical-align:top}
+#student-learning-board .athlete-program table.goal-comparison>tbody>tr>td:first-child{padding:6px;background:var(--well);font-weight:600}
+#student-learning-board .athlete-program .goal-progressions {display:flex;flex-wrap:wrap;align-items:flex-start;gap:7px}
+#student-learning-board .athlete-program .goal-progression-card{box-sizing:border-box;flex:1 1 min(100%,275px);padding:7px;margin:0;min-width:0}
+#student-learning-board .athlete-program .goal-progression-card:not([data-tracks="1"]){flex-basis:min(100%,740px)}
+#student-learning-board .athlete-program .goal-progression-card[data-tracks="2"]{flex-basis:min(100%,500px)}
+#student-learning-board .athlete-program .goal-progression-card>header{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:0 0 4px}
+#student-learning-board .athlete-program .goal-progress-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 8px}
+#student-learning-board .athlete-program .goal-progress-title h3 svg{color:var(--leaf)}
+#student-learning-board .athlete-program .goal-progress-title p{font-size:12px;margin:0;color:var(--lz-sub)}
+#student-learning-board .athlete-program .goal-progression-card .progression-entry-actions{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 0 auto}
+#student-learning-board .athlete-program .goal-progression-card .progression-entry-actions button{font-size:12px;min-height:25px;padding:3px 6px;border-radius:6px}
+#student-learning-board .athlete-program .progression-goal{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;margin:3px 0 5px;padding:3px 6px;font-size:12px;background:light-dark(#edf8f1,#213d32);border-color:light-dark(#bfdacb,#456d57);color:var(--leaf)}
+#student-learning-board .athlete-program .progression-goal-values{display:flex;justify-content:flex-start;font-size:13px;gap:3px 6px;margin:0}
+#student-learning-board .athlete-program .progression-goal-values>span+span{border-color:var(--card-border);padding-left:6px}
+#student-learning-board .athlete-program .progression-comparisons{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:5px;max-width:none}
+#student-learning-board .athlete-program .progression-comparison{border-color:var(--card-border);border-radius:6px}
+#student-learning-board .athlete-program .progression-comparison h4{font-size:13px;line-height:1.25;margin:0;padding:3px 6px;background:var(--well)}
+#student-learning-board .athlete-program table.progression-comparison-table{width:100%;min-width:0;max-width:none;table-layout:fixed}
+#student-learning-board .athlete-program .progression-comparison-table :is(td,th){font-size:13px;line-height:1.25;padding:3px 5px}
+#student-learning-board .athlete-program .progression-comparison-table :is(.progression-week-column,th:first-child){width:54px}
+#student-learning-board .athlete-program .goal-progression-card>p{font-size:13px;margin:3px 0}
+@container athlete (max-width:630px){
+ #student-learning-board .athlete-program .athlete-mark{display:none}
+ #student-learning-board .athlete-program .athlete-identity{gap:0}
+ #student-learning-board .athlete-program .athlete-bar{padding:4px}
+ #student-learning-board .athlete-program .athlete-nav{gap:3px}
+ #student-learning-board .athlete-program .mirror-filter-bar{gap:3px 6px}
+ #student-learning-board .athlete-program table.goal-comparison{min-width:calc(60px + var(--mirror-days)*145px)}
+ #student-learning-board .athlete-program table.goal-comparison>thead>tr>th:first-child{width:60px}
+}

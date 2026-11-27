@@ -73,7 +73,7 @@
     }
     return {
       id:'e'+exercise.id,source:exercise,
-      get goal(){return api.goalMatch(exercise);},
+      get goal(){return api.isGoalExercise(exercise);},
       get name(){return exercise.name;},set name(value){exercise.name=value;delete exercise.exerciseId;api.schedule();},
 
       get weeks(){return read('weeks');},set weeks(value){write('weeks',value);},
@@ -195,7 +195,11 @@ class AthleteSpreadsheet extends HTMLElement {
     area.setAttribute('aria-label',e.name+', '+heads[fields.indexOf(key)]+(e.goal&&key==='name'?', goal exercise':''));
     box.dataset.copy=area.value||area.placeholder;box.append(area);parent.append(box);
     function select(){const old=selected[d];mark(d,e.id,hasWeeks?key:old.id===e.id?old.key:'weeks',hasWeeks?lineAt(area):old.id===e.id?old.line:0);}
-    area.addEventListener('focus',select);
+    let initialWeek;
+    area.addEventListener('focus',()=>{
+      if(key==='weeks')initialWeek=window.LZProgression.forExercise(e.source).rows[0].planned;
+      select();
+    });
     area.addEventListener('input',event=>{
       if(key==='alternative'&&!event.isComposing&&event.inputType?.startsWith('insert')&&
          area.value.trim()&&!/\n|^\s*(?:w|we|wee|week\b.*)$/i.test(area.value)&&
@@ -211,6 +215,11 @@ class AthleteSpreadsheet extends HTMLElement {
         area.setAttribute('aria-invalid',String(!!issue));
         warning.textContent=issue;
       }else updateTray();
+    });
+    if(key==='weeks')area.addEventListener('change',()=>{
+      if(window.LZProgression.forExercise(e.source).rows[0].planned!==initialWeek){
+        api.applyWeekToSets(e.source);api.schedule();
+      }
     });
     if(key==='name')area.addEventListener('change',()=>{api.bindExerciseName(e.source,area.value);api.automaticRoles();area.value=e.name;box.dataset.copy=e.name;area.closest('tr').toggleAttribute('data-goal',e.goal);api.schedule();updateTray();});
     if(!hasWeeks)return area;
@@ -373,6 +382,14 @@ class AthleteSpreadsheet extends HTMLElement {
     const move=button(whole?'Swap days':'Move',()=>{relocate(id,Number(select.value),pos.value);done();});move.disabled=whole&&schedule.length<2;placement.append(move,button('Add to comparison',()=>{pin(id);done();}));
     if(!whole){
       const exercise=workouts[d].find(entry=>entry.id===id).source;
+      const role=el('select'),label=el('label','','Exercise role');
+      for(const value of ['Choose','Goal','Primary','Secondary','Tertiary']){
+        role.add(new Option(value==='Choose'?'Unassigned':value,value));
+      }
+      role.value=exercise.role||'Choose';label.append(role);placement.append(label);
+      role.onchange=()=>{
+        api.setExerciseRole(exercise,role.value);api.schedule();render();done();
+      };
       placement.append(button('Edit progression',()=>{done();api.openProgression(exercise.id);}),
         button('Add alternative progression',()=>{done();api.openProgression(exercise.id,true);}));
     }

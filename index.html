@@ -2096,7 +2096,7 @@ async function open(){
 window.LZMigration={preview,run,open};
 })();
 </script>
-<script src="athlete-spreadsheet.js?v=ordered5"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
+<script src="athlete-spreadsheet.js?v=shared-role7"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
 'use strict';
 const formats = ['fixed', 'range', 'top'];
 const text = value => String(value ?? '');
@@ -2180,7 +2180,7 @@ function addAlternative(p) {
 
 function loadLabel(value) {
   const v = text(value).trim();
-  return /^\d+(?:\.\d+)?$/.test(v) ? v + ' kg' : v;
+  return /^[+-]?\d+(?:\.\d+)?$/.test(v) ? v + ' kg' : v;
 }
 function describeBank(r, mode) {
   const values = r[mode];
@@ -2315,7 +2315,7 @@ function backup(before){
  if(removed.length){undo={owner,id:current.id,name:current.name,removed};undoButton.textContent='Undo deletion in '+current.name;undoButton.hidden=false}
 }
 function clearUndo(){undo=null;undoButton.hidden=true}
-function undoDeletion(){if(!undo||undo.owner!==owner||undo.id!==current?.id)return;const additions=new Map();for(const r of undo.removed.filter(r=>r.type==='set')){const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(e&&!e.setRows.some(x=>x.id===r.item.id))additions.set(e,(additions.get(e)||0)+1)}if([...additions].some(([e,n])=>e.setRows.length+n>20)){say('Undo would exceed 20 sets. Your current targets are unchanged; this deletion cannot be undone at the current set count.');return}for(const r of undo.removed){let list;if(r.type==='goal')list=current.goals;else if(r.type==='day')list=current.days;else if(r.type==='exercise')list=current.days.find(d=>d.id===r.parent)?.exercises;else{const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(!e)continue;list=e.setRows;if(!list.some(x=>x.id===r.item.id)){list.splice(Math.min(r.index,list.length),0,r.item);e.sets=String(list.length)}continue}if(list&&!list.some(x=>x.id===r.item.id))list.splice(Math.min(r.index,list.length),0,r.item)}clearUndo();automaticRoles();render();schedule();say('Deletion undone. Subsequent edits were kept.')}
+function undoDeletion(){if(!undo||undo.owner!==owner||undo.id!==current?.id)return;const additions=new Map();for(const r of undo.removed.filter(r=>r.type==='set')){const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(e&&!e.setRows.some(x=>x.id===r.item.id))additions.set(e,(additions.get(e)||0)+1)}if([...additions].some(([e,n])=>e.setRows.length+n>20)){say('Undo would exceed 20 sets. Your current targets are unchanged; this deletion cannot be undone at the current set count.');return}for(const r of undo.removed){let list;if(r.type==='goal')list=current.goals;else if(r.type==='day')list=current.days;else if(r.type==='exercise')list=current.days.find(d=>d.id===r.parent)?.exercises;else{const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(!e)continue;list=e.setRows;if(!list.some(x=>x.id===r.item.id)){list.splice(Math.min(r.index,list.length),0,r.item);e.sets=String(list.length);publishSetEdit(e)}continue}if(list&&!list.some(x=>x.id===r.item.id))list.splice(Math.min(r.index,list.length),0,r.item)}clearUndo();automaticRoles();render();schedule();say('Deletion undone. Subsequent edits were kept.')}
 const clone=value=>JSON.parse(JSON.stringify(value));
 function resetComparison(){goalsOpen=false;mirrorDayFilter=mirrorExerciseFilter='all';compareGoal='all';compareRoles=new Set(['Goal','Primary','Secondary','Tertiary','Choose']);excludedEntries=new Set();pickerOpen=false;selectedWorkouts=null;exerciseChoice='';clearUndo()}
 /* Helpers run inside the existing student workspace closure. */
@@ -2399,7 +2399,7 @@ screen.addEventListener('change',event=>{
 });
 function render(keepGoals=false){normalize();rawRender(keepGoals===true);const sheet=screen.querySelector('athlete-spreadsheet');
  if(sheet)sheet.mount(current,{
-   schedule,rows,needsShared,bindExerciseName,automaticRoles,openProgression,goalMatch:isGoalExercise,includesWorkout,setWorkoutSelection,
+   schedule,bindExerciseName,automaticRoles,openProgression,setExerciseRole,isGoalExercise,applyWeekToSets,includesWorkout,setWorkoutSelection,
    addExercise(day){
      const exercise=ex('','1','fixed','','','');exercise.collapsed=true;
      day.exercises.push(exercise);render();schedule();
@@ -2427,6 +2427,27 @@ screen.addEventListener('submit',event=>{if(!event.target.matches('[data-profile
 screen.addEventListener('click',event=>{if(event.target.closest('[data-teaching-launch]'))return;if(learningClick(event))return;if(advancedClick(event))return;const b=event.target.closest('button');if(!b)return;const v=b.dataset;if(v.action==='roster'){preserveDraft();roster();return}if(v.action==='create'){clearUndo();profile();return}if(v.open){current=athletes.find(a=>a.id===Number(v.open));resetComparison();view='board';render();say('Athlete workspace opened. Changes save automatically.');return}if(!current)return;if(v.view){view=v.view;render();return}if(v.workout){if(v.workout!=='custom')setWorkoutSelection(v.workout==='all'?null:[Number(v.workout)]);render();return}if(v.action==='add-day'){current.days.push(day(unusedDayName()));selectedWorkouts=null;if(view!=='sheet')view='board';say('Workout added. Tabs and mirrors updated.')}if(v.action==='add-goal')current.goals.push({name:'',ceiling:'',floor:'',goal:'',priority:'Choose'});if(v.addEx)current.days.find(d=>d.id===Number(v.addEx)).exercises.push(ex());if(v.removeDay){const d=current.days.find(d=>d.id===Number(v.removeDay));askDelete('Delete '+(d.name||'this day')+'?', 'This removes the workout and its '+d.exercises.length+' exercise entries. Your goals stay unchanged.',()=>{current.days=current.days.filter(item=>item.id!==d.id)});return}if(v.removeEx){const d=current.days.find(d=>d.id===Number(v.day));const e=d.exercises.find(e=>e.id===Number(v.removeEx));askDelete('Delete '+(e.name||'this exercise')+'?', 'Remove this exercise and its set targets from '+(d.name||'this workout')+'? Other workouts stay unchanged.',()=>{d.exercises=d.exercises.filter(item=>item.id!==e.id)});return}if(v.removeGoal!==undefined){askDelete('Delete this goal?', 'Remove the selected goal from this athlete profile?',()=>{current.goals.splice(Number(v.removeGoal),1)});return}render()});
 function update(event){
  if(learningUpdate(event)||advancedUpdate(event))return;const el=event.target,v=el.dataset;if(!current)return;
+ if(v.weekOne){
+   const e=allEntries().find(x=>x.e.id===Number(v.weekOne))?.e;
+   if(e?.progression){
+     const p=LZProgression.forExercise(e);
+     p.rows[0].planned=el.value;e.progression=p;e.weeklyPrescription=true;
+     if(e.sheetDrafts)delete e.sheetDrafts.main;
+     if(event.type==='change'){
+       applyWeekToSets(e);refreshEntry(e);
+       const fields=weekSetFields(e),card=el.closest('.exercise-expanded');
+       if(fields&&card){
+         const d=current.days.find(day=>day.exercises.includes(e)),template=document.createElement('template');
+         template.innerHTML=exerciseEditor(d,e);
+         for(const selector of ['.prescription','.shared-targets,.set-editor']){
+           const existing=card.querySelector(selector),next=template.content.querySelector(selector);
+           if(existing&&next)existing.replaceWith(next);
+         }
+       }
+     }
+   }
+   return;
+ }
  if(v.goal!==undefined){current.goals[Number(v.goal)][v.key]=el.value;
    if(el.parentElement.matches('.goal-name-editor'))el.nextElementSibling.textContent=el.value||el.placeholder;
    if(el.parentElement.matches('.goal-value-editor'))el.parentElement.dataset.value=el.value||el.placeholder;
@@ -2438,12 +2459,15 @@ function update(event){
      }
      automaticRoles();
      if(event.type==='change' && allEntries().length)render(true);
+   }else if(event.type==='change'&&view==='progression'&&['ceiling','floor','goal'].includes(v.key)){
+     render(true);
    }if(v.key==='priority')el.className=el.value==='Floor'?'priority-floor':el.value==='Ceiling'?'priority-ceiling':'';return}
  if(v.day){const d=current.days.find(d=>d.id===Number(v.day));if(!d)return;const target=v.ex?d.exercises.find(e=>e.id===Number(v.ex)):d;if(!target)return;
- if(v.set!==undefined){rows(target);target.setRows[Number(v.set)][v.setKey]=el.value;if(event.type==='change')refreshEntry(target,v.setKey==='kind')}
- else if(v.key==='sets'){if(event.type==='input')return;const n=Number(el.value);if(!Number.isInteger(n)||n<1||n>20){el.value=target.sets;say('Enter a whole number from 1 to 20 sets.');return}if(n<Number(target.sets)){el.value=target.sets;askDelete('Remove '+(Number(target.sets)-n)+' sets?','The removed set targets will be deleted. Undo is available afterward.',()=>{target.sets=String(n);target.setRows=target.setRows.slice(0,n);rows(target)},'Remove sets');return}target.sets=String(n);rows(target);refreshEntry(target,true)}
+ if(v.ex&&(v.set!==undefined||['sets','mode','low','high','load'].includes(v.key)))applyWeekToSets(target);
+ if(v.set!==undefined){rows(target);target.setRows[Number(v.set)][v.setKey]=el.value;publishSetEdit(target);if(event.type==='change')refreshEntry(target,v.setKey==='kind')}
+ else if(v.key==='sets'){if(event.type==='input')return;const n=Number(el.value);if(!Number.isInteger(n)||n<1||n>20){el.value=target.sets;say('Enter a whole number from 1 to 20 sets.');return}if(n<Number(target.sets)){el.value=target.sets;askDelete('Remove '+(Number(target.sets)-n)+' sets?','The removed set targets will be deleted. Undo is available afterward.',()=>{target.sets=String(n);target.setRows=target.setRows.slice(0,n);rows(target);publishSetEdit(target)},'Remove sets');return}target.sets=String(n);rows(target);publishSetEdit(target);refreshEntry(target,true)}
  else if(v.key==='mode'){if(event.type==='input')return;const mode=el.value;el.value=target.mode;convertPrescription(target,mode)}
- else if(v.key){target[v.key]=el.value;if(['low','high','load'].includes(v.key)&&target.sharedPrescription)rows(target);if(['low','high','load'].includes(v.key))refreshEntry(target);else if(event.type==='change'&&(v.key==='type'||v.key==='name'&&!v.ex))render()}
+ else if(v.key){target[v.key]=el.value;if(['low','high','load'].includes(v.key)&&target.sharedPrescription)rows(target);if(['low','high','load'].includes(v.key)){publishSetEdit(target);refreshEntry(target);}else if(event.type==='change'&&(v.key==='type'||v.key==='name'&&!v.ex))render()}
  }
 }
 let compareGoal='all',compareRoles=new Set(['Goal','Primary','Secondary','Tertiary','Choose']),excludedEntries=new Set(),pickerOpen=false;
@@ -2463,7 +2487,7 @@ function rows(e){
 function needsShared(e){const rs=(e.setRows||[]).slice(0,Number(e.sets));return e.mode!=='top'&&rs.length>1&&rs.some(r=>String(r.reps??'')!==String(rs[0].reps??'')||String(r.load??'')!==String(rs[0].load??'')||(e.mode==='range'&&String(r.high??e.high??'')!==String(rs[0].high??e.high??'')))}
 function reps(e){const rs=rows(e);return e.mode==='top'||needsShared(e)?rs.map((r,i)=>`Set ${i+1}, ${e.mode==='top'?r.kind+': ':''}${r.reps}${e.mode==='range'?' to '+r.high:''} reps at ${r.load||'load unset'}`).join('; '):summary(e)}
 function summary(e){rows(e);if(e.mode==='top'||needsShared(e))return `${e.sets} ${Number(e.sets)===1?'set':'sets'} · ${e.mode==='top'?'Top + Back Off':'Choose shared prescription'}`;const load=String(e.load||'').trim();return `${e.sets} × ${e.low||'Reps Not Set'}${e.mode==='range'?' to '+(e.high||'?'):''} · ${load?(/^[0-9]+(?:\.[0-9]+)?$/.test(load)?load+' kg':load):'Load Not Set'}`}
-function roleBadge(e){return `<span class="role-badge">${icon(roleIcon(e.role))}${esc(e.role==='Choose'?(isGoalExercise(e)?'Goal':'Role Not Set'):e.role)}</span>`}
+function roleBadge(e){return `<span class="role-badge">${icon(roleIcon(e.role))}${esc(e.role==='Choose'?'Role Not Set':e.role)}</span>`}
 function prescriptionRows(e){
  const loadLabel=value=>{const text=String(value??'').trim();return text?(/^[0-9]+(?:\.[0-9]+)?$/.test(text)?text+' kg':text):'Load Not Set'};
  return `<div class="prescription-rows" role="table" aria-label="Set targets for ${esc(e.name||'exercise')}"><div class="prescription-row-head" role="row"><span role="columnheader">Set / Type</span><span role="columnheader">Reps</span><span role="columnheader">Load</span></div>${rows(e).map((r,i)=>`<div class="prescription-row" role="row"><span role="cell">${i+1}${e.mode==='top'?' · '+esc(r.kind):''}</span><span role="cell">${esc(r.reps||'Unset')}${e.mode==='range'?' to '+esc(r.high||'?'):''}</span><span role="cell">${esc(loadLabel(r.load))}</span></div>`).join('')}</div>`;
@@ -2471,20 +2495,22 @@ function prescriptionRows(e){
 function exerciseNumberLabel(e,day=null){const workout=day||allEntries().find(x=>x.e.id===e.id)?.d;const index=workout?.exercises.findIndex(x=>x.id===e.id)??-1;return index<0?'':`<small class="exercise-number">Exercise Number ${index+1}</small>`;}
 function firstWeekSummary(e){
  const first=e.progression&&LZProgression.forExercise(e).rows[0].planned.trim();
- return first?'Week 1 · '+first.split('\n').join(' · '):'';
+ return e.progression?'Week 1 · '+(first?first.split('\n').join(' · '):'Not entered'):'';
 }
 function miniExercise(e){
- const perSet=e.mode==='top'||needsShared(e),week=firstWeekSummary(e);
+ const week=firstWeekSummary(e),fields=weekSetFields(e);
+ if(fields)e={...e,...fields,setRows:(fields.setRows||e.setRows||[]).map(r=>({...r}))};
+ const perSet=e.mode==='top'||needsShared(e);
  return `<div class="exercise mirror-entry role-${e.role.toLowerCase()}" data-athlete-goal="${isGoalExercise(e)}">
    <div class="mirror-entry-title"><strong>${esc(e.name||'Unnamed exercise')}</strong>${roleBadge(e)}</div>
    <div class="mirror-prescription">${esc(week||summary(e))}${!week&&e.rir?' · '+esc(e.rir)+' RIR':''} <span>${esc(goalLabel(e))}</span></div>
    ${e.progression?`<details class="mirror-weeks"><summary>${e.progression.weeks} ${e.progression.weeks===1?'week':'weeks'}${e.progression.alternatives?.length?' · '+e.progression.alternatives.length+' alternative'+(e.progression.alternatives.length===1?'':'s'):''}</summary>${progressionComparison(LZProgression.forExercise(e))}</details>`:''}
-   ${perSet?`<details class="mirror-sets"><summary>Set targets</summary>${prescriptionRows(e)}</details>`:''}
+   ${perSet&&(fields||!e.progression||LZProgression.forExercise(e).rows[0].planned===planFromSets(e).rows[0].planned)?`<details class="mirror-sets"><summary>Set targets</summary>${prescriptionRows(e)}</details>`:''}
  </div>`;
 }
 function mirror(){const groups=new Map();current.days.filter(matchesDay).forEach(d=>{if(!groups.has(d.type))groups.set(d.type,[]);groups.get(d.type).push(d)});return bodyFilterControls()+(!groups.size?'<p>No days match these filters.</p>':[...groups].map(([type,ds])=>`<div class="mirror-block"><h3 class="label-icon">${icon('columns-2')}${esc(type)} Workouts</h3><div class="day-grid">${ds.map(d=>`<article class="mirror-workout"><h3 class="label-icon">${icon('dumbbell')}${esc(d.name)}</h3>${d.exercises.filter(matchesBody).map(miniExercise).join('')||'<p>No exercises match this filter.</p>'}</article>`).join('')}</div></div>`).join(''))}
 
-function advancedClick(event){const button=event.target.closest('button');if(!button||!current)return false;const v=button.dataset;const entry=allEntries().find(x=>x.e.id===Number(v.toggleEx||v.ex));if(v.convertShared!==undefined){convertPrescription(entry.e,entry.e.mode);return true}if(v.toggleEx){entry.e.collapsed=!entry.e.collapsed;render();return true}if(v.insertSet!==undefined){const e=entry.e;if(Number(e.sets)>=20)return true;const index=Number(v.insertSet);const active=rows(e);const next={...active[index],id:uid(),kind:e.mode==='top'?'Back off':active[index].kind};e.setRows=active;e.setRows.splice(index+1,0,next);e.sets=String(e.setRows.length);render();say('Set added. Set count updated.');return true}if(v.deleteSet!==undefined){const e=entry.e;const index=Number(v.deleteSet);if(Number(e.sets)===1){say('Keep at least one set. You can delete the exercise instead.');return true}askDelete('Delete Set '+(index+1)+'?', 'Remove this set target from '+(e.name||'this exercise')+'?',()=>{e.setRows=rows(e);e.setRows.splice(index,1);e.sets=String(e.setRows.length)});return true}return false}
+function advancedClick(event){const button=event.target.closest('button');if(!button||!current)return false;const v=button.dataset;const entry=allEntries().find(x=>x.e.id===Number(v.toggleEx||v.ex));if(v.convertShared!==undefined){convertPrescription(entry.e,entry.e.mode);return true}if(v.toggleEx){entry.e.collapsed=!entry.e.collapsed;render();return true}if(v.insertSet!==undefined){const e=entry.e;if(Number(e.sets)>=20)return true;const index=Number(v.insertSet);const active=rows(e);const next={...active[index],id:uid(),kind:e.mode==='top'?'Back off':active[index].kind};e.setRows=active;e.setRows.splice(index+1,0,next);e.sets=String(e.setRows.length);publishSetEdit(e);render();say('Set added. Set count updated.');return true}if(v.deleteSet!==undefined){const e=entry.e;const index=Number(v.deleteSet);if(Number(e.sets)===1){say('Keep at least one set. You can delete the exercise instead.');return true}askDelete('Delete Set '+(index+1)+'?', 'Remove this set target from '+(e.name||'this exercise')+'?',()=>{e.setRows=rows(e);e.setRows.splice(index,1);e.sets=String(e.setRows.length);publishSetEdit(e)});return true}return false}
 function advancedUpdate(event){const el=event.target,v=el.dataset;if(v.compareGoal!==undefined){compareGoal=el.value;render();return true}if(v.compareRole){if(el.checked)compareRoles.add(v.compareRole);else compareRoles.delete(v.compareRole);render();return true}if(v.compareEntry){pickerOpen=true;if(el.checked)excludedEntries.delete(Number(v.compareEntry));else excludedEntries.add(Number(v.compareEntry));render();return true}if(v.linkKey){if(event.type==='input')return true;const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;e[v.linkKey]=el.value;if(v.linkKey==='goalId')e.parentId='';if(v.linkKey==='role'){e.parentId='';if(e.role==='Primary'){const g=current.goals.find(g=>g.name.trim().toLowerCase()===e.name.trim().toLowerCase());if(g)e.goalId=g.id}}render();return true}return false}
 screen.addEventListener('input',update);screen.addEventListener('change',update);undoButton.addEventListener('click',undoDeletion);
 let session=null,member=null,owner=null,revision=0,lastSaved='',saveTimer=null,saving=null,conflict=false,dragged=null,switching=false,loadSequence=0,workspaceActive=false,workspaceName='',pendingRecovery=null,restoredDraft=null;
@@ -2694,26 +2720,85 @@ root.addEventListener('input',event=>{if(member&&!event.target.closest('[data-us
 window.addEventListener('blur',()=>{if(member&&workspaceActive){preserveDraft();flush().catch(error);}});window.addEventListener('beforeunload',()=>{if(member&&serialized()!==lastSaved){preserveDraft();flush().catch(()=>{});}});
 function normalize(){if(!current)return;current.goals.forEach(g=>{if(!g.id)g.id=uid()});allEntries().forEach(({e})=>{if(e.collapsed===undefined)e.collapsed=true;if(!e.role)e.role='Choose';bindExerciseName(e,e);const c=StudentPatterns.classify(e);e.patterns=c.patterns.length?c.patterns:['Needs classification'];delete e.parentId;delete e.goalId;rows(e)});const patterns=allEntries().flatMap(x=>x.e.patterns);if(compareGoal!=='all'&&!patterns.includes(compareGoal))compareGoal='all'}
 function matchesAthleteGoal(e){const id=exerciseIdentity(e);return !!e.name.trim()&&current.goals.some(g=>g.name.trim()&&exerciseIdentity(g)===id);}
-function isGoalExercise(e){return e.role==="Goal"||matchesAthleteGoal(e);}
-function automaticRoles(){if(!current)return;for(const {e} of allEntries()){if(e.roleManual)continue;const matching=matchesAthleteGoal(e);e.role=matching?'Primary':StudentPatterns.classify(e).unilateral?'Tertiary':'Choose'}}
+function isGoalExercise(e){return e.role==='Goal';}
+function setExerciseRole(e,role){e.role=role;e.roleManual=true;}
+function automaticRoles(){if(!current)return;for(const {e} of allEntries()){if(e.roleManual||isGoalExercise(e))continue;const matching=matchesAthleteGoal(e);e.role=matching?'Primary':StudentPatterns.classify(e).unilateral?'Tertiary':'Choose'}}
 function goalLabel(e){const ps=StudentPatterns.classify(e).patterns;return ps.length?ps.join(' / '):'Pattern needs teacher review'}
+function parseSetScheme(scheme){
+ const match=/^(\d+)\s*[×x]\s*(\d+)(?:\s*(?:[-–]|to)\s*(\d+))?(?:\s*[×x]\s*([+-]?\d+(?:\.\d+)?\s*(?:kg|lbs?|%)?|BW(?:\s*[+-]\s*\d+(?:\.\d+)?\s*(?:kg|lbs?)?)?|bodyweight))?$/i.exec(scheme);
+ if(!match||+match[1]<1||+match[1]>20||+match[2]<1||(match[3]&&+match[3]<+match[2]))return null;
+ return {sets:match[1],mode:match[3]?'range':'fixed',low:match[2],high:match[3]||'',load:(match[4]||'').replace(/^([+-]?\d+(?:\.\d+)?)\s*kg$/i,'$1')};
+}
+function weekSetFields(e){
+ if(!e.progression)return null;
+ const plan=LZProgression.forExercise(e).rows[0].planned.trim();
+ const effort=/(?:\s*[·,@]\s*|\s+)(?:(\d+(?:\.\d+)?(?:\s*[-–]\s*\d+(?:\.\d+)?)?)\s*RIR|RIR\s*(\d+(?:\.\d+)?(?:\s*[-–]\s*\d+(?:\.\d+)?)?))$/i.exec(plan);
+ const scheme=effort?plan.slice(0,effort.index):plan,rir=effort?(effort[1]||effort[2]):'';
+ const shared=parseSetScheme(scheme);
+ if(shared){
+   if(!e.weeklyPrescription&&(e.mode==='top'||needsShared(e)))return null;
+   return {...shared,rir,sharedPrescription:true};
+ }
+ const setRows=[];
+ let mode;
+ for(const line of scheme.split('\n')){
+   const label=/^\s*(Top|Back[ -]off|Set\s+(\d+)):\s*(.+)$/i.exec(line);
+   if(!label)return null;
+   const part=parseSetScheme(label[3]),numbered=!!label[2];
+   if(!part||setRows.length+Number(part.sets)>20)return null;
+   if(numbered?(Number(label[2])!==setRows.length+1||Number(part.sets)!==1):part.mode!=='fixed')return null;
+   const format=numbered?part.mode:'top';
+   if(mode&&mode!==format)return null;
+   mode=format;
+   for(let j=0;j<Number(part.sets);j++){
+     const prior=e.setRows?.[setRows.length];
+     setRows.push({...prior,kind:numbered?(prior?.kind||'Top'):/^top$/i.test(label[1])?'Top':'Back off',reps:part.low,high:part.high,load:part.load});
+   }
+ }
+ const first=setRows[0];
+ return {mode,sets:String(setRows.length),low:first.reps,high:first.high,load:first.load,rir,sharedPrescription:false,setRows};
+}
+function applyWeekToSets(e){
+ const fields=weekSetFields(e);
+ if(fields){Object.assign(e,fields);rows(e);}
+}
+function planFromSets(e,p=LZProgression.create({weeks:1})){
+ LZProgression.seedWeekOne(p,e);
+ const first=p.rows[0],rir=String(e.rir||'').trim();
+ if(rir)first.planned+=' · '+(/\bRIR\b/i.test(rir)?rir:rir+' RIR');
+ return p;
+}
+function publishSetEdit(e){
+ if(!e.progression)return;
+ const p=planFromSets(e,LZProgression.forExercise(e));
+ p.format=e.mode;
+ e.progression=p;e.weeklyPrescription=true;
+ if(e.sheetDrafts)delete e.sheetDrafts.main;
+}
 function exerciseEditor(d,e){
  const attrs=`data-day="${d.id}" data-ex="${e.id}"`;rows(e);
- const perSet=e.mode==='top'||needsShared(e),week=e.collapsed&&firstWeekSummary(e);
+ const week=firstWeekSummary(e),fields=weekSetFields(e);
+ if(fields)e={...e,...fields,setRows:(fields.setRows||e.setRows).map(r=>({...r}))};
+ const perSet=e.mode==='top'||needsShared(e);
+ const planned=e.progression&&LZProgression.forExercise(e).rows[0].planned;
+ const freeform=e.progression&&!fields&&planned!==planFromSets(e).rows[0].planned;
  const content=perSet?`<div class="set-editor set-grid">${needsShared(e)?`<p class="structural-warning">This saved entry has different targets. Choose a shared prescription to use ${e.mode==='range'?'Rep Range':'Fixed'}.</p><button ${attrs} data-convert-shared>Choose shared prescription</button>`:''}${e.mode==='top'&&!e.setRows.some(r=>r.kind==='Top')?'<p class="structural-warning" role="status">No Top set yet. Mark a set as Top when ready.</p>':''}${rows(e).map((r,i)=>`<div class="one-set"><div class="set-topline"><span>Set ${i+1} <span class="set-kind ${r.kind==='Top'?'top':'back-off'}">${e.mode==='top'?esc(r.kind):'Saved Target'}</span></span><div class="actions"><button ${attrs} data-insert-set="${i}" aria-label="Add Set after set ${i+1}" ${Number(e.sets)>=20?'disabled':''}>${icon('plus')}</button><button class="remove" ${attrs} data-delete-set="${i}" aria-label="Delete Set ${i+1}">${icon('trash-2')}</button></div></div><div class="set-values">${e.mode==='top'?`<label>Type<select ${attrs} data-set="${i}" data-set-key="kind">${options(['Top','Back off'],r.kind)}</select></label>`:''}<label>${e.mode==='range'?'Minimum Reps':'Reps'}${field(r.reps,`type="number" min="1" step="1" ${attrs} data-set="${i}" data-set-key="reps" aria-label="Set ${i+1} reps"`)}</label>${e.mode==='range'?`<label>Maximum Reps${field(r.high,`type="number" min="1" step="1" ${attrs} data-set="${i}" data-set-key="high" aria-label="Set ${i+1} maximum reps"`)}</label>`:''}<label>Load${field(r.load,`${attrs} data-set="${i}" data-set-key="load" aria-label="Set ${i+1} load" placeholder="kg / other"`)}</label></div></div>`).join('')}</div>`:`<div class="shared-targets"><label>${e.mode==='range'?'Minimum Reps':'Reps'}${field(e.low,`type="number" min="1" step="1" ${attrs} data-key="low" aria-label="${e.mode==='range'?'Minimum Reps':'Reps'}"`)}</label>${e.mode==='range'?`<label>Maximum Reps${field(e.high,`type="number" min="1" step="1" ${attrs} data-key="high" aria-label="Maximum Reps"`)}</label>`:''}<label>Load${field(e.load,`${attrs} data-key="load" aria-label="Load" placeholder="kg / other"`)}</label></div>`;
- return `<div class="exercise role-${e.role.toLowerCase()}" data-folded="${!!e.collapsed}" data-athlete-goal="${isGoalExercise(e)}"><div class="exercise-summary"><div>${exerciseNumberLabel(e,d)}<strong class="exercise-title-toggle" role="button" tabindex="0" data-header-toggle="${e.id}" aria-expanded="${!e.collapsed}">${esc(e.name||'New Exercise')}</strong> ${roleBadge(e)}<div class="summary-text prescription-summary"><strong class="scheme">${esc(week||summary(e))}</strong>${!week&&e.collapsed&&perSet&&[rows(e)[0].reps,rows(e)[0].load].some(Boolean)?' · '+esc([rows(e)[0].reps&&rows(e)[0].reps+' reps',rows(e)[0].load].filter(Boolean).join(' · ')):''}${!week&&e.rir?' · '+esc(e.rir)+' RIR':''}${e.progression?' · '+esc(e.progression.weeks)+(e.progression.weeks===1?' week':' weeks'):''}</div></div><button type="button" class="summary-toggle" data-toggle-ex="${e.id}" aria-expanded="${!e.collapsed}" aria-label="${e.collapsed?'Expand':'Minimize'} ${esc(e.name||'exercise')}">${icon(e.collapsed?'chevron-down':'chevron-up')}</button></div>${e.collapsed&&perSet?prescriptionRows(e):''}${e.collapsed?'':`<div class="exercise-expanded"><div class="exercise-head">${field(e.name,`${attrs} data-key="name" aria-label="Exercise Name" placeholder="Exercise Name"`)}<button class="remove" data-remove-ex="${e.id}" data-day="${d.id}" aria-label="Delete Exercise">${icon('trash-2')}</button></div><div class="role-fields"><label>Exercise Role<select ${attrs} data-link-key="role" aria-label="Exercise Role">${'<option value="Choose" '+(e.role==='Choose'?'selected':'')+'>Choose Role (Optional)</option>'+options(['Goal','Primary','Secondary','Tertiary'],e.role)}</select></label></div><div class="prescription"><label>Sets${field(e.sets,`type="number" min="1" max="20" step="1" ${attrs} data-key="sets" aria-label="Number of Sets"`)}</label><label>Rep Format<select ${attrs} data-key="mode" aria-label="Rep Format"><option value="fixed" ${e.mode==='fixed'?'selected':''}>Fixed</option><option value="range" ${e.mode==='range'?'selected':''}>Rep Range</option><option value="top" ${e.mode==='top'?'selected':''}>Top + Back Off</option></select></label></div>${content}</div>`}</div>`
+ return `<div class="exercise role-${e.role.toLowerCase()}" data-folded="${!!e.collapsed}" data-athlete-goal="${isGoalExercise(e)}"><div class="exercise-summary"><div>${exerciseNumberLabel(e,d)}<strong class="exercise-title-toggle" role="button" tabindex="0" data-header-toggle="${e.id}" aria-expanded="${!e.collapsed}">${esc(e.name||'New Exercise')}</strong> ${roleBadge(e)}<div class="summary-text prescription-summary"><strong class="scheme">${esc(week||summary(e))}</strong>${!week&&e.collapsed&&perSet&&[rows(e)[0].reps,rows(e)[0].load].some(Boolean)?' · '+esc([rows(e)[0].reps&&rows(e)[0].reps+' reps',rows(e)[0].load].filter(Boolean).join(' · ')):''}${!week&&e.rir?' · '+esc(e.rir)+' RIR':''}${e.progression?' · '+esc(e.progression.weeks)+(e.progression.weeks===1?' week':' weeks'):''}</div></div><button type="button" class="summary-toggle" data-toggle-ex="${e.id}" aria-expanded="${!e.collapsed}" aria-label="${e.collapsed?'Expand':'Minimize'} ${esc(e.name||'exercise')}">${icon(e.collapsed?'chevron-down':'chevron-up')}</button></div>${e.collapsed&&perSet&&!freeform?prescriptionRows(e):''}${e.collapsed?'':`<div class="exercise-expanded"><div class="exercise-head">${field(e.name,`${attrs} data-key="name" aria-label="Exercise Name" placeholder="Exercise Name"`)}<button class="remove" data-remove-ex="${e.id}" data-day="${d.id}" aria-label="Delete Exercise">${icon('trash-2')}</button></div><div class="role-fields"><label>Exercise Role<select ${attrs} data-link-key="role" aria-label="Exercise Role">${'<option value="Choose" '+(e.role==='Choose'?'selected':'')+'>Choose Role (Optional)</option>'+options(['Goal','Primary','Secondary','Tertiary'],e.role)}</select></label></div>${freeform?`<label>Week 1 planned prescription<textarea data-week-one="${e.id}" rows="2">${esc(planned)}</textarea></label><details><summary>Edit Week 1 using set fields</summary>`:''}<div class="prescription"><label>Sets${field(e.sets,`type="number" min="1" max="20" step="1" ${attrs} data-key="sets" aria-label="Number of Sets"`)}</label><label>Rep Format<select ${attrs} data-key="mode" aria-label="Rep Format"><option value="fixed" ${e.mode==='fixed'?'selected':''}>Fixed</option><option value="range" ${e.mode==='range'?'selected':''}>Rep Range</option><option value="top" ${e.mode==='top'?'selected':''}>Top + Back Off</option></select></label></div>${content}${freeform?'</details>':''}</div>`}</div>`
 }
 function refreshEntry(e,targets=false){
- const card=screen.querySelector(`[data-drag-id="${e.id}"]`);if(!card)return;const line=card.querySelector('.prescription-summary');if(line)line.innerHTML='<strong class="scheme">'+esc(firstWeekSummary(e)||summary(e))+'</strong> · '+esc(goalLabel(e));
+ const card=screen.querySelector(`[data-drag-id="${e.id}"]`);if(!card)return;const scheme=card.querySelector('.prescription-summary .scheme');
+ if(scheme)scheme.textContent=firstWeekSummary(e)||summary(e);
+ const manual=card.querySelector('[data-week-one]');
+ if(manual&&document.activeElement!==manual)manual.value=LZProgression.forExercise(e).rows[0].planned;
  if(targets){const existing=card.querySelector('.set-editor');if(existing?.replaceWith){const d=current.days.find(d=>d.exercises.some(x=>x.id===e.id)),template=document.createElement('template');template.innerHTML=exerciseEditor(d,e);const next=template.content.querySelector('.set-editor');if(next)existing.replaceWith(next);if(window.lucide)lucide.createIcons({attrs:{width:16,height:16}})}}
 }
 function convertPrescription(e,mode){
- const rs=rows(e);if(mode==='top'){e.mode='top';e.sharedPrescription=false;render();return}
- if(e.mode!=='top'&&!needsShared(e)){e.mode=mode;rows(e);render();return}
- askDelete('Choose shared prescription','Select the target to use for every set. This replaces the individual targets; no target is selected automatically.',()=>{const choice=root.querySelector('[data-shared-source]').value;if(choice==='')return;const r=rs[Number(choice)];e.mode=mode;e.low=r.reps;e.high=String(r.high??'');e.load=r.load;e.sharedPrescription=true;rows(e)},'Use shared prescription',`<label>Prescription to use<select data-shared-source><option value="">Choose a set target</option>${rs.map((r,i)=>`<option value="${i}">Set ${i+1}: ${esc(r.reps)}${mode==='range'?' to '+esc(r.high):''} · ${esc(r.load||'Load Not Set')}</option>`).join('')}</select></label>`);
+ const rs=rows(e);if(mode==='top'){e.mode='top';e.sharedPrescription=false;publishSetEdit(e);render();return}
+ if(e.mode!=='top'&&!needsShared(e)){e.mode=mode;rows(e);publishSetEdit(e);render();return}
+ askDelete('Choose shared prescription','Select the target to use for every set. This replaces the individual targets; no target is selected automatically.',()=>{const choice=root.querySelector('[data-shared-source]').value;if(choice==='')return;const r=rs[Number(choice)];e.mode=mode;e.low=r.reps;e.high=String(r.high??'');e.load=r.load;e.sharedPrescription=true;rows(e);publishSetEdit(e)},'Use shared prescription',`<label>Prescription to use<select data-shared-source><option value="">Choose a set target</option>${rs.map((r,i)=>`<option value="${i}">Set ${i+1}: ${esc(r.reps)}${mode==='range'?' to '+esc(r.high):''} · ${esc(r.load||'Load Not Set')}</option>`).join('')}</select></label>`);
  root.querySelector('[data-accept-delete]').disabled=true;
 }
-function learningUpdate(event){const el=event.target,v=el.dataset;if(v.patternFilter!==undefined){compareGoal=el.value;render();return true}if(v.linkKey==='role'){if(event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;e.role=el.value;e.roleManual=true;render()}return true}if(v.key==='name'&&v.ex&&event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;bindExerciseName(e,el.value);automaticRoles();render();return true}return false}
+function learningUpdate(event){const el=event.target,v=el.dataset;if(v.patternFilter!==undefined){compareGoal=el.value;render();return true}if(v.linkKey==='role'){if(event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;setExerciseRole(e,el.value);render()}return true}if(v.key==='name'&&v.ex&&event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;bindExerciseName(e,el.value);automaticRoles();render();return true}return false}
 function learningClick(event){const b=event.target.closest('button');if(!b)return false;if(b.dataset.addEx){const d=current.days.find(d=>d.id===Number(b.dataset.addEx));const e=ex('','','fixed','','','');e.sets='1';e.collapsed=false;d.exercises.push(e);render();return true}return false}
 function decorateLearning(){
   screen.querySelectorAll('[data-remove-goal]').forEach(button=>{button.innerHTML=icon('trash-2');button.setAttribute('aria-label','Delete Goal');});
@@ -2765,9 +2850,8 @@ root.addEventListener('click',event=>{
 function exerciseMirror(){
  const entries=allEntries().filter(x=>matchesDay(x.d)&&matchesBody(x.e)),patterns=[...new Set([...current.goals.flatMap(g=>StudentPatterns.classify(g).patterns),...entries.flatMap(x=>x.e.patterns)])];
  if(compareGoal!=='all'&&!patterns.includes(compareGoal))compareGoal='all';const roles=['Goal','Primary','Secondary','Tertiary','Choose'];
- const role=e=>e.role==='Choose'&&isGoalExercise(e)?'Goal':e.role;
- const eligible=entries.filter(x=>(compareGoal==='all'||x.e.patterns.includes(compareGoal))&&compareRoles.has(role(x.e))),selected=eligible.filter(x=>!excludedEntries.has(x.e.id));
- return `<div class="mirror-filter-bar">${bodyFilterControls()}<div class="comparison-controls"><label>Movement pattern<select data-pattern-filter><option value="all">All patterns</option>${patterns.map(p=>`<option ${compareGoal===p?'selected':''}>${esc(p)}</option>`).join('')}</select></label>${roles.map(r=>`<label class="check-label"><input type="checkbox" data-compare-role="${r}" ${compareRoles.has(r)?'checked':''}>${r==='Choose'?'Unassigned role':r}</label>`).join('')}</div><details data-entry-picker ${pickerOpen?'open':''}><summary>Choose exact exercise entries (${selected.length} selected)</summary><div class="entry-picker">${eligible.map(x=>`<label class="check-label"><input type="checkbox" data-compare-entry="${x.e.id}" ${excludedEntries.has(x.e.id)?'':'checked'}>${esc(x.d.name)} · <strong>${esc(x.e.name||'Unnamed')}</strong> · ${esc(role(x.e)==='Choose'?'Unassigned role':role(x.e))} · ${esc(summary(x.e))}</label>`).join('')||'<p>No entries match these filters.</p>'}</div></details></div>${patterns.filter(p=>(compareGoal==='all'||p===compareGoal)&&selected.some(x=>x.e.patterns.includes(p))).map(p=>{const goals=current.goals.filter(g=>StudentPatterns.classify(g).patterns.includes(p)),match=selected.filter(x=>x.e.patterns.includes(p)),ds=current.days.filter(d=>match.some(x=>x.d.id===d.id));return `<div class="mirror-block"><div class="mirror-pattern"><h3 class="label-icon">${icon('git-compare-arrows')}${esc(p)}</h3>${p==='Needs classification'?'<span>Needs classification review</span>':goals.length?`<span>${icon('target')} ${goals.map(g=>esc(g.name)).join(', ')}</span>`:''}</div>${ds.length?`<div class="table-wrap"><table class="mirror-table goal-comparison" style="--mirror-days:${ds.length}"><thead><tr><th>Role</th>${ds.map(d=>`<th>${esc(d.name)}</th>`).join('')}</tr></thead><tbody>${roles.filter(r=>compareRoles.has(r)&&match.some(x=>role(x.e)===r)).map(r=>`<tr><td>${r==='Choose'?'Unassigned role':r}</td>${ds.map(d=>`<td>${match.filter(x=>x.d.id===d.id&&role(x.e)===r).map(x=>miniExercise(x.e)).join('')||'No entries'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<p>No selected entries.</p>'}</div>`}).join('')||'<p class="mirror-empty">No exercises match these filters.</p>'}`
+ const eligible=entries.filter(x=>(compareGoal==='all'||x.e.patterns.includes(compareGoal))&&compareRoles.has(x.e.role)),selected=eligible.filter(x=>!excludedEntries.has(x.e.id));
+ return `<div class="mirror-filter-bar">${bodyFilterControls()}<div class="comparison-controls"><label>Movement pattern<select data-pattern-filter><option value="all">All patterns</option>${patterns.map(p=>`<option ${compareGoal===p?'selected':''}>${esc(p)}</option>`).join('')}</select></label>${roles.map(r=>`<label class="check-label"><input type="checkbox" data-compare-role="${r}" ${compareRoles.has(r)?'checked':''}>${r==='Choose'?'Unassigned role':r}</label>`).join('')}</div><details data-entry-picker ${pickerOpen?'open':''}><summary>Choose exact exercise entries (${selected.length} selected)</summary><div class="entry-picker">${eligible.map(x=>`<label class="check-label"><input type="checkbox" data-compare-entry="${x.e.id}" ${excludedEntries.has(x.e.id)?'':'checked'}>${esc(x.d.name)} · <strong>${esc(x.e.name||'Unnamed')}</strong> · ${esc(x.e.role==='Choose'?'Unassigned role':x.e.role)} · ${esc(firstWeekSummary(x.e)||summary(x.e))}</label>`).join('')||'<p>No entries match these filters.</p>'}</div></details></div>${patterns.filter(p=>(compareGoal==='all'||p===compareGoal)&&selected.some(x=>x.e.patterns.includes(p))).map(p=>{const goals=current.goals.filter(g=>StudentPatterns.classify(g).patterns.includes(p)),match=selected.filter(x=>x.e.patterns.includes(p)),ds=current.days.filter(d=>match.some(x=>x.d.id===d.id));return `<div class="mirror-block"><div class="mirror-pattern"><h3 class="label-icon">${icon('git-compare-arrows')}${esc(p)}</h3>${p==='Needs classification'?'<span>Needs classification review</span>':goals.length?`<span>${icon('target')} ${goals.map(g=>esc(g.name)).join(', ')}</span>`:''}</div>${ds.length?`<div class="table-wrap"><table class="mirror-table goal-comparison" style="--mirror-days:${ds.length}"><thead><tr><th>Role</th>${ds.map(d=>`<th>${esc(d.name)}</th>`).join('')}</tr></thead><tbody>${roles.filter(r=>compareRoles.has(r)&&match.some(x=>x.e.role===r)).map(r=>`<tr><td>${r==='Choose'?'Unassigned role':r}</td>${ds.map(d=>`<td>${match.filter(x=>x.d.id===d.id&&x.e.role===r).map(x=>miniExercise(x.e)).join('')||'No entries'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<p>No selected entries.</p>'}</div>`}).join('')||'<p class="mirror-empty">No exercises match these filters.</p>'}`
 }
 
 screen.addEventListener('toggle',event=>{if(event.target.matches?.('[data-entry-picker]'))pickerOpen=event.target.open},true);
@@ -2837,7 +2921,7 @@ function activeProgression() {
   return progressionTrackId ? progressionDraft.alternatives.find(track => track.id===progressionTrackId) : progressionDraft;
 }
 function progressionGoal(e, compact=false) {
-  if (!isGoalExercise(e) || !e.name.trim()) return '';
+  if (!e.name.trim()) return '';
   const identity = exerciseIdentity(e);
   const goal = current.goals.find(entry => (entry.exerciseId || entry.name.trim()) && exerciseIdentity(entry) === identity);
   if(!goal)return '';
@@ -2996,6 +3080,9 @@ progressionDialog.addEventListener('input', event=>{
 });
 progressionDialog.addEventListener('change', event=>{
   const el=event.target;
+  if(!progressionTrackId&&el.dataset.pweek==='0'&&el.dataset.pfield==='planned'){
+    const e=progressionEntry();if(e)applyWeekToSets(e);
+  }
   if(el.dataset.pweek!==undefined || el.matches('[data-progression-weeks]')){
     progressComparisonPanel();
     queueProgressionAutosave(true);
@@ -3041,13 +3128,13 @@ progressionDialog.addEventListener('click', async event=>{
 progressionDialog.addEventListener('cancel',event=>{event.preventDefault();requestProgressionClose();});
 progressionDialog.addEventListener('submit',event=>{event.preventDefault();queueProgressionAutosave(true);});
 function goalProgressionView() {
-  const entries=allEntries().filter(({d,e})=>includesWorkout(d)&&(e.role==='Primary'||isGoalExercise(e)||e.progression?.alternatives?.length)).sort((a,b)=>Number(b.e.role==='Goal')-Number(a.e.role==='Goal'));
+  const entries=allEntries().filter(({d,e})=>includesWorkout(d)&&(e.role==='Primary'||isGoalExercise(e)||matchesAthleteGoal(e)||e.progression?.alternatives?.length)).sort((a,b)=>Number(b.e.role==='Goal')-Number(a.e.role==='Goal'));
   if(!entries.length&&selectedWorkouts)return '<p class="mirror-empty">No goal exercises in the selected workouts.</p>';
   if(!entries.length)return '<div class="goal-progression-empty"><h3>No Goal Exercises Yet</h3><p>Set an exercise role to Goal or Primary to see its progression here.</p></div>';
   return `<div class="goal-progressions">${entries.map(({d,e})=>{
     const p=e.progression?LZProgression.forExercise(e):null;
     return `<article class="goal-progression-card" data-tracks="${1+(p?.alternatives.length||0)}" data-progression-entry="${e.id}"><header>
-      <div class="goal-progress-title"><h3 class="label-icon">${icon('target')}${esc(e.name||'Unnamed Exercise')}</h3><p>${esc(d.name)} · ${esc(e.role==='Choose'?(isGoalExercise(e)?'Goal':'Unassigned role'):e.role)}</p></div>
+      <div class="goal-progress-title"><h3 class="label-icon">${icon('target')}${esc(e.name||'Unnamed Exercise')}</h3><p>${esc(d.name)} · ${esc(e.role==='Choose'?'Unassigned role':e.role)}</p></div>
       ${progressionEntryActions(e)}
     </header>${progressionGoal(e)}${p?progressionComparison(p):'<p>No progression entered yet.</p>'}</article>`;
   }).join('')}</div>`;

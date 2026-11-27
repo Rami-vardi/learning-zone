@@ -25,6 +25,22 @@
   function sequence(id,frames,labels,props=''){
     set(id,(t)=>{const u=t*(frames.length-1),i=Math.min(frames.length-2,Math.floor(u));return props+body(mix(frames[i],frames[i+1],u-i));},labels);
   }
+  set('straight-back-roman-chair-hip-extension',t=>{
+    const hinge=Math.sin(Math.PI*t)**2;
+    const angle=(-45+80*hinge)*Math.PI/180;
+    const cos=Math.cos(angle),sin=Math.sin(angle);
+    // The torso and folded arms rotate together around the hip. The legs stay on the bench.
+    const hip=[91,75];
+    const upper=(along,across=0)=>[hip[0]+along*cos-across*sin,hip[1]+along*sin+across*cos];
+    const points=[upper(63),upper(46),hip,upper(26,7),upper(40,3),upper(28,10),upper(43,3),
+      [56,106],[29,133],[61,105],[31,135]];
+    const bench=line([[19,143],[100,143]],prop,3)+line([[42,142],[77,91],[88,142]],prop,3)
+      +line([[62,110],[85,87]],prop,8)+line([[22,137],[35,143]],prop,4)
+      +line([[28,142],[25,128]],prop,3)+dot([26,126],5,prop);
+    return bench+body(points);
+  },['Start with the trunk in line with the legs and the pad below the hip crease.',
+     'Hinge at the hips while the back keeps its shape.',
+     'Extend the hips until the trunk and legs line up again.']);
   const reach = {5:[107,56],6:[127,60]};
   const ready = pose(stand,reach);
   const squat = pose(stand,{0:[82,45],1:[81,62],2:[69,106],7:[91,118],9:[99,117],3:[97,64],4:[120,67],5:[102,63],6:[127,65]});

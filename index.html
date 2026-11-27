@@ -1342,9 +1342,9 @@ async function open(owner,kind,fallback){if(!window.LZCloud?.api)throw Error('Th
 window.LZCloudContent={open,merge,download(store){const blob=new Blob([JSON.stringify({type:'learning-zone-pending-content',...store.snapshot()},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Learning_Zone_Pending_Content.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}};
 })();
 </script>
-<script src="exercise-quality-data.js?v=2186b259"></script>
+<script src="exercise-quality-data.js?v=20261127-hip-hinge"></script>
 <script src="exercise-review.js?v=20261127"></script>
-<script src="exercise-quality.js?v=20261127"></script>
+<script src="exercise-quality.js?v=20261127-hip-hinge"></script>
 <script>
 (function(){
 'use strict';
@@ -1623,7 +1623,7 @@ function drawGuide(e){
  const isExercise=e.kind==='exercise',videoLabel=isExercise?'Demonstration':'Video',summaryLabel=isExercise?'Explanation':'Source summary';
  const needsDemoReview=window.LZIdentity?.requiresDemonstrationReview?.(e)&&!quality?.correction(e)?.video;
  const hasVideoEdit=Object.hasOwn(edit,'video');
- const candidates=needsDemoReview?[]:[d.video,e.video,...(e.videos||[]),e.videoId?'https://www.youtube.com/watch?v='+e.videoId:''];
+ const candidates=needsDemoReview?(quality?.correction(e)?.illustration?[d.video]:[]):[d.video,e.video,...(e.videos||[]),e.videoId?'https://www.youtube.com/watch?v='+e.videoId:''];
  const video=hasVideoEdit?safeLink(edit.video):candidates.map(safeLink).find(url=>url&&!quality?.unavailable(url)&&!quality?.excludedVideo(e,url))||'';
  const chosenMedia=quality?.mediaInfo(video),defaultMedia=quality?.mediaInfo(d.video);
  const embedRestricted=d.playbackStatus==='embed-restricted'&&chosenMedia?.kind===defaultMedia?.kind&&chosenMedia?.id===defaultMedia?.id;
@@ -3086,4 +3086,4 @@ window.addEventListener('lz-cloud-import-complete',async()=>{try{await closeCont
 window.LZShell={navigate,refreshAccount,showMessage,flushContent,closeContent};refreshAccount();if(LZStudent.context().admin&&!LZStudent.context().owner)dashboardChrome();iconify();
 })();
 </script><script src="appearance-settings.js?v=20261127-builder-fit2"></script>
-<link rel="stylesheet" href="teaching-board.css?v=20261127-green"><script src="teaching-board.js?v=athlete-compact"></script><link rel="stylesheet" href="athlete-program.css?v=1"></body></html>
+<link rel="stylesheet" href="teaching-board.css?v=20261127-green"><script src="teaching-board.js?v=athlete-compact"></script><link rel="stylesheet" href="athlete-program.css?v=2"></body></html>

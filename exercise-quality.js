@@ -18,6 +18,7 @@ function videoSeconds(value){
 }
 function mediaInfo(value){
  const url=safeUrl(value);if(!url)return null;const u=new URL(url),host=u.hostname.toLowerCase(),id=youtubeId(url);
+ if(root.document?.baseURI){const demo=new URL('exercise-demo.html',root.document.baseURI);if(u.origin===demo.origin&&u.pathname===demo.pathname&&/^#[a-z][a-z0-9-]+$/.test(u.hash))return {kind:'illustration',url,embed:url};}
  if(id){
   const fragment=new URLSearchParams(u.hash.replace(/^#/,'')),start=videoSeconds(u.searchParams.get('start')??u.searchParams.get('t')??fragment.get('t')),end=videoSeconds(u.searchParams.get('end')),query=new URLSearchParams();
   if(start!==null&&start>0)query.set('start',String(start));if(end!==null&&end>(start||0))query.set('end',String(end));
@@ -37,10 +38,10 @@ function correction(record){const data=root.LZExerciseQualityData||{},id=record?
 function applyRecord(record){const c=correction(record);if(!c)return record;const canonical=c.name&&c.preserveOriginalIdentity===true&&record?.provider==='core'?root.LZIdentity?.resolve(record):null;return {...record,...(canonical?.id?{exerciseId:canonical.id}:{}),...(c.name?{name:c.name}:{}),...(['exercise','related','other'].includes(c.kind)?{kind:c.kind}:{}),aliases:[...new Set([...(record.aliases||[]),...(c.aliases||[])])]};}
 function displayName(record){return correction(record)?.name||root.LZIdentity?.displayName(record)||record?.name||'';}
 function matches(record,query){if(root.LZIdentity?.matches(record,query))return true;const n=root.LZIdentity?.normalize||((v)=>String(v||'').toLowerCase()),tokens=n(query).split(' ').filter(Boolean),aliases=correction(record)?.aliases||[];return aliases.some(value=>{const words=n(value).split(' ');return tokens.every(token=>words.some(word=>word.startsWith(token)));});}
-function guide(record,g,d){const c=correction(record);return {g:c?.guide?{...(g||{}),...c.guide}:g,d:{...d,...(c?.explanation?{explanation:c.explanation}:{}),...Object.fromEntries(['video','source','creator','title','playbackStatus','embedIssue','definitionStatus','definitionNote','contentIssue','videoIssue'].filter(k=>c&&Object.hasOwn(c,k)).map(k=>[k,c[k]]))}};}
+function guide(record,g,d){const c=correction(record);return {g:c?.guide?{...(g||{}),...c.guide}:g,d:{...d,...(c?.explanation?{explanation:c.explanation}:{}),...Object.fromEntries(['video','source','creator','title','playbackStatus','embedIssue','definitionStatus','definitionNote','contentIssue','videoIssue'].filter(k=>c&&Object.hasOwn(c,k)).map(k=>[k,c[k]])),...(c?.illustration&&root.document?.baseURI?{video:new URL('exercise-demo.html#'+c.illustration,root.document.baseURI).href}:{})}};}
 function unavailable(value){const id=youtubeId(value),entries=root.LZExerciseUnavailableVideos||[];return entries.some(row=>typeof row==='string'?(row===id||canonicalMediaUrl(row)===canonicalMediaUrl(value)):row.videoId===id&&Boolean(id));}
 function excludedVideo(record,value){const key=canonicalMediaUrl(value);return (correction(record)?.excludeVideos||[]).some(url=>canonicalMediaUrl(url)===key);}
-function browseKey(record){if(record?.provider!=='core')return record?.id;return root.LZIdentity?.resolve(record)?.id||record.id;}
+function browseKey(record){const alias=correction(record)?.browseAs;if(alias)return alias;if(record?.provider!=='core')return record?.id;return root.LZIdentity?.resolve(record)?.id||record.id;}
 // Collections are browsing descriptors. Never rewrite an exercise identity or saved record.
 const categories=[['all','All exercises'],['weightlifting','Weightlifting'],['gymnastics','Gymnastics'],['weights','External Weights'],['bodyweight','Bodyweight'],['jumps','Jumps and Plyometrics'],['mobility','Mobility and Warm Up'],['conditioning','Conditioning']];
 const collectionIds=new Set(categories.map(([id])=>id).filter(id=>id!=='all'));
@@ -48,6 +49,7 @@ function memberships(record,classification){
  const e=record||{};
  // Read legacy personal "other" collections through the same rules without changing user data.
  if(collectionIds.has(e.collection))return [e.collection];
+ const reviewed=correction(e)?.collections;if(reviewed)return reviewed;
  const normalize=root.ExerciseTaxonomy?.name||root.LZIdentity?.normalize||((v)=>String(v||'').toLowerCase());
  const n=normalize(e.name||e.exerciseName||e.title),s=normalize([...(e.sections||[]),e.category,e.sourceCategory,e.subpattern].filter(Boolean).join(' ')),c=classification||root.ExerciseLens?.classify(e)||{},out=[];
  const add=id=>{if(!out.includes(id))out.push(id);};
@@ -57,7 +59,7 @@ function memberships(record,classification){
  const body=/\b(?:bodyweight|push up|pull up|chin up|dip|plank|hollow|sit up|inverted row|trx row|air squat|pistol|shrimp squat|skater squat|sissy squat|calf raise|tibialis raise|nordic|harop|razor|ring|handstand|handstannd|hspu|lever|planche|wall walk|dead bug|bird dog|arch|crunch|leg raise|knee raise|leg lift|toes to bar|tuck up|v up|dragon flag|hamstring slider|glute bridge|back extension|hip extension|dead hang|chin hold|german hang|rope climb|superman|flutter kick|knees to elbow)\b/.test(n);
  if(c.pattern==='weightlifting'||/\b(?:weightlifting|snatch|clean|jerk)\b/.test(s+' '+n))add('weightlifting');
  if(c.pattern==='skills'||/\b(?:ring|gymnastic|gymnastics|muscle up|handstand|handstannd|hspu|planche|lever|nordic|harop|razor curl|false grip|l sit|skin the cat|german hang|rope climb|dead hang|chin hold|candlestick|parallette|parallete|iron cross)\b/.test(n))add('gymnastics');
- if(c.pattern==='jump'||/\b(?:jump|plyometric|pogo|bound|hop|landing|deceleration|single under|double under)\b/.test(s+' '+n))add('jumps');
+ if(c.pattern==='jump'||!(/\b(?:no|without)(?: a)? jump\b/.test(n))&&/\b(?:jump|plyometric|pogo|bound|hop|landing|deceleration|single under|double under)\b/.test(s+' '+n))add('jumps');
  if(mobility)add('mobility');
  if(c.pattern==='locomotion'||c.pattern==='throw'||/\b(?:conditioning|running|sprint|sled|ergometer|rowing|cycling|burpee|battle rope|crawl|crab walk|medicine ball|med ball|scoop toss)\b/.test(s+' '+n))add('conditioning');
  if(external||/\baccessory\b/.test(s)&&!body)add('weights');

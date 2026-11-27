@@ -719,10 +719,10 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
     ["squat","Squat & Lunge"],["hinge","Hinge"],["horizontal-push","Horizontal Push"],
     ["horizontal-pull","Horizontal Pull"],["vertical-push","Vertical Push"],
     ["vertical-pull","Vertical Pull"],["core","Trunk & Core"],["carry","Carries"],
-    ["jump","Jumps"],["locomotion","Locomotion"],["skills","Gymnastics Skills"],["weightlifting","Weightlifting"],["throw","Throws & Power"]
+    ["jump","Jumps"],["locomotion","Locomotion"],["skills","Gymnastics Skills"],["weightlifting","Weightlifting"],["throw","Throws & Power"],["cervical","Cervical Movement"]
   ];
   const regions=[
-    ["upper","Upper Body",[["chest","Chest"],["back","Back"],["shoulders","Shoulders"],["biceps","Biceps"],["triceps","Triceps"],["forearms","Forearms"]]],
+    ["upper","Upper Body",[["chest","Chest"],["back","Back"],["shoulders","Shoulders"],["biceps","Biceps"],["triceps","Triceps"],["forearms","Forearms"],["serratus","Serratus Anterior"],["neck","Neck"]]],
     ["lower","Lower Body",[["quadriceps","Quadriceps"],["hamstrings","Hamstrings"],["glutes","Glutes"],["calves","Calves & Lower Leg"],["adductors","Hip Adductors"],["abductors","Hip Abductors"]]],
     ["core","Core & Trunk",[["core","Core & Trunk"]]]
   ];
@@ -1330,20 +1330,21 @@ function merge(base,local,remote){if(same(local,base))return remote;if(same(remo
  if(Array.isArray(local)&&Array.isArray(remote)){if([...local,...remote,...(base||[])].every(x=>typeof x==='string')){const deleted=new Set((base||[]).filter(x=>!local.includes(x)));return [...new Set([...local,...remote.filter(x=>!deleted.has(x))])];}if([...local,...remote,...(base||[])].every(x=>x&&typeof x==='object'&&x.id)){const asMap=a=>Object.fromEntries((a||[]).map(x=>[x.id,x]));return Object.values(merge(asMap(base),asMap(local),asMap(remote)));}}
  throw Error('This item was also changed on another device. Your pending changes are preserved; export them before replacing either version.');
 }
-async function open(owner,kind,fallback){if(!window.LZCloud?.api)throw Error('The online connection is unavailable.');const actor=LZCloud.currentMember()?.id;const assertActor=()=>{if(!actor||LZCloud.currentMember()?.id!==actor)throw Object.assign(Error('Sign in to the original account to save these pending changes.'),{status:401});};assertActor();const key='learning-zone-cloud:content:'+actor+':'+owner+':'+kind,read=await LZCloud.api('content-get',{owner,kind});assertActor();let revision=Number(read.revision)||0,value=clone(read.value??fallback),base=clone(value),dirty=false,cacheIssue='',conflictDraft=null,pending=null;
+async function open(owner,kind,fallback){if(!window.LZCloud?.api)throw Error('The online connection is unavailable.');const actor=LZCloud.currentMember()?.id;const assertActor=()=>{if(!actor||LZCloud.currentMember()?.id!==actor)throw Object.assign(Error('Sign in to the original account to save these pending changes.'),{status:401});};assertActor();const key='learning-zone-cloud:content:'+actor+':'+owner+':'+kind,read=await LZCloud.api('content-get',{owner,kind});assertActor();let revision=Number(read.revision)||0,value=clone(read.value??fallback),base=clone(value),dirty=false,cacheSafe=false,cacheIssue='',conflictDraft=null,pending=null;
  try{pending=JSON.parse(localStorage.getItem(key)||'null');if(pending?.dirty&&pending.value!==undefined){value=Number(pending.revision)===revision?pending.value:merge(pending.base??fallback,pending.value,value);dirty=true;}}catch(e){cacheIssue=e.message;conflictDraft=pending;}
  const listeners=new Set();let active=null,timer=null,status=cacheIssue?'error':dirty?'pending':'saved',message=cacheIssue||'Saved Online',error=null;
- const cache=()=>{try{localStorage.setItem(key,JSON.stringify({revision,value,base,dirty,conflictDraft}));}catch{if(dirty)message='Changes are in memory; this browser could not preserve an offline copy.';}};
+ const cache=()=>{try{localStorage.setItem(key,JSON.stringify({revision,value,base,dirty,conflictDraft}));cacheSafe=true;}catch{cacheSafe=false;if(dirty)message='Changes are in memory; this browser could not preserve an offline copy.';}};
  const notify=()=>{for(const fn of listeners)fn({state:status,message,error});};
  async function flush(){clearTimeout(timer);if(dirty)assertActor();if(active){await active;assertActor();if(dirty)return flush();return;}if(!dirty)return;active=(async()=>{let merged=false;while(dirty){assertActor();const sent=clone(value);status='saving';message='Saving…';error=null;notify();try{assertActor();const result=await LZCloud.api('content-set',{owner,kind,value:sent,revision});assertActor();revision=Number(result.revision);base=sent;dirty=!same(value,sent);cache();}catch(e){if(e.status===409&&!merged){try{assertActor();const latest=await LZCloud.api('content-get',{owner,kind});assertActor();value=merge(base,value,latest.value??fallback);base=clone(latest.value??fallback);revision=Number(latest.revision)||0;merged=true;cache();continue;}catch(mergeError){e=mergeError;}}status='error';message='Changes not yet saved online. Your pending changes are preserved.';error=e;cache();notify();throw e;}}status='saved';message='Saved Online';notify();})();try{await active;}finally{active=null;}}
- const api={get value(){return value;},get state(){return {state:status,message,error};},set(next){value=clone(next);dirty=!same(value,base);status=dirty?'pending':'saved';message=dirty?'Saving…':'Saved Online';error=null;cache();notify();clearTimeout(timer);if(dirty)timer=setTimeout(()=>flush().catch(()=>{}),250);return true;},flush,retry:flush,subscribe(fn){listeners.add(fn);fn({state:status,message,error});return ()=>listeners.delete(fn);},snapshot(){return clone({owner,kind,revision,base,value,dirty,conflictDraft});},close(options={}){listeners.clear();clearTimeout(timer);if(options.discard){cache();return Promise.resolve();}return flush();}};
+ const api={get draftPreserved(){return cacheSafe;},get value(){return value;},get state(){return {state:status,message,error};},set(next){value=clone(next);dirty=!same(value,base);status=dirty?'pending':'saved';message=dirty?'Saving…':'Saved Online';error=null;cache();notify();clearTimeout(timer);if(dirty)timer=setTimeout(()=>flush().catch(()=>{}),250);return true;},flush,retry:flush,subscribe(fn){listeners.add(fn);fn({state:status,message,error});return ()=>listeners.delete(fn);},snapshot(){return clone({owner,kind,revision,base,value,dirty,conflictDraft});},close(options={}){listeners.clear();clearTimeout(timer);if(options.discard){cache();return Promise.resolve();}return flush();}};
  if(dirty&&!cacheIssue)timer=setTimeout(()=>flush().catch(()=>{}),0);return api;
 }
 window.LZCloudContent={open,merge,download(store){const blob=new Blob([JSON.stringify({type:'learning-zone-pending-content',...store.snapshot()},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Learning_Zone_Pending_Content.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}};
 })();
 </script>
 <script src="exercise-quality-data.js?v=2186b259"></script>
-<script src="exercise-quality.js?v=20261118-audit-batch3"></script>
+<script src="exercise-review.js?v=20261127"></script>
+<script src="exercise-quality.js?v=20261127"></script>
 <script>
 (function(){
 'use strict';
@@ -1371,14 +1372,18 @@ for(const stages of Object.values(pathData))for(const [,targets]of stages)for(co
 for(const e of window.LZIdentity?.additionalRecords?.()||[]){if(!map.has(e.id))map.set(e.id,{...e,kind:'exercise',provider:'core',sections:[],core:true});}
 return [...map.values()].map(e=>window.LZExerciseQuality?.applyRecord(e)||e);}
 let base;
-const exercisesById=new Map(),exercisesByName=new Map();
+const exercisesById=new Map(),exercisesByName=new Map(),sourcesByGroup=new Map();
 function refreshBase(){
  base=makeRecords();
  exercisesById.clear();
  exercisesByName.clear();
+ sourcesByGroup.clear();
  for(const record of base){
   if(record.kind!=='exercise')continue;
   exercisesById.set(record.id,record);
+  const group=window.LZExerciseQuality.browseKey(record);
+  if(!sourcesByGroup.has(group))sourcesByGroup.set(group,[]);
+  sourcesByGroup.get(group).push(record);
   for(const name of [record.name,displayName(record)]){
    const key=name.trim().toLowerCase();
    if(!exercisesByName.has(key))exercisesByName.set(key,record);
@@ -1393,7 +1398,15 @@ function findExercise(value){
 }
 refreshBase();
 const classificationCache=new WeakMap();
-function classify(e){if(classificationCache.has(e))return classificationCache.get(e);const reviewed=e.kind==='exercise'&&e.id.startsWith('source:')?window.LZExerciseQuality?.correction(e)?.classification:null;const result=reviewed||window.ExerciseLens?.classify({...e,exerciseId:e.id})||{pattern:null,muscle:null,patternStatus:'needs-review',muscleStatus:'needs-review'};classificationCache.set(e,result);return result;}
+function classify(e){
+ if(classificationCache.has(e))return classificationCache.get(e);
+ const quality=window.LZExerciseQuality.correction(e);
+ const existing=(e.kind==='exercise'&&e.id.startsWith('source:')&&quality?.classification)||window.ExerciseLens?.classify({...e,exerciseId:e.id})||{};
+ const result={...existing,...quality?.lens};
+ result.region=window.ExerciseLens.regionFor(result.muscle);
+ classificationCache.set(e,result);
+ return result;
+}
 const membershipsCache=new WeakMap();
 function memberships(e){
  if(!membershipsCache.has(e))membershipsCache.set(e,window.LZExerciseQuality.memberships(e,classify(e)));
@@ -1404,16 +1417,33 @@ function mobilityRegionsFor(e){if(e.bodyRegion)return [e.bodyRegion];const n=nor
 function parentFor(e,cat){if(cat==='jumps')return 'jump';if(cat==='gymnastics')return 'skills';if(cat==='weightlifting')return 'weightlifting';return classify(e).pattern;}
 function guide(e){const C=window.TrainingLabExerciseCoaching,id=e.id,d={...(C?.mediaForId(id)||{}),...(window.TrainingLabPrimaryDemonstrations?.[id]||{})},mob=window.LZMobilityGuides?.[e.name],g=e.kind==='exercise'?(C?.forId(id)||C?.forExercise({name:e.name})||addedGuides[e.name]||(mob?{...mob,setup:mob.purpose,summary:mob.purpose}:null)):null;return window.LZExerciseQuality?.guide(e,g,d)||{g,d};}
 function safeLink(url){if(window.LZExerciseQuality)return window.LZExerciseQuality.safeUrl(url);try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password?u.href:'';}catch{return '';}}
-function media(url,label){const info=window.LZExerciseQuality?.mediaInfo(url);if(!info)return '';if(info.kind==='youtube'||info.kind==='vimeo')return '<iframe class="lze-video" title="'+esc(label)+'" src="'+esc(info.embed)+'" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';if(info.kind==='video')return '<video class="lze-video" controls preload="metadata" src="'+esc(info.url)+'"></video>';return '';}
+function media(url,label){const info=window.LZExerciseQuality?.mediaInfo(url);if(!info)return '';if(info.kind==='youtube'||info.kind==='vimeo'||info.kind==='illustration')return '<iframe class="lze-video" title="'+esc(label)+'" src="'+esc(info.embed)+'" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';if(info.kind==='video')return '<video class="lze-video" controls preload="metadata" src="'+esc(info.url)+'"></video>';return '';}
 async function mount(host,opts={}){
 let region='all';
 let tab='catalog',cat='all',group='all',family='all',kind='exercise',q='',page=0,detail=null,path='Nordic',favoritesOnly=false,recentOnly=false;
 const pathOrders={};let stageDrag=null;
 const user=opts.username||window.LZCloud?.currentMember()?.id;
 let content,unsubscribe=()=>{},personalModal=null,destroyed=false;let saved={favorites:[],recent:[],personal:[],edits:{}};const lifecycle=new AbortController(),abortMount=()=>lifecycle.abort();if(opts.signal?.aborted)lifecycle.abort();else opts.signal?.addEventListener('abort',abortMount,{once:true});const stopped=()=>destroyed||lifecycle.signal.aborted,releaseSignal=()=>opts.signal?.removeEventListener('abort',abortMount),emptyHandle=()=>({flush:async()=>{},destroy:async()=>{}});if(stopped()){releaseSignal();return emptyHandle();}
-try{host.innerHTML='<p role="status">Loading your online exercise workspace…</p>';content=await window.LZCloudContent.open(user,'exercise',saved);if(stopped()){releaseSignal();await content.close({discard:true});return emptyHandle();}const loaded=content.value;if(!loaded||!Array.isArray(loaded.favorites)||!Array.isArray(loaded.recent)||!Array.isArray(loaded.personal)||!loaded.edits||typeof loaded.edits!=='object')throw Error('The online exercise workspace needs review.');saved=loaded;}catch(error){if(stopped()){releaseSignal();return emptyHandle();}let child=null;host.innerHTML='<p role="alert">'+esc(error.message)+'</p><button type="button" data-retry-content>Retry Loading</button>';host.onclick=async event=>{if(stopped()||!event.target.closest('[data-retry-content]'))return;const next=await mount(host,{...opts,signal:lifecycle.signal});if(stopped()){await next.destroy?.({discard:true});return;}child=next;};return {flush:async()=>{if(child)await child.flush?.();},async destroy(options={}){if(destroyed)return;destroyed=true;lifecycle.abort();releaseSignal();await child?.destroy?.(options);host.onclick=null;host.innerHTML='';}};}
-function paintCloudStatus(){let target=host.querySelector('[data-cloud-content-status]');if(!target){target=document.createElement('p');target.dataset.cloudContentStatus='';target.setAttribute('role','status');target.setAttribute('aria-live','polite');host.append(target);}const state=content.state;target.textContent=state.message+(state.error?' '+state.error.message:'');const guideStatus=host.querySelector('[data-edit-guide] [data-save-status]');if(guideStatus?.dataset.guideSaveStarted==='true')guideStatus.textContent=state.state==='saved'?'Guide Saved Online':state.state==='error'?'Guide not yet saved online. '+(state.error?.message||'Use Retry Saving below.'):'Saving Guide Online…';if(state.state==='error'){const retry=document.createElement('button');retry.type='button';retry.dataset.retryCloudSave='';retry.textContent='Retry Saving';target.append(' ',retry);const download=document.createElement('button');download.type='button';download.dataset.exportCloudDraft='';download.textContent='Export Pending Changes';target.append(' ',download);}}
-const persist=()=>{content.set(saved);return true;};
+try{host.innerHTML='<p role="status">Loading your online exercise workspace…</p>';content=await window.LZCloudContent.open(user,'exercise',saved);if(stopped()){releaseSignal();await content.close({discard:true});return emptyHandle();}const loaded=content.value;if(!loaded||!Array.isArray(loaded.favorites)||!Array.isArray(loaded.recent)||!Array.isArray(loaded.personal)||!loaded.edits||typeof loaded.edits!=='object')throw Error('The online exercise workspace needs review.');saved=loaded;}catch(error){if(stopped()){releaseSignal();return emptyHandle();}content=null;}
+ const actor=window.LZCloud?.currentMember()?.id||user;
+ const draftPrefix='lz-guide-draft:'+actor+':'+user+':';
+ const drafts=new Map(),submitted=new Map(),memoryOnlyDrafts=new Set();let unsyncedEdit=false,addedTo=null;
+ function getDraft(id){
+   if(drafts.has(id))return drafts.get(id);
+   try{return JSON.parse(sessionStorage.getItem(draftPrefix+id)||'null');}catch{return null;}
+ }
+ function keepDraft(id,draft){drafts.set(id,draft);try{sessionStorage.setItem(draftPrefix+id,JSON.stringify(draft));memoryOnlyDrafts.delete(id);return true;}catch{memoryOnlyDrafts.add(id);return false;}}
+ function forgetDraft(id){memoryOnlyDrafts.delete(id);drafts.delete(id);try{sessionStorage.removeItem(draftPrefix+id);}catch{}}
+ async function flushExercise(){
+   if([...memoryOnlyDrafts].some(id=>!submitted.has(id)))throw Error('Save your open guide edit before leaving. This browser could not retain its draft.');
+   if(!content)return;
+   try{await content.flush();}catch(error){if(unsyncedEdit&&!content.draftPreserved)throw error;}
+ }
+ function paintCloudStatus(){let target=host.querySelector('[data-cloud-content-status]');if(!target){target=document.createElement('p');target.dataset.cloudContentStatus='';target.setAttribute('role','status');target.setAttribute('aria-live','polite');host.append(target);}if(!content){
+  target.textContent='Browsing the built-in catalog. Personal guides and history are unavailable. ';
+  const retry=document.createElement('button');retry.type='button';retry.dataset.retryContent='';retry.textContent='Reconnect';target.append(retry);return;
+ }const state=content.state;target.textContent=state.message+(state.error?' '+state.error.message:'');const guideStatus=host.querySelector('[data-edit-guide] [data-save-status]');if(guideStatus?.dataset.guideSaveStarted==='true')guideStatus.textContent=state.state==='saved'?'Guide Saved Online':state.state==='error'?'Guide not yet saved online. '+(state.error?.message||'Use Retry Saving below.'):'Saving Guide Online…';if(state.state==='error'){const retry=document.createElement('button');retry.type='button';retry.dataset.retryCloudSave='';retry.textContent='Retry Saving';target.append(' ',retry);const download=document.createElement('button');download.type='button';download.dataset.exportCloudDraft='';download.textContent='Export Pending Changes';target.append(' ',download);}}
+const persist=(userEdit=true)=>{if(!content)return false;if(userEdit)unsyncedEdit=true;content.set(saved);return true;};
 const records=()=>[...base,...saved.personal];
 const get=id=>records().find(e=>e.id===id);
 const browseKey=id=>{const e=get(id);return e?(window.LZExerciseQuality?.browseKey(e)||id):id;};
@@ -1431,9 +1461,9 @@ function selected(){
   if(tab==='catalog'&&cat==='mobility'&&family!=='all'&&!mobilityRegionsFor(e).includes(family))return false;
   if(tab==='pattern'&&!patternMatch(e))return false;
   if(tab==='muscle'){
-   const muscle=classify(e).muscle;
-   if(region!=='all'&&window.ExerciseLens.regionFor(muscle)!==region)return false;
-   if(group!=='all'&&(group==='review'?muscle:muscle!==group))return false;
+   const c=classify(e),muscles=[c.muscle,...c.secondary||[]].filter(Boolean);
+   if(region!=='all'&&!muscles.some(m=>window.ExerciseLens.regionFor(m)===region))return false;
+   if(group!=='all'&&(group==='review'?muscles.length:!muscles.includes(group)))return false;
   }
   if(tab==='catalog'&&cat!=='mobility'&&family!=='all'&&!window.ExerciseTaxonomy.subgroups(e,parentFor(e,cat)).includes(family))return false;
   if(favoritesOnly&&!favorite(e.id))return false;
@@ -1497,14 +1527,14 @@ function refreshResults(){
  container.innerHTML='<div class="lze-grid">'+cards.join('')+'</div>'+pagination;
  iconify();
 }
-const patternMenu=[['squat','Squat'],['hinge','Hinge'],['push','Push'],['pull','Pull'],['midline','Midline']];
+const patternMenu=[['squat','Squat'],['hinge','Hinge'],['push','Push'],['pull','Pull'],['midline','Midline'],...window.ExerciseLens.patterns.filter(([key])=>['carry','jump','locomotion','skills','weightlifting','throw','cervical'].includes(key))];
 const patternChildren={squat:[['squat','Squat'],['lunge','Lunge']],hinge:[['vertical','Vertical'],['horizontal','Horizontal']],push:[['horizontal','Horizontal'],['vertical','Vertical']],pull:[['horizontal','Horizontal'],['vertical','Vertical']],midline:[['rotation','Rotation and Anti Rotation'],['flexion','Flexion'],['holds','Holds']]};
 function patternMatch(e){const c=classify(e),n=norm(e.name),p=c.pattern;
  if(group==='squat'){if(p!=='squat')return false;const lunge=/lunge|split squat/.test(n);return family==='all'||(family==='lunge'?lunge:!lunge);}
  if(group==='hinge'){if(p!=='hinge')return false;const horizontal=/hip thrust|glute bridge|hip bridge|frog pump/.test(n);return family==='all'||(family==='horizontal'?horizontal:!horizontal);}
  if(group==='push'||group==='pull')return family==='all'?["horizontal-"+group,"vertical-"+group].includes(p):p===family+'-'+group;
  if(group==='midline'){if(p!=='core')return false;if(family==='all')return true;const sub=window.ExerciseTaxonomy.subgroups(e,'core');if(family==='rotation')return sub.some(x=>['rotation','anti-rotation'].includes(x));if(family==='flexion')return sub.includes('flexion')||/leg raise|knee raise|crunch|sit up|spinal flexion/.test(n);return /plank|dead ?bug|hold|hollow|bird dog/.test(n)||sub.includes('anti-extension');}
- return true;
+ return group==='all'||p===group&&(family==='all'||window.ExerciseTaxonomy.subgroups(e,p).includes(family));
 }
 const categoryPictograms={
  weightlifting:'<circle cx="24" cy="17" r="3.4"/><path d="M24 22v11m0-9-10-9V8m10 16 10-9V8M24 33l-8 9m8-9 8 9M5 8h38M8 4v8m4-9v10M36 3v10m4-9v8"/>',
@@ -1519,14 +1549,14 @@ const categoryPictograms={
 function categoryPictogram(id){return categoryPictograms[id]?'<svg class="lze-category-pictogram" data-category-icon="'+esc(id)+'" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+categoryPictograms[id]+'</svg>':'';}
 function menuTile(id,label,attr,description=''){const active=attr==='data-family'&&family===id||attr==='data-group'&&group===id,pictogram=attr==='data-cat'?categoryPictogram(id):'',subcategory=attr!=='data-cat';return '<button type="button" class="lze-menu-tile '+(subcategory?'lze-subcategory-tile ':'')+(tab==='muscle'?'lze-muscle-menu ':'')+(active?'is-active':'')+'" '+attr+'="'+esc(id)+'" aria-pressed="'+active+'">'+(pictogram?'<span class="lze-menu-symbol">'+pictogram+'</span>':'')+'<strong>'+esc(label)+'</strong>'+(description?'<small>'+esc(description)+'</small>':'')+'</button>';}
 function menuRows(rows,attr){return '<div class="lze-menu-grid">'+rows.map(([id,label])=>menuTile(id,label,attr)).join('')+'</div>';}
-function menuTitle(){if(tab==='pattern')return patternChildren[group]?.find(x=>x[0]===family)?.[1]||patternMenu.find(x=>x[0]===group)?.[1]||'Movement Patterns';if(tab==='muscle')return window.ExerciseLens.regions.flatMap(r=>r[2]).find(x=>x[0]===group)?.[1]||window.ExerciseLens.regions.find(r=>r[0]===region)?.[1]||'Muscle Groups';return cat==='all'?'Main Categories':cat==='mobility'&&family!=='all'?mobilityRegions.find(x=>x[0]===family)?.[1]||'Mobility and Warm Up':categories.find(x=>x[0]===cat)?.[1]||'Main Categories';}
-function categoryContent(){if(tab==='catalog')return cat==='all'?menuRows(categories.filter(x=>x[0]!=='all'),'data-cat'):familiesMarkup();if(tab==='pattern')return group==='all'?menuRows(patternMenu,'data-group'):menuRows(patternChildren[group],'data-family');if(tab==='muscle'){const regions=window.ExerciseLens.regions;return region==='all'?menuRows(regions.map(r=>[r[0],r[1]]),'data-region'):menuRows(regions.find(r=>r[0]===region)[2],'data-group');}return '';}
+function menuTitle(){if(tab==='pattern')return (patternChildren[group]||window.ExerciseTaxonomy?.families[group])?.find(x=>x[0]===family)?.[1]||patternMenu.find(x=>x[0]===group)?.[1]||'Movement Patterns';if(tab==='muscle')return window.ExerciseLens.regions.flatMap(r=>r[2]).find(x=>x[0]===group)?.[1]||window.ExerciseLens.regions.find(r=>r[0]===region)?.[1]||'Muscle Groups';return cat==='all'?'Main Categories':cat==='mobility'&&family!=='all'?mobilityRegions.find(x=>x[0]===family)?.[1]||'Mobility and Warm Up':categories.find(x=>x[0]===cat)?.[1]||'Main Categories';}
+function categoryContent(){if(tab==='catalog')return cat==='all'?menuRows(categories.filter(x=>x[0]!=='all'),'data-cat'):familiesMarkup();if(tab==='pattern')return group==='all'?menuRows(patternMenu,'data-group'):menuRows(patternChildren[group]||window.ExerciseTaxonomy?.families[group]||[],'data-family');if(tab==='muscle'){const regions=window.ExerciseLens.regions;return region==='all'?menuRows(regions.map(r=>[r[0],r[1]]),'data-region'):menuRows(regions.find(r=>r[0]===region)[2],'data-group');}return '';}
 function insideCategory(){return tab==='catalog'?cat!=='all':tab==='pattern'?group!=='all':region!=='all';}
 function readyForResults(){
  if(q.trim()||favoritesOnly||recentOnly||kind!=='exercise')return true;
  if(!insideCategory())return false;
  if(tab==='catalog')return cat!=='mobility'||family!=='all';
- return group!=='all'&&(tab==='muscle'||family!=='all');
+ return group!=='all'&&(tab==='muscle'||family!=='all'||!patternChildren[group]&&!window.ExerciseTaxonomy?.families[group]?.length);
 }
 function controlIcon(id){return id==='pattern'?'<svg class="lze-control-symbol" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="19" cy="5" r="3"/><path d="m17 10-5 7 10 4v7h7M12 17l-6 5 4 6h5m2-17 6 4 5-2"/></svg>':icon(id==='muscle'?'biceps-flexed':id==='pathways'?'ladder':'box');}
 function draw(){
@@ -1549,7 +1579,7 @@ function draw(){
     '<label class="lze-local-search">'+(inside?'Search this view':'Search Exercise Library')+
      '<input type="search" data-search value="'+esc(q)+'" placeholder="Try a name or abbreviation"></label>'+
     '<label>Content<select data-kind>'+contentKinds.map(([id,label])=>'<option value="'+id+'" '+(kind===id?'selected':'')+'>'+label+'</option>').join('')+'</select></label>'+
-    button('Recently Viewed','data-recent aria-pressed="'+recentOnly+'"',recentOnly)+'</div>'+
+    button('Recently Viewed','data-recent aria-pressed="'+recentOnly+'"',recentOnly)+(content?button('Favorites','data-favorites aria-pressed="'+favoritesOnly+'"',favoritesOnly)+button('Add personal exercise','data-add-personal'):'')+'</div>'+
    '<div data-browse-menu>'+categoryContent()+'</div>'+
    '<p class="lze-count" data-result-status role="status" tabindex="-1" hidden></p><div data-results></div>');
  if(tab!=='pathways')refreshResults();
@@ -1591,7 +1621,7 @@ function drawGuide(e){
  if(!e){detail=null;return draw();}
  const {g,d}=guide(e),edit=guideEdit(e.id),C=classify(e),quality=window.LZExerciseQuality;
  const isExercise=e.kind==='exercise',videoLabel=isExercise?'Demonstration':'Video',summaryLabel=isExercise?'Explanation':'Source summary';
- const needsDemoReview=window.LZIdentity?.requiresDemonstrationReview?.(e);
+ const needsDemoReview=window.LZIdentity?.requiresDemonstrationReview?.(e)&&!quality?.correction(e)?.video;
  const selectedVideo=Object.hasOwn(edit,'video')?edit.video:needsDemoReview?'':(d.video||e.video||e.videos?.[0]||(e.videoId?'https://www.youtube.com/watch?v='+e.videoId:''));
  const video=safeLink(!Object.hasOwn(edit,'video')&&(quality?.unavailable(selectedVideo)||quality?.excludedVideo(e,selectedVideo))?'':selectedVideo);
  const chosenMedia=quality?.mediaInfo(video),defaultMedia=quality?.mediaInfo(d.video);
@@ -1600,13 +1630,14 @@ function drawGuide(e){
  const definitionNote=isExercise?quality?.correction(e)?.definitionNote:'';
  const sourceUrl=safeLink(Object.hasOwn(d,'source')?d.source:e.sourceUrl);
  const pLabel=window.ExerciseLens.patterns.find(p=>p[0]===C.pattern)?.[1]||(C.patternStatus==='not-applicable'?'No single movement pattern':'Needs classification review');
- const mLabel=window.ExerciseLens.regions.flatMap(r=>r[2]).find(m=>m[0]===C.muscle)?.[1]||(C.muscleStatus==='needs-review'?'Needs classification review':'No single muscle classification');
+ const mLabel=[C.muscle,...C.secondary||[]].map(id=>window.ExerciseLens.regions.flatMap(r=>r[2]).find(m=>m[0]===id)?.[1]).filter(Boolean).join(', ')||(C.muscleStatus==='needs-review'?'Needs classification review':'No single muscle classification');
  const mediaKey=url=>quality?.canonicalMediaUrl(url)||url;
  const additionalVideos=[...new Map((needsDemoReview?[]:e.videos||[])
   .filter(url=>safeLink(url)&&!quality?.unavailable(url)&&!quality?.excludedVideo(e,url))
   .map(url=>[mediaKey(url),safeLink(url)])).values()].filter(url=>mediaKey(url)!==mediaKey(video));
  const items=values=>(values||[]).map(value=>'<li>'+esc(value)+'</li>').join('');
  const sections=[];
+ if(content&&isExercise)sections.push(button(favorite(e.id)?'Remove from favorites':'Save to favorites','data-fav="'+esc(e.id)+'" aria-pressed="'+favorite(e.id)+'"'));
  if(isExercise){sections.push('<p class="lze-muted">Pattern: '+esc(pLabel)+' · Muscle emphasis: '+esc(mLabel)+'</p>');}
  else{sections.push('<p class="lze-muted">'+(e.kind==='related'?'Technique video':'Source video')+'</p>');}
  if(explanation)sections.push('<section class="lze-guide-section"><h2>'+summaryLabel+'</h2><p>'+esc(explanation)+'</p></section>');
@@ -1614,8 +1645,8 @@ function drawGuide(e){
  if(definitionNote)sections.push('<p class="lze-empty">'+esc(definitionNote)+'</p>');
  if(video){
   const player=embedRestricted?'<p class="lze-empty">'+esc(d.embedIssue||'Use the creator link below to watch.')+'</p>':media(video,videoLabel);
-  const watchLabel=chosenMedia?.kind==='link'?'Watch on the provider’s site':'Open '+videoLabel.toLowerCase()+' in a new tab';
-  sections.push('<section class="lze-guide-section"><h2>'+videoLabel+'</h2>'+player+
+  const watchLabel=chosenMedia?.kind==='illustration'?'Open movement illustration':chosenMedia?.kind==='link'?'Watch on the provider’s site':'Open '+videoLabel.toLowerCase()+' in a new tab';
+  sections.push('<section class="lze-guide-section"><h2>'+(chosenMedia?.kind==='illustration'?'Animated movement illustration':videoLabel)+'</h2>'+player+
    '<a target="_blank" rel="noopener noreferrer" href="'+esc(video)+'">'+watchLabel+'</a></section>');
  }else if(isExercise){sections.push('<p class="lze-empty">No selected demonstration is available for this record.</p>');}
  else{sections.push('<p class="lze-empty">No video is available for this source item.</p>');}
@@ -1633,12 +1664,23 @@ function drawGuide(e){
   if(setup||execution||cues||equipment)sections.push('<section class="lze-guide-section">'+setup+execution+cues+equipment+'</section>');
  }
  if(tab!=='pathways'){
-  if(sourceUrl)sections.push('<p><a target="_blank" rel="noopener noreferrer" href="'+esc(sourceUrl)+'">Original provider source</a></p>');
-  if(isExercise)sections.push('<div class="lze-add-program">'+button('Add to Current Practice Workout','data-add-program="'+esc(e.id)+'"')+'</div>');
+  const sourceLinks=new Map();
+  if(sourceUrl)sourceLinks.set(sourceUrl,'Original provider source');
+  for(const other of sourcesByGroup.get(quality.browseKey(e))||[]){
+   if(other.id===e.id)continue;
+   const url=safeLink(guide(other).d.source||other.sourceUrl);
+   if(url&&!sourceLinks.has(url))sourceLinks.set(url,other.provider==='monkey'?'The Monkey Method':other.provider==='catalyst'?'Catalyst Athletics':'Original provider source');
+  }
+  for(const [url,label] of sourceLinks)sections.push('<p><a target="_blank" rel="noopener noreferrer" href="'+esc(url)+'">'+esc(label)+'</a></p>');
+  if(isExercise){
+    const label=addedTo?'Added to '+esc(addedTo)+' · Return to workout':window.LZStudent?.context()?.editing?'Add to Current Practice Workout':'Choose athlete and workout';
+    sections.push('<div class="lze-add-program">'+button(label,'data-add-program="'+esc(e.id)+'"')+'</div>');
+   }
   const editLabel=isExercise?'Edit Explanation and Demonstration':'Edit Source Summary and Video';
-  sections.push('<details class="lze-guide-section"><summary>'+editLabel+'</summary><form data-edit-guide>'+
-   '<label>'+summaryLabel+'<textarea name="explanation" rows="4">'+esc(explanation)+'</textarea></label>'+
-   '<label>'+videoLabel+' URL<input name="video" type="url" value="'+esc(video)+'" placeholder="https://"></label>'+
+  const draft=getDraft(e.id);
+   if(content)sections.push('<details class="lze-guide-section"'+(draft?' open':'')+'><summary>'+editLabel+'</summary><form data-edit-guide>'+
+   '<label>'+summaryLabel+'<textarea name="explanation" rows="4">'+esc(draft?.explanation??explanation)+'</textarea></label>'+
+   '<label>'+videoLabel+' URL<input name="video" type="url" value="'+esc(draft?.video??video)+'" placeholder="https://"></label>'+
    '<button class="lze-button">Save Guide</button><p data-save-status role="status"></p></form></details>');
  }
  host.innerHTML='<div class="lze-guide"><div class="lze-guide-top">'+button(tab==='pathways'?'Back to Progression / Regression':'Back to Exercises','data-back')+
@@ -1648,19 +1690,20 @@ function drawGuide(e){
 host.onclick=async ev=>{
  const b=ev.target.closest('button');
  if(!b||b.disabled)return;
+ if(b.hasAttribute('data-retry-content')){await window.LZShell?.navigate('exercises');return;}
  if(b.hasAttribute('data-retry-cloud-save')){content.retry().catch(()=>{});return;}
  if(b.hasAttribute('data-export-cloud-draft')){window.LZCloudContent.download(content);return;}
  if(b.dataset.open){
-  detail=b.dataset.open;
+  addedTo=null;detail=b.dataset.open;
   saved.recent=[detail,...saved.recent.filter(id=>browseKey(id)!==browseKey(detail))].slice(0,30);
-  persist();
+  persist(false);
   draw();
   host.querySelector('[data-guide-heading]')?.focus();
   return;
  }
  if(b.hasAttribute('data-back')){
   const id=detail;
-  detail=null;
+  detail=null;addedTo=null;
   draw();
   const prior=[...host.querySelectorAll('[data-open]')].find(card=>card.dataset.open===id);
   (prior||host.querySelector('[data-browse-heading]'))?.focus();
@@ -1685,7 +1728,10 @@ host.onclick=async ev=>{
   if(!e||!opts.onAddExercise)return;
   const id=window.LZIdentity?.resolve(e.id)?.id||e.id;
   b.disabled=true;
-  try{await opts.onAddExercise({name:displayName(e),id,exerciseId:id,sourceId:e.id});}
+  try{
+     if(!addedTo)addedTo=await opts.onAddExercise({name:displayName(e),id,exerciseId:id,sourceId:e.id});
+     if(addedTo){b.textContent='Added to '+addedTo+' · Return to workout';await opts.returnToWorkout(addedTo);}
+   }catch(error){window.LZShell?.showMessage(error.message,true);}
   finally{b.disabled=false;}
   return;
  }
@@ -1720,6 +1766,8 @@ host.onclick=async ev=>{
  else host.querySelector('[data-browse-heading]')?.focus({preventScroll:true});
 };
 host.oninput=ev=>{
+ const form=ev.target.closest('[data-edit-guide]');
+ if(form && detail){keepDraft(detail,{explanation:form.elements.explanation.value,video:form.elements.video.value});return;}
  if(ev.target.hasAttribute('data-search')){
   q=ev.target.value;
   page=0;
@@ -1733,9 +1781,21 @@ host.onchange=ev=>{
   refreshResults();
  }
 };
-host.onsubmit=ev=>{if(!ev.target.matches('[data-edit-guide]'))return;ev.preventDefault();const data=new FormData(ev.target),url=data.get('video').trim();if(url&&!safeLink(url)){ev.target.querySelector('[data-save-status]').textContent='Enter a valid HTTP or HTTPS address without a username or password.';return;}saved.edits[detail]={explanation:data.get('explanation').trim(),video:url};ev.target.querySelector('[data-save-status]').dataset.guideSaveStarted='true';persist();paintCloudStatus();};
+host.onsubmit=ev=>{if(!ev.target.matches('[data-edit-guide]'))return;ev.preventDefault();const data=new FormData(ev.target),url=data.get('video').trim();if(url&&!safeLink(url)){ev.target.querySelector('[data-save-status]').textContent='Enter a valid HTTP or HTTPS address without a username or password.';return;}saved.edits[detail]={explanation:data.get('explanation').trim(),video:url};const id=detail;keepDraft(id,{...saved.edits[id]});submitted.set(id,{...saved.edits[id]});unsyncedEdit=true;
+ const top=window.scrollY;persist();drawGuide(get(id));const form=host.querySelector('[data-edit-guide]');
+ form.closest('details').open=true;form.querySelector('[data-save-status]').dataset.guideSaveStarted='true';paintCloudStatus();window.scrollTo(0,top);};
 function personalDialog(){if(destroyed)return;personalModal?.close();let dialog=document.createElement('dialog');personalModal=dialog;dialog.className='lze-dialog';dialog.innerHTML='<form><h2>Add Personal Exercise</h2><label>Name<input name="name" required maxlength="160"></label><label>Collection<select name="collection">'+categories.filter(c=>c[0]!=='all').map(([id,title])=>'<option value="'+id+'">'+title+'</option>').join('')+'</select></label><label>Explanation<textarea name="explanation" rows="4"></textarea></label><label>Demonstration URL<input name="video" type="url" placeholder="https://"></label><div class="lze-guide-top">'+button('Cancel','data-cancel')+'<button class="lze-button">Save personal exercise</button></div><p role="alert" data-error></p></form>';document.body.append(dialog);dialog.querySelector('[data-cancel]').onclick=()=>dialog.close();dialog.onclose=()=>{if(personalModal===dialog)personalModal=null;dialog.remove();};dialog.querySelector('form').onsubmit=ev=>{ev.preventDefault();if(destroyed)return;const data=new FormData(ev.target),name=data.get('name').trim(),video=data.get('video').trim();if(!name)return;if(video&&!safeLink(video)){dialog.querySelector('[data-error]').textContent='Enter a valid video URL.';return;}const id='personal:'+Date.now()+':'+Math.random().toString(36).slice(2);saved.personal.push({id,name,kind:'exercise',provider:'personal',collection:data.get('collection'),sections:[]});saved.edits[id]={explanation:data.get('explanation').trim(),video};if(persist()){detail=id;dialog.close();draw();}};dialog.showModal();}
-draw();unsubscribe=content.subscribe(state=>{if(state.state==='saved')saved=content.value;paintCloudStatus();});return {refresh:draw,flush:()=>content.flush(),async destroy(options={}){if(destroyed)return;destroyed=true;lifecycle.abort();releaseSignal();unsubscribe();personalModal?.close();personalModal=null;host.onclick=host.oninput=host.onchange=host.onsubmit=host.onpointerdown=host.onpointermove=host.onpointerup=host.onpointercancel=host.onlostpointercapture=host.onkeydown=null;resetPathOrders();try{await content.close(options);}finally{host.innerHTML='';}}};
+draw();if(content)unsubscribe=content.subscribe(state=>{
+   if(state.state==='saved'){
+     saved=content.value;unsyncedEdit=false;
+     for(const [id,draft] of submitted){
+       const current=getDraft(id);
+       if(current&&current.explanation.trim()===draft.explanation&&current.video.trim()===draft.video)forgetDraft(id);
+     }
+     submitted.clear();
+   }
+   paintCloudStatus();
+ });return {refresh:draw,flush:flushExercise,async destroy(options={}){if(destroyed)return;destroyed=true;lifecycle.abort();releaseSignal();unsubscribe();personalModal?.close();personalModal=null;host.onclick=host.oninput=host.onchange=host.onsubmit=host.onpointerdown=host.onpointermove=host.onpointerup=host.onpointercancel=host.onlostpointercapture=host.onkeydown=null;resetPathOrders();try{await content?.close({discard:true});}finally{host.innerHTML='';}}};
 }
 window.LZExercises={mount,categories,baseRecords:()=>base,refreshBase,findExercise,classify,memberships,mobilityRegions,mobilityRegionsFor,paths:pathData};
 })();
@@ -2466,8 +2526,8 @@ async function leaveWorkspace(){await window.LZShell?.closeContent?.();if(!works
 function validationIssue(){for(const a of athletes){if(!a.name.trim())return {a,text:'Enter an athlete name.'};for(const d of a.days)for(const e of d.exercises){if(!Number.isInteger(Number(e.sets))||Number(e.sets)<1||Number(e.sets)>20)return {a,d,e,key:'sets',text:'Sets must be a whole number from 1 to 20.'};const rs=rows(e);for(let i=0;i<rs.length;i++){const r=rs[i];if(r.reps!==''&&(!Number.isInteger(Number(r.reps))||Number(r.reps)<1))return {a,d,e,index:i,key:e.mode==='top'||needsShared(e)?'reps':'low',text:'Reps must be positive whole numbers.'};if(e.mode==='range'&&r.high!==''&&(!Number.isInteger(Number(r.high))||Number(r.high)<1||(r.reps!==''&&Number(r.high)<Number(r.reps))))return {a,d,e,index:i,key:needsShared(e)?'high-set':'high',text:'Maximum Reps must be a whole number at least as large as minimum reps.'}}}}return null}
 function showIssue(issue){if(!issue)return;const {a,d,e,index,key}=issue;say((a?.name||'Athlete')+(d?' / '+d.name:'')+(e?' / '+(e.name||'Exercise'):'')+': '+issue.text);if(current?.id===a.id&&e){e.collapsed=false;view='board';selectedDay='all';render();let selector=key==='role'?`[data-ex="${e.id}"][data-link-key="role"]`:key==='reps'||key==='high-set'?`[data-ex="${e.id}"][data-set="${index}"][data-set-key="${key==='high-set'?'high':key}"]`:`[data-ex="${e.id}"][data-key="${key}"]`;const input=screen.querySelector(selector);if(input){input.setAttribute('aria-invalid','true');input.focus()}}}
 function sanitize(payload){if(!payload||!Array.isArray(payload.athletes))throw Error('The saved workspace needs review.');const used=new Set();const safeId=v=>{let n=Number(v);if(!Number.isSafeInteger(n)||n<1||used.has(n))n=uid();used.add(n);serial=Math.max(serial,n);return n};return payload.athletes.map(a=>({id:safeId(a.id),name:String(a.name||''),archived:!!a.archived,goals:(Array.isArray(a.goals)?a.goals:[]).map(g=>({...g,id:safeId(g.id),name:String(g.name||''),ceiling:String(g.ceiling??''),floor:String(g.floor??''),goal:String(g.goal??''),priority:['Floor','Ceiling'].includes(g.priority)?g.priority:'Choose'})),days:(Array.isArray(a.days)?a.days:[]).map(d=>({id:safeId(d.id),name:String(d.name||''),type:['Full body','Upper','Lower','Other'].includes(d.type)?d.type:'Other',exercises:(Array.isArray(d.exercises)?d.exercises:[]).map(e=>({...e,id:safeId(e.id),name:String(e.name||''),role:['Goal','Primary','Secondary','Tertiary'].includes(e.role)?e.role:'Choose',mode:['fixed','range','top'].includes(e.mode)?e.mode:'fixed',sets:String(Math.max(1,Math.min(20,parseInt(e.sets)||1))),collapsed:true,setRows:(Array.isArray(e.setRows)?e.setRows:[]).slice(0,20).map(s=>({id:safeId(s.id),kind:s.kind==='Top'?'Top':'Back off',reps:String(s.reps??''),high:String(s.high??''),load:String(s.load??'')}))}))}))}))}
-async function loadOwner(id,name='',recover=false){
- const request=++loadSequence;setBusy(true);try{if(!recover)await leaveWorkspace();if(request!==loadSequence)return false;const r=await api('read',{owner:id});if(request!==loadSequence)return false;const incoming=sanitize(r.payload);athletes.splice(0,athletes.length,...incoming);owner=id;revision=r.revision;workspaceName=name||member?.username||member?.email||'Student';workspaceActive=true;current=null;resetComparison();conflict=false;
+async function loadOwner(id,name='',recover=false,fromExercise=false){
+ const request=++loadSequence;setBusy(true);try{if(!recover&&(!fromExercise||workspaceActive))await leaveWorkspace();if(request!==loadSequence)return false;const r=await api('read',{owner:id});if(request!==loadSequence)return false;const incoming=sanitize(r.payload);athletes.splice(0,athletes.length,...incoming);owner=id;revision=r.revision;workspaceName=name||member?.username||member?.email||'Student';workspaceActive=true;current=null;resetComparison();conflict=false;
  for(const a of athletes){current=a;normalize()}current=null;lastSaved=serialized();pendingRecovery=null;try{pendingRecovery=findRecovery()}catch(e){}
  if(pendingRecovery&&Number(pendingRecovery.revision)===Number(revision)){const draft=pendingRecovery;const recovered=sanitize(draft.payload);athletes.splice(0,athletes.length,...recovered);for(const a of athletes){current=a;normalize()}current=null;pendingRecovery=null;restoredDraft=draft;try{await flush();clearRestoredDraft();}catch(err){preserveDraft();error(err);}}
  recoveryPanel(pendingRecovery?'A draft from another saved version is available. Choose which version to keep.':'');say('Workspace loaded. Changes save automatically.');return true;
@@ -2627,6 +2687,23 @@ screen.addEventListener('toggle',event=>{if(event.target.matches?.('[data-entry-
 
 let progressionExercise=null,progressionDraft=null;
 const progressionDialog=document.createElement('dialog');progressionDialog.className='progression-dialog';root.append(progressionDialog);
+function chooseExerciseTarget(){
+ return new Promise(resolve=>{
+   const available=athletes.filter(a=>!a.archived&&a.days.length);
+   const picker=document.createElement('dialog');picker.className='app-modal';
+   picker.innerHTML='<form><h2>Choose athlete and workout</h2>'+(available.length?
+     '<label>Athlete<select name="athlete">'+available.map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('')+'</select></label><label>Workout<select name="workout"></select></label>':
+     '<p>Create a practice athlete and workout in Program Builder first.</p>')+
+     '<div class="actions"><button type="button">Cancel</button><button type="submit" class="primary">'+(available.length?'Add exercise':'Open Program Builder')+'</button></div></form>';
+   document.body.append(picker);const form=picker.querySelector('form');
+   function update(){const a=available.find(a=>a.id===Number(form.elements.athlete.value));form.elements.workout.innerHTML=a.days.map(d=>'<option value="'+d.id+'">'+esc(d.name)+'</option>').join('');}
+   if(available.length){update();form.elements.athlete.onchange=update;}
+   function finish(result){picker.close();picker.remove();resolve(result);}
+   picker.oncancel=event=>{event.preventDefault();finish(null);};form.querySelector('[type=button]').onclick=()=>finish(null);
+   form.onsubmit=event=>{event.preventDefault();if(!available.length){finish(null);window.LZShell.navigate('programs');return;}finish({athlete:Number(form.elements.athlete.value),day:Number(form.elements.workout.value)});};
+   picker.showModal();
+ });
+}
 function chooseWorkout(){return new Promise(resolve=>{const dialog=document.createElement('dialog');dialog.className='app-modal';dialog.innerHTML=`<form><h2>Choose a Workout</h2><label>Workout<select required>${current.days.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label><div class="actions" style="margin-top:20px"><button type="button">Cancel</button><button class="primary" type="submit">Add Exercise</button></div></form>`;document.body.append(dialog);dialog.querySelector('form').onsubmit=event=>{event.preventDefault();const id=Number(dialog.querySelector('select').value);dialog.close();dialog.remove();resolve(id);};const cancel=()=>{dialog.close();dialog.remove();resolve(null);};dialog.querySelector('[type=button]').onclick=cancel;dialog.oncancel=event=>{event.preventDefault();cancel();};dialog.showModal();});}
 function applyGoalRowColors(){screen.querySelectorAll('[data-key="priority"]').forEach(select=>{const tr=select.closest('tr');if(tr){tr.classList.toggle('goal-floor',select.value==='Floor');tr.classList.toggle('goal-ceiling',select.value==='Ceiling');}});}
 function progressionEntryActions(exercise) {
@@ -2873,7 +2950,12 @@ function goalProgressionView() {
 
 async function confirmSaveAndReturn(){if(!current)return true;try{if(typeof flushProgressionAutosave==='function')await flushProgressionAutosave();await flush();roster();account();return true;}catch(err){error(err);return false;}}
 const originalDecorateLearning=decorateLearning;decorateLearning=function(){originalDecorateLearning();decorateProgressions();};
-window.LZStudent={context(){return {username:member?.username||'',admin:member?.role==='teacher',workspace:workspaceName,owner,editing:!!current,member:member?clone(member):null};},async saveAndReturn(){return confirmSaveAndReturn();},async programs(){if(!member)return login();if(!workspaceActive)await loadOwner(member.id,member.username);if(current)render();else roster();account();},async students(){if(member?.role==='teacher')await teacherHome();},async leave(){await leaveWorkspace();},async createFromCase(data){if(!member)throw Error('Sign in first.');if(!workspaceActive)await loadOwner(member.id,member.username);current={id:uid(),name:data.name,goals:(data.goals||[]).map(g=>({id:uid(),name:g.name||'',ceiling:g.ceiling||'',floor:g.floor||'',goal:g.goal||'',priority:g.priority||'Choose'})),days:Array.from({length:Math.max(1,Math.min(7,data.workouts||2))},(_,i)=>day('Day '+(i+1)))};if(!current.goals.length)current.goals.push({id:uid(),name:'',ceiling:'',floor:'',goal:'',priority:'Choose'});athletes.push(current);resetComparison();view='board';render();schedule();account();},async addExercise(data){if(!current)throw Error('Open a practice athlete and workout in Program Builder first.');let d=current.days.find(d=>d.id===selectedDay);if(!current.days.length)throw Error('Add a workout first.');if(!d){const chosen=await chooseWorkout();if(chosen===null)return null;d=current.days.find(d=>d.id===chosen);}if(!d)throw Error('Choose a workout.');const e=ex(data.name||data.exerciseName||'','','fixed','','','');e.sets='1';e.collapsed=false;bindExerciseName(e,data);d.exercises.push(e);automaticRoles();render();schedule();return d.name;}};
+window.LZStudent={context(){return {username:member?.username||'',admin:member?.role==='teacher',workspace:workspaceName,owner,editing:!!current,member:member?clone(member):null};},async saveAndReturn(){return confirmSaveAndReturn();},async programs(){if(!member)return login();if(!workspaceActive)await loadOwner(member.id,member.username);if(current)render();else roster();account();},async students(){if(member?.role==='teacher')await teacherHome();},async leave(){await leaveWorkspace();},async createFromCase(data){if(!member)throw Error('Sign in first.');if(!workspaceActive)await loadOwner(member.id,member.username);current={id:uid(),name:data.name,goals:(data.goals||[]).map(g=>({id:uid(),name:g.name||'',ceiling:g.ceiling||'',floor:g.floor||'',goal:g.goal||'',priority:g.priority||'Choose'})),days:Array.from({length:Math.max(1,Math.min(7,data.workouts||2))},(_,i)=>day('Day '+(i+1)))};if(!current.goals.length)current.goals.push({id:uid(),name:'',ceiling:'',floor:'',goal:'',priority:'Choose'});athletes.push(current);resetComparison();view='board';render();schedule();account();},async addExercise(data){if(!current){
+ if(!workspaceActive)await loadOwner(member.id,member.username,false,true);
+ const selected=await chooseExerciseTarget();if(!selected)return null;
+ current=athletes.find(a=>a.id===selected.athlete);if(!current)throw Error('The selected athlete is unavailable.');
+ resetComparison();selectedDay=selected.day;view='board';normalize();
+ }let d=current.days.find(d=>d.id===selectedDay);if(!current.days.length)throw Error('Add a workout first.');if(!d){const chosen=await chooseWorkout();if(chosen===null)return null;d=current.days.find(d=>d.id===chosen);}if(!d)throw Error('Choose a workout.');const e=ex(data.name||data.exerciseName||'','','fixed','','','');e.sets='1';e.collapsed=false;bindExerciseName(e,data);d.exercises.push(e);automaticRoles();render();schedule();return d.name;}};
 
 bootstrap();
 })();
@@ -2928,7 +3010,7 @@ function contentContext(){const c=window.LZStudent?.context();return (c?.member?
 let lastContentContext=contentContext();
 async function mountContent(module,host,options){const epoch=contentEpoch,key=contentContext(),controller=new AbortController();loadAbort=controller;const instance=await module.mount(host,{...options,signal:controller.signal});if(loadAbort===controller)loadAbort=null;if(epoch!==contentEpoch||key!==contentContext()||controller.signal.aborted){await instance?.destroy?.({discard:true});return null;}return instance;}
 function navigate(zone,options={}){const next=navigation.catch(()=>{}).then(()=>performNavigate(zone,options));navigation=next;return next;}
-async function performNavigate(zone,options={}){let c=window.LZStudent?.context();if(!c?.username)zone='programs';try{if(options.fromMain&&zone==='programs'&&c?.editing){if(!await LZStudent.saveAndReturn())return;}await closeContent();document.querySelector('#shell-status').hidden=true;if(zone!==active)await LZStudent.leave();c=window.LZStudent?.context();if(!c?.username)zone='programs';extra.onclick=extra.oninput=extra.onchange=extra.onsubmit=null;extra.className='';active=zone;heading.hidden=zone!=='programs';document.querySelectorAll('[data-nav]').forEach(b=>{if(b.dataset.nav===zone)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});heading.hidden=zone!=='programs';heading.innerHTML='<div class="eyebrow">'+(zone==='programs'?'YOUR PROGRAMMING WORKSPACE':'LEARNING ZONE')+'</div><h1>'+labels[zone]+'</h1><p>'+descriptions[zone]+'</p>';document.querySelector('#breadcrumb').textContent='Workspace / '+labels[zone];board.hidden=!['programs','students'].includes(zone);extra.hidden=['programs','students'].includes(zone);if(zone==='programs')await LZStudent.programs();if(zone==='students')await LZStudent.students();if(zone==='exercises')libraryInstance=await mountContent(LZExercises,extra,{username:(c.owner||c.member.id),admin:c.admin,onAddExercise:async e=>{try{const day=await LZStudent.addExercise(e);if(day){await navigate('programs');showMessage('Exercise added to '+day+'.');}}catch(e){showMessage(e.message,true);}}});if(zone==='anatomy')libraryInstance=await mountContent(LZAnatomy,extra,{username:(c.owner||c.member.id),admin:c.admin});if(zone==='cases')libraryInstance=await mountContent(LZCases,extra,{username:(c.owner||c.member.id),admin:c.admin,onCreateAthlete:async data=>{await LZStudent.createFromCase(data);await navigate('programs');}});if(zone==='library')libraryInstance=await mountContent(LZLibrary,extra,{username:(c.owner||c.member.id),admin:c.admin});if(zone==='whiteboard')libraryInstance=await mountContent(LZWhiteboard,extra,{username:(c.owner||c.member.id),admin:c.admin});refreshAccount();iconify();}catch(e){showMessage(e.message,true);}}
+async function performNavigate(zone,options={}){let c=window.LZStudent?.context();if(!c?.username)zone='programs';try{if(options.fromMain&&zone==='programs'&&c?.editing){if(!await LZStudent.saveAndReturn())return;}await closeContent();document.querySelector('#shell-status').hidden=true;if(zone!==active)await LZStudent.leave();c=window.LZStudent?.context();if(!c?.username)zone='programs';extra.onclick=extra.oninput=extra.onchange=extra.onsubmit=null;extra.className='';active=zone;heading.hidden=zone!=='programs';document.querySelectorAll('[data-nav]').forEach(b=>{if(b.dataset.nav===zone)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});heading.hidden=zone!=='programs';heading.innerHTML='<div class="eyebrow">'+(zone==='programs'?'YOUR PROGRAMMING WORKSPACE':'LEARNING ZONE')+'</div><h1>'+labels[zone]+'</h1><p>'+descriptions[zone]+'</p>';document.querySelector('#breadcrumb').textContent='Workspace / '+labels[zone];board.hidden=!['programs','students'].includes(zone);extra.hidden=['programs','students'].includes(zone);if(zone==='programs')await LZStudent.programs();if(zone==='students')await LZStudent.students();if(zone==='exercises')libraryInstance=await mountContent(LZExercises,extra,{username:(c.owner||c.member.id),admin:c.admin,onAddExercise:e=>LZStudent.addExercise(e),returnToWorkout:async day=>{await navigate('programs');if(active==='programs')showMessage('Exercise added to '+day+'.');}});if(zone==='anatomy')libraryInstance=await mountContent(LZAnatomy,extra,{username:(c.owner||c.member.id),admin:c.admin});if(zone==='cases')libraryInstance=await mountContent(LZCases,extra,{username:(c.owner||c.member.id),admin:c.admin,onCreateAthlete:async data=>{await LZStudent.createFromCase(data);await navigate('programs');}});if(zone==='library')libraryInstance=await mountContent(LZLibrary,extra,{username:(c.owner||c.member.id),admin:c.admin});if(zone==='whiteboard')libraryInstance=await mountContent(LZWhiteboard,extra,{username:(c.owner||c.member.id),admin:c.admin});refreshAccount();iconify();}catch(e){showMessage(e.message,true);}}
 function showMessage(message,error=false){
  const notice=document.querySelector('#shell-status');
  if(error&&!extra.hidden&&Array.from(extra.querySelectorAll('[role="alert"]')).some(alert=>alert.textContent===message)){notice.hidden=true;return;}

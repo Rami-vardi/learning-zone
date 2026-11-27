@@ -73,7 +73,7 @@ html:has(#student-learning-board:not([hidden]) .athlete-program){--lz-fit-scale:
  #student-learning-board .athlete-program .athlete-bar{grid-template-columns:minmax(0,1fr) auto auto}
  #student-learning-board .athlete-program .athlete-whiteboard button{padding:3px 5px;gap:3px}
 }
-#student-learning-board .athlete-program [data-athlete-goal=true] .exercise-title-toggle{color:var(--lz-green,#176b47)}
+#student-learning-board .athlete-program [data-athlete-goal=true] .exercise-title-toggle{color:light-dark(#176b47,#9ae0b7)}
 #student-learning-board .athlete-program [data-athlete-goal=true].role-choose .role-badge{background:#187443;color:white}
 @container athlete (max-width:370px){
  #student-learning-board .athlete-program [data-teaching-launch] span{display:none}

@@ -1,0 +1,81 @@
+html:has(#student-learning-board:not([hidden]) .athlete-program){--lz-fit-scale:1}
+.app-main:has(#student-learning-board:not([hidden]) .athlete-program) > .app-topbar,
+.app-main:has(#student-learning-board:not([hidden]) .athlete-program) #zone-heading,
+#student-learning-board:has(.athlete-program) > [data-account-bar]:not(:has([data-retry-save]:not([hidden]))){display:none}
+#student-learning-board:has(.athlete-program) [data-account-bar] :is(.builder-account-owner,button:not([data-retry-save])){display:none}
+.app-shell .app-zone:has(#student-learning-board:not([hidden]) .athlete-program){padding:6px}
+#student-learning-board:has(.athlete-program){padding:0;margin:0;width:100%;max-width:none}
+#student-learning-board main.athlete-program{display:block;padding:0;margin:0;width:100%;min-width:0;max-width:none;container:athlete / inline-size}
+#student-learning-board .athlete-program .athlete-training{margin:0;padding:0 6px 6px;max-width:none;border:0;box-shadow:none}
+#student-learning-board .athlete-program .athlete-bar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:5px;padding:5px 9px;background:var(--lz-paper);border-bottom:1px solid var(--lz-line)}
+#student-learning-board .athlete-program .athlete-identity{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 7px;min-width:0}
+#student-learning-board .athlete-program .athlete-identity strong{font-size:20px;line-height:1.1;overflow-wrap:anywhere}
+#student-learning-board .athlete-program .athlete-identity span{font-size:14px;color:var(--lz-sub)}
+#student-learning-board .athlete-program .athlete-whiteboard{margin:0;justify-self:end}
+#student-learning-board .athlete-program :is([data-teaching-launch],[data-goals-toggle],.athlete-nav button,.athlete-nav select){min-height:28px;height:auto;padding:3px 7px;margin:0;font-size:13px;line-height:1.3;min-width:0;border-radius:5px}
+#student-learning-board .athlete-program [data-teaching-launch]{min-height:31px}
+#student-learning-board .athlete-program [data-goals-toggle] b{border-radius:3px;background:var(--lz-bg);padding:1px 4px}
+#student-learning-board .athlete-program .athlete-nav,#student-learning-board .athlete-program :is(.athlete-views,.athlete-days){display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:3px;margin:0;border:0;padding:0}
+#student-learning-board .athlete-program .athlete-nav{padding:5px 0}
+#student-learning-board .athlete-program .athlete-nav [data-action=add-day]{margin-left:auto}
+#student-learning-board .athlete-program .athlete-nav button[aria-selected=true]{background:var(--lz-soft,#e7effb);color:var(--lz-blue);border-color:var(--lz-blue)}
+#student-learning-board .athlete-program .athlete-nav .athlete-days{padding-left:4px}
+#student-learning-board .athlete-program .athlete-nav [data-program-view]{display:none;width:auto}
+#student-learning-board .athlete-program #athlete-goal-panel{max-width:850px;margin:auto;padding:3px 6px}
+#student-learning-board .athlete-program #athlete-goal-panel[hidden]{display:none}
+#student-learning-board .athlete-program .athlete-goals{padding:2px 0;border:0;border-radius:0;box-shadow:none;display:flex;flex-direction:column}
+#student-learning-board .athlete-program .athlete-goals .section-head{order:1;justify-content:center;margin:2px 0}
+#student-learning-board .athlete-program .athlete-goals .section-head>div{display:none}
+#student-learning-board .athlete-program .athlete-goals :is(button,select){min-height:26px;padding:2px 4px;font-size:13px}
+#student-learning-board .athlete-program .athlete-goals-table :is(th,td){padding:2px;font-size:13px}
+#student-learning-board .athlete-program table.athlete-goals-table .goal-edit-cell :is(input,textarea,select),
+#student-learning-board .athlete-program :is(.goal-name-editor span,.goal-value-editor::after){padding:2px 4px;font-size:14px;line-height:18px;min-height:25px}
+#student-learning-board .athlete-program .athlete-goals-table .goal-remove-column{width:52px}
+#student-learning-board .athlete-program .workout-scroll{padding:0}
+#student-learning-board .athlete-program .day-grid:has(>.day){display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,255px),1fr));width:100%;max-width:none;gap:6px;align-items:start}
+#student-learning-board .athlete-program .day{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:0;border-radius:7px;padding:0;background:var(--lz-soft,#e7effb);min-width:0}
+#student-learning-board .athlete-program .day-title{padding:3px 4px;gap:4px;min-width:0;background:transparent;border:0}
+#student-learning-board .athlete-program .day-title input{width:100%;min-width:0;min-height:26px;height:auto;font-weight:650;font-size:16px;padding:2px 0}
+#student-learning-board .athlete-program .day-tools{display:flex;align-items:center;gap:2px;min-width:0;padding:2px 4px;background:transparent;border:0}
+#student-learning-board .athlete-program .day-tools :is(select,button){width:auto;min-height:25px;height:auto;font-size:13px;min-width:0;padding:2px 4px}
+#student-learning-board .athlete-program .day-tools [data-remove-day] span{display:none}
+#student-learning-board .athlete-program .day-body{grid-column:1/-1;display:block;padding:0;min-width:0;background:var(--lz-paper)}
+#student-learning-board .athlete-program .day-body>.exercise{border:0;border-radius:0;border-top:1px solid var(--lz-line);padding:4px 6px;margin:0;box-shadow:none}
+#student-learning-board .athlete-program .day-body .exercise-summary{align-items:center;gap:4px}
+#student-learning-board .athlete-program .exercise-summary .exercise-number,
+#student-learning-board .athlete-program .exercise[data-folded=true] :is(.progression-entry,.exercise-move,.prescription-rows){display:none}
+#student-learning-board .athlete-program .exercise-title-toggle{font-size:16px;line-height:1.25}
+#student-learning-board .athlete-program .day-body .prescription-summary{margin:0;font-size:14px;line-height:1.3}
+#student-learning-board .athlete-program .day-body .scheme{font-size:inherit;font-weight:500}
+#student-learning-board .athlete-program .role-badge{font-size:11px;min-height:0;padding:1px 4px}
+#student-learning-board .athlete-program .role-goal .role-badge{background:#187443;color:#fff}
+#student-learning-board .athlete-program .summary-toggle{width:27px;min-width:0;height:27px;min-height:0;padding:2px}
+#student-learning-board .athlete-program .day-body>[data-add-ex]{min-height:26px;padding:3px 6px;margin:3px 6px;font-size:13px}
+@container athlete (max-width:1120px){
+ #student-learning-board .athlete-program .athlete-nav [data-program-view]{display:block}
+ #student-learning-board .athlete-program .athlete-nav .athlete-views{display:none}
+}
+@container athlete (max-width:540px){
+ #student-learning-board .athlete-program .athlete-bar{padding:4px;gap:3px}
+ #student-learning-board .athlete-program .athlete-identity{display:grid}
+ #student-learning-board .athlete-program .athlete-identity span{font-size:11px}
+ #student-learning-board .athlete-program .athlete-nav .athlete-days{order:2;flex-basis:100%;padding-left:0}
+ #student-learning-board .athlete-program .athlete-nav :is(button,select){min-height:28px}
+}
+@media(max-width:700px){
+ .app-shell:has(#student-learning-board:not([hidden]) .athlete-program){grid-template-rows:auto 1fr;align-content:start}
+ .app-shell:has(#student-learning-board:not([hidden]) .athlete-program) .app-sidebar[data-mobile-menu]{align-self:start;min-height:0;padding:2px 8px}
+ .app-shell:has(#student-learning-board:not([hidden]) .athlete-program) .app-sidebar[data-mobile-menu=closed] .app-brand-mark{width:26px;height:26px}
+ .app-shell:has(#student-learning-board:not([hidden]) .athlete-program) .app-sidebar[data-mobile-menu=closed] .app-brand small{display:none}
+ .app-shell:has(#student-learning-board:not([hidden]) .athlete-program) #lz-nav-toggle{min-height:30px}
+}
+@container athlete (max-width:540px){
+ #student-learning-board .athlete-program .athlete-bar{grid-template-columns:minmax(0,1fr) auto auto}
+ #student-learning-board .athlete-program .athlete-whiteboard button{padding:3px 5px;gap:3px}
+}
+#student-learning-board .athlete-program [data-athlete-goal=true] .exercise-title-toggle{color:var(--lz-green,#176b47)}
+#student-learning-board .athlete-program [data-athlete-goal=true].role-choose .role-badge{background:#187443;color:white}
+@container athlete (max-width:370px){
+ #student-learning-board .athlete-program [data-teaching-launch] span{display:none}
+ #student-learning-board .athlete-program [data-teaching-launch]{min-width:32px;min-height:32px}
+}

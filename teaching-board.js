@@ -87,7 +87,7 @@
     if(!parent||parent.querySelector(':scope > [data-teaching-launch]'))return;
     const button=document.createElement('button');button.type='button';button.dataset.teachingLaunch='';
     button.title='Teaching whiteboard';button.setAttribute('aria-label',button.title);button.setAttribute('aria-haspopup','dialog');button.innerHTML=symbol+'<span>Whiteboard</span>';
-    button.onpointerdown=e=>{if(e.button===0){focusBeforeButton=document.activeElement;e.preventDefault();}};
+    button.onpointerdown=e=>{if(e.button===0){focusBeforeButton=document.activeElement?.shadowRoot?.activeElement||document.activeElement;e.preventDefault();}};
     button.onclick=()=>open(button);if(first)parent.prepend(button);else parent.append(button);
   }
   function refresh() {
@@ -96,7 +96,8 @@
       document.querySelectorAll('[data-teaching-launch]').forEach(b=>b.remove());
       if(actor && !panel.open && !pending)resetOwner();return;
     }
-    const bar=document.querySelector('#student-learning-board [data-account-bar] .actions');
+    const bar=document.querySelector('.athlete-whiteboard')||document.querySelector('#student-learning-board [data-account-bar] .actions');
+    document.querySelectorAll('[data-account-bar] [data-teaching-launch]').forEach(b=>{if(b.parentElement!==bar)b.remove();});
     const top=document.querySelector('.app-topbar');
     if(bar)top?.querySelector('[data-teaching-launch]')?.remove();
     install(bar||top,true);

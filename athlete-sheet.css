@@ -1,0 +1,87 @@
+:host{display:block;min-width:0}
+#workout-sheet {--paper:light-dark(#fff,#192535);--ink:light-dark(#192e47,#e7eff7);--muted:light-dark(#4e627b,#b0c2d6);--line:light-dark(#bccbd9,#4a5b70);--navy:light-dark(#1c3c60,#213d59);--green:light-dark(#176b47,#265e45);--band:light-dark(#edf3fa,#223249);--pick:light-dark(#dfeafa,#324d71);--focus:light-dark(#245ea7,#a5ccff);color:var(--ink);background:var(--paper);font:13px/1.3 Inter,system-ui,sans-serif;border:1px solid var(--line);border-radius:8px;}
+#workout-sheet * {box-sizing:border-box;}
+#workout-sheet [hidden]{display:none!important;}
+#workout-sheet .wp-app {display:flex;align-items:center;gap:8px;background:#182f4d;color:#edf3fc;padding:6px 10px;border-radius:7px 7px 0 0;}
+#workout-sheet .wp-app svg {width:16px;height:16px;}
+#workout-sheet button,#workout-sheet select {font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:3px 7px;}
+#workout-sheet button:disabled {opacity:.48;}
+#workout-sheet .wp-nav {display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:6px 8px;}
+#workout-sheet h2 {margin:0 auto 0 0;font-size:17px;}
+#workout-sheet .wp-switch {display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden;}
+#workout-sheet .wp-switch button {border:0;border-radius:0;}
+#workout-sheet .wp-switch [aria-pressed=true] {background:var(--pick);font-weight:650;}
+#workout-sheet [data-workouts] {display:grid;align-items:start;gap:0;}
+#workout-sheet .wp-stack {display:flex;flex-direction:column;min-width:0;}
+#workout-sheet .wp-stack+.wp-stack {border-left:2px solid var(--navy);}
+#workout-sheet .wp-unit {min-width:0;background:var(--paper);margin:0;padding:0;}
+#workout-sheet .wp-stack .wp-unit+.wp-unit {border-top:2px solid var(--navy);}
+#workout-sheet .wp-tools {display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:3px 5px;background:var(--band);border-top:1px solid var(--line);}
+#workout-sheet h3 {font-size:13px;margin:0 auto 0 0;color:var(--ink);}
+#workout-sheet .wp-target {font-size:11px;color:var(--muted);min-width:0;overflow-wrap:anywhere;}
+#workout-sheet .wp-tools button {font-size:12px;white-space:nowrap;}
+#workout-sheet .wp-filters,#workout-sheet .wp-comparebar,#workout-sheet [data-filters],#workout-sheet [data-pins],#workout-sheet [data-placement] {display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;}
+#workout-sheet .wp-filters,#workout-sheet .wp-comparebar,#workout-sheet [data-placement] {padding:5px 8px;border-top:1px solid var(--line);font-size:12px;}
+#workout-sheet .wp-filters button[aria-pressed=true] {background:var(--pick);color:var(--focus);border-color:var(--focus);font-weight:650;}
+#workout-sheet .wp-legend {margin-left:auto;font-size:11px;color:var(--muted);}
+#workout-sheet .wp-legend::before {display:inline-block;content:"";width:9px;height:9px;border-radius:2px;background:var(--green);margin-right:4px;}
+#workout-sheet .wp-comparebar {background:var(--band);}
+#workout-sheet .wp-comparebar [data-hint] {color:var(--muted);}
+#workout-sheet [data-open-compare] {margin-left:auto;}
+#workout-sheet [data-placement] {background:var(--pick);}
+#workout-sheet [data-placement] strong {margin-right:auto;}
+#workout-sheet [data-placement] label {display:inline-flex;align-items:center;gap:4px;margin:0;font:inherit;}
+#workout-sheet [data-placement] select {max-width:175px;}
+#workout-sheet button.wp-grip {padding:0 3px;min-width:21px;min-height:24px;line-height:1;touch-action:none;user-select:none;border:0;background:transparent;color:inherit;cursor:grab;}
+#workout-sheet .wp-grip::before {content:"";display:inline-block;width:11px;height:15px;background:radial-gradient(circle,currentColor 1.2px,transparent 1.6px) 0 0/5px 5px;}
+#workout-sheet .wp-name-wrap {display:grid;grid-template-columns:21px minmax(0,1fr);align-items:center;}
+#workout-sheet .wp-name-wrap textarea,#workout-sheet .wp-name-wrap .wp-box::after {padding-left:1px;}
+#workout-sheet .wp-tools h3 span {color:var(--muted);font-weight:400;font-size:11px;}
+#workout-sheet [data-drop="target"] {outline:2px solid var(--focus);outline-offset:-2px;background:var(--pick);}
+#workout-sheet [data-drop="before"] {outline:0;border-top:3px solid var(--focus);}
+#workout-sheet [data-drop="after"] {outline:0;border-bottom:3px solid var(--focus);}
+#workout-sheet [data-drag-active] {cursor:grabbing;opacity:.6;}
+#workout-sheet .wp-comparison {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1px;background:var(--line);align-items:start;}
+#workout-sheet .wp-compare-item {min-width:0;background:var(--paper);}
+#workout-sheet .wp-compare-item>h3 {padding:5px 8px;background:var(--band);}
+#workout-sheet .wp-comp-ex {padding:5px 8px;border-bottom:1px solid var(--line);}
+#workout-sheet .wp-comp-ex strong,#workout-sheet .wp-card strong {display:block;color:var(--ink);}
+#workout-sheet [data-goal] .wp-card-name,#workout-sheet .wp-comp-ex[data-goal] strong {background:var(--green);color:#fff;padding:2px 4px;}
+#workout-sheet .wp-comp-ex p {margin:3px 0;white-space:pre-line;font-size:12px;overflow-wrap:anywhere;}
+#workout-sheet .wp-comp-ex small {color:var(--muted);font-size:11px;}
+#workout-sheet .wp-empty {grid-column:1/-1;margin:0;padding:10px;color:var(--muted);}
+@media (max-width:500px){#workout-sheet .wp-comparison{grid-template-columns:repeat(2,minmax(0,1fr));}#workout-sheet .wp-legend{margin-left:0;}#workout-sheet .wp-name-wrap{grid-template-columns:16px minmax(0,1fr);}#workout-sheet .wp-name-wrap .wp-grip{min-width:16px;padding:0;}}
+@media (pointer:coarse){#workout-sheet button.wp-grip{min-height:44px;}#workout-sheet .wp-filters button,#workout-sheet .wp-comparebar button,#workout-sheet [data-placement] :is(button,select){min-height:44px;}}
+#workout-sheet table {width:100%;table-layout:fixed;border-collapse:collapse;margin:0;font:inherit;color:var(--ink);}
+#workout-sheet th,#workout-sheet td {border:1px solid var(--line);padding:0;text-align:left;vertical-align:middle;overflow-wrap:anywhere;}
+#workout-sheet thead th {background:var(--navy);color:#f7faff;font-size:12px;font-weight:600;padding:4px 5px;line-height:1.18;}
+
+#workout-sheet .wp-name {background:var(--navy);color:#f7faff;font-weight:600;}
+#workout-sheet [data-goal] .wp-name {background:var(--green);}
+#workout-sheet .wp-box {position:relative;display:grid;min-width:0;font-size:12px;}
+#workout-sheet textarea,#workout-sheet .wp-box::after {grid-area:1/1;font:inherit;line-height:1.29;letter-spacing:normal;border:0;padding:4px 5px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;min-width:0;width:100%;text-align:left;}
+#workout-sheet .wp-box::after {box-sizing:border-box;content:attr(data-copy) " ";visibility:hidden;pointer-events:none;}
+#workout-sheet textarea {display:block;resize:none;border-radius:0;overflow:hidden;background:transparent;color:inherit;font-variant-numeric:tabular-nums;}
+#workout-sheet textarea::placeholder {color:var(--muted);}
+#workout-sheet .wp-name textarea::placeholder {color:#dae6f6;}
+#workout-sheet td[data-picked] {box-shadow:inset 2px 0 var(--focus);}
+#workout-sheet .wp-picks {position:absolute;top:calc(100% - 1px);left:0;z-index:5;background:var(--paper);color:var(--ink);border:1px solid var(--focus);box-shadow:0 3px 8px #15294325;border-radius:4px;min-width:100%;}
+#workout-sheet .wp-picks button {display:flex;width:100%;align-items:center;justify-content:space-between;gap:6px;padding:4px 6px;background:var(--pick);border:0;color:var(--ink);white-space:nowrap;}
+#workout-sheet kbd {font:inherit;font-size:10px;color:var(--muted);}
+#workout-sheet .wp-card {border:1px solid var(--line);padding:5px 8px;}
+#workout-sheet .wp-card+.wp-card {border-top:0;}
+#workout-sheet .wp-card p {white-space:pre-line;margin:2px 0;color:var(--muted);}
+#workout-sheet .wp-sr {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+@media(max-width:450px){#workout-sheet .wp-nav{gap:4px;}#workout-sheet h2{font-size:15px;}#workout-sheet .wp-tools{gap:3px;}#workout-sheet .wp-box::after,#workout-sheet textarea,#workout-sheet thead th{padding:3px;}#workout-sheet .wp-nav select{font-size:12px;}}
+@media(pointer:coarse){#workout-sheet .wp-nav :is(button,select),#workout-sheet .wp-tools button,#workout-sheet .wp-picks button{min-height:44px;}#workout-sheet .wp-box:focus-within{font-size:16px;}}
+#workout-sheet .wp-nav{float:right;padding:3px 6px}
+#workout-sheet .wp-filters{min-height:34px}
+#workout-sheet [data-workouts]{clear:both}
+#workout-sheet .wp-box{font-size:14px}
+#workout-sheet .wp-load label{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px;padding:1px 3px;font-size:11px}
+#workout-sheet .wp-load input{font:inherit;font-size:13px;color:inherit;background:transparent;border:0;border-bottom:1px solid var(--line);width:100%;min-width:0}
+#workout-sheet .wp-alt-select{max-width:100%;font-size:11px}
+#workout-sheet .wp-box:has([aria-invalid=true]){outline:2px solid #b64236}
+#workout-sheet .wp-warning{display:block;color:var(--ink);font-size:12px}
+@media(max-width:550px){#workout-sheet .wp-nav{float:none}#workout-sheet .wp-box{font-size:13px}}
+#workout-sheet .wp-add-exercise{margin:2px 4px;font-size:12px}

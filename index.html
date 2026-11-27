@@ -2096,7 +2096,7 @@ async function open(){
 window.LZMigration={preview,run,open};
 })();
 </script>
-<script src="athlete-spreadsheet.js?v=weekly3"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
+<script src="athlete-spreadsheet.js?v=alternatives4"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
 'use strict';
 const formats = ['fixed', 'range', 'top'];
 const text = value => String(value ?? '');
@@ -2163,6 +2163,10 @@ function setWeeks(p, weeks) {
   p.weeks = weeks;
   p.weeksInput = text(weeks);
   return ensure(p);
+}
+
+function trackName(track) {
+  return track.id ? 'Alternative '+(track.id+1) : 'Main Progression';
 }
 
 function addAlternative(p) {
@@ -2268,7 +2272,7 @@ function validate(p) {
 }
 function describe(p, i) { return p.rows[i]?.planned.trim() || 'Not entered'; }
 
-return {formats, row, create, ensure, setWeeks, addAlternative, validate, describe, seedWeekOne, forExercise};
+return {formats, row, create, ensure, setWeeks, addAlternative, trackName, validate, describe, seedWeekOne, forExercise};
 });
 </script>
 <script>
@@ -2831,9 +2835,6 @@ let progressionClosing=false,progressionTimer=null,progressionSaving=null,progre
 function activeProgression() {
   return progressionTrackId ? progressionDraft.alternatives.find(track => track.id===progressionTrackId) : progressionDraft;
 }
-function progressionName(track) {
-  return track.id ? 'Alternative ' + track.id : 'Main Progression';
-}
 function progressionGoal(e) {
   if (!isGoalExercise(e) || !e.name.trim()) return '';
   const identity = exerciseIdentity(e);
@@ -2852,7 +2853,7 @@ function progressionRows(track) {
   }).join('');
 }
 function progressionTable() {
-  return `<table class="progression-table" aria-label="${esc(progressionName(activeProgression()))}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${progressionRows(activeProgression())}</tbody></table>`;
+  return `<table class="progression-table" aria-label="${esc(LZProgression.trackName(activeProgression()))}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${progressionRows(activeProgression())}</tbody></table>`;
 }
 function progressionComparison(p, selected=0) {
   const tracks = [p, ...p.alternatives];
@@ -2860,7 +2861,7 @@ function progressionComparison(p, selected=0) {
   if(active>1) tracks.splice(1, 0, tracks.splice(active,1)[0]);
   return `<div class="progression-comparisons">${tracks.map(track=>{
     LZProgression.ensure(track);
-    const name = progressionName(track);
+    const name = LZProgression.trackName(track);
     const heading = tracks.length > 1 ? `<h4>${esc(name)}</h4>` : '';
     return `<div class="progression-comparison">${heading}<div class="table-wrap"><table class="progression-comparison-table" aria-label="${esc(name)}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${track.rows.slice(0,track.weeks).map((week,index)=>`<tr><th scope="row">Week ${index+1}</th><td class="progression-plan-text">${esc(LZProgression.describe(track,index))}</td><td class="actual-results progression-plan-text ${week.actual.trim()?'progression-results-entered':''}">${esc(week.actual.trim()?week.actual:'Not entered')}</td></tr>`).join('')}</tbody></table></div></div>`;
   }).join('')}</div>`;
@@ -2876,7 +2877,7 @@ function updateProgressionTable() {
 }
 function updateProgressionEditor() {
   const track = activeProgression();
-  const buttons = [progressionDraft, ...progressionDraft.alternatives].map(item=>`<button type="button" data-progression-track="${item.id || 0}" aria-pressed="${item===track}">${esc(progressionName(item))}</button>`);
+  const buttons = [progressionDraft, ...progressionDraft.alternatives].map(item=>`<button type="button" data-progression-track="${item.id || 0}" aria-pressed="${item===track}">${esc(LZProgression.trackName(item))}</button>`);
   const tabs = progressionDialog.querySelector('[data-progression-tabs]');
   tabs.innerHTML = buttons.join('');
   tabs.hidden = buttons.length === 1;
@@ -2918,7 +2919,16 @@ function openProgression(id, newAlternative = false) {
 function askProgressionChoice(title,description,choices){return new Promise(resolve=>{const d=document.createElement('dialog');d.className='progression-discard-dialog';d.innerHTML=`<h2>${esc(title)}</h2><p>${esc(description)}</p><div class="actions">${choices.map(([id,label])=>`<button type="button" data-choice="${id}">${esc(label)}</button>`).join('')}</div>`;document.body.append(d);let settled=false;const done=id=>{if(settled)return;settled=true;d.close();d.remove();resolve(id);};d.onclick=event=>{const b=event.target.closest('[data-choice]');if(b)done(b.dataset.choice);};d.oncancel=event=>{event.preventDefault();done('keep');};d.showModal();d.querySelector('button').focus();});}
 function progressionEntry(){if(!progressionExercise||progressionExercise.owner!==owner||progressionExercise.athlete!==current?.id)return null;return allEntries().find(x=>x.e.id===progressionExercise.id)?.e||null;}
 function progressionSaveStatus(state,text){const status=progressionDialog.querySelector('[data-progression-save-status]');if(status){status.dataset.state=state;status.textContent=text;}const retry=progressionDialog.querySelector('[data-progression-retry]');if(retry)retry.hidden=state!=='error';const keep=progressionDialog.querySelector('[data-progression-keep-draft]');if(keep)keep.hidden=true;}
-function syncProgressionDraft(){const e=progressionEntry();if(!e||!progressionDraft)return false;e.progression=clone(progressionDraft);e.weeklyPrescription=true;preserveDraft();return true;}
+function syncProgressionDraft(){
+  const e=progressionEntry();
+  if(!e||!progressionDraft)return false;
+  e.progression=clone(progressionDraft);
+  e.weeklyPrescription=true;
+  if(progressionTrackId)e.selectedAlternativeId=progressionTrackId;
+  else if(!progressionDraft.alternatives.some(item=>item.id===e.selectedAlternativeId))delete e.selectedAlternativeId;
+  preserveDraft();
+  return true;
+}
 function progressionGuidance(){const track=activeProgression(),raw=track.weeksInput,n=Number(raw),message=String(raw).trim()===''||!Number.isInteger(n)||n<1||n>52?'Choose a whole number from 1 to 52 weeks.':LZProgression.validate(track);const status=progressionDialog.querySelector('[data-progression-error]');if(status)status.textContent=message?'Saved as entered. '+message:'';}
 function progressionAutosaveError(err,token=progressionToken){
   if(token!==progressionToken||!progressionEntry())return;
@@ -2942,7 +2952,9 @@ function finishProgressionClose(){
   if(shouldRender){
     render();
     const selector=`[data-create-progression="${context.id}"]`+(context.newAlternative?'[data-new-alternative]':':not([data-new-alternative])');
-    screen.querySelector(selector)?.focus({preventScroll:true});
+    const sheet=screen.querySelector('athlete-spreadsheet');
+    if(sheet)sheet.focusPrescription(context.id,progressionTrackId?'alternative':'weeks');
+    else screen.querySelector(selector)?.focus({preventScroll:true});
   }
 }
 async function requestProgressionClose(){
@@ -3006,12 +3018,12 @@ progressionDialog.addEventListener('click', async event=>{
     progressionTrackId=Number(button.dataset.progressionTrack);
     updateProgressionEditor();
     progressionDialog.querySelector(`[data-progression-track="${progressionTrackId}"]`).focus();
-    if(progressionRevision>progressionSavedRevision)queueProgressionAutosave(true);
+    if(progressionRevision>progressionSavedRevision||(progressionTrackId&&progressionEntry()?.selectedAlternativeId!==progressionTrackId))queueProgressionAutosave(true);
     else progressionGuidance();
   }else if(event.target.closest('[data-progression-delete]')){
     const token=progressionToken, track=activeProgression();
     if(!track?.id)return;
-    const choice=await askProgressionChoice('Delete '+progressionName(track)+'?', 'This permanently deletes its planned prescriptions and actual results.', [['keep','Cancel'],['delete','Delete Alternative']]);
+    const choice=await askProgressionChoice('Delete '+LZProgression.trackName(track)+'?', 'This permanently deletes its planned prescriptions and actual results.', [['keep','Cancel'],['delete','Delete Alternative']]);
     if(choice!=='delete'||token!==progressionToken||!progressionEntry())return;
     progressionDraft.alternatives=progressionDraft.alternatives.filter(item=>item.id!==track.id);
     progressionTrackId=0;

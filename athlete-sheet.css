@@ -78,7 +78,9 @@
 #workout-sheet .wp-filters{min-height:34px}
 #workout-sheet [data-workouts]{clear:both}
 #workout-sheet .wp-box{font-size:14px}
-#workout-sheet .wp-alt-select{max-width:100%;font-size:11px}
+#workout-sheet td.wp-alternative{vertical-align:top;cursor:text}
+#workout-sheet .wp-alternative textarea{min-height:26px}
+#workout-sheet .wp-alt-select{max-width:100%;font-size:12px;margin:2px 0 0;cursor:pointer}
 #workout-sheet .wp-box:has([aria-invalid=true]){outline:2px solid #b64236}
 #workout-sheet .wp-warning{display:block;color:var(--ink);font-size:12px}
 @media(max-width:550px){#workout-sheet .wp-nav{float:none}#workout-sheet .wp-box{font-size:13px}}

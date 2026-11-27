@@ -2,24 +2,26 @@
   'use strict';
 
   const sheetSessions=new WeakMap();
-  const preferredAlternative=new WeakMap();
 
   // Sheet cells and the progression dialog use the same planned and actual rows.
   function sheetExercise(exercise,api){
     const model=window.LZProgression;
-    let altId=preferredAlternative.get(exercise)??exercise.progression?.alternatives?.[0]?.id;
+    let altId=exercise.selectedAlternativeId??exercise.progression?.alternatives?.[0]?.id;
     function track(key,write=false){
       const main=model.forExercise(exercise);
       if(write)exercise.progression=main;
       if(key==='weeks')return main;
       let alt=main.alternatives.find(t=>t.id===altId)||main.alternatives[0];
       if(!alt&&write){alt=model.addAlternative(main);model.setWeeks(alt,1);}
-      if(alt)altId=alt.id;
+      if(alt){altId=alt.id;if(write)exercise.selectedAlternativeId=alt.id;}
       return alt;
     }
-    const tag=key=>key==='weeks'?'main':'alt'+(altId||1);
+    const tag=key=>key==='weeks'?'main':'alt'+(altId||exercise.progression?.nextAlternative||1);
     const signature=t=>t?JSON.stringify([t.weeks,...t.rows.slice(0,t.weeks).map(r=>r.planned)]):'';
-    const display=t=>t?Array.from({length:t.weeks},(_,i)=>'Week '+(i+1)+': '+(t.rows[i]?.planned||'')).join('\n'):'';
+    function display(t,key){
+      if(!t||(key==='alternative'&&t.weeks===1&&!t.rows[0].planned))return '';
+      return Array.from({length:t.weeks},(_,i)=>'Week '+(i+1)+': '+(t.rows[i]?.planned||'')).join('\n');
+    }
     function read(key){
       const t=track(key),draft=exercise.sheetDrafts?.[tag(key)];
       if(draft){
@@ -29,7 +31,7 @@
           draft.signature===signature(model.create(exercise.progression,exercise.mode))&&
           (parse(draft.text).pending||parse(draft.text).issue))return draft.text;
       }
-      return display(t);
+      return display(t,key);
     }
     function parse(value){
       const weeks=new Map();let index=null,pending=false;
@@ -58,7 +60,7 @@
         if(key==='weeks')exercise.weeklyPrescription=true;
       }
       const id=tag(key);
-      if(value===display(t)){
+      if(value===display(t,key)){
         if(exercise.sheetDrafts)delete exercise.sheetDrafts[id];
       }else{
         (exercise.sheetDrafts||={})[id]={signature:signature(t),text:value};
@@ -73,16 +75,33 @@
       get weeks(){return read('weeks');},set weeks(value){write('weeks',value);},
       get alternative(){return read('alternative');},set alternative(value){write('alternative',value);},
       get alternatives(){return exercise.progression?.alternatives||[];},
-      get alternativeId(){return altId;},set alternativeId(value){altId=value;preferredAlternative.set(exercise,value);},
+      get alternativeId(){return altId;},
+      get nextAlternativeId(){return model.forExercise(exercise).nextAlternative;},
+      selectAlternative(id){
+        if(id==='new'){
+          const main=model.forExercise(exercise);
+          const alt=model.addAlternative(main);
+          model.setWeeks(alt,1);
+          exercise.progression=main;
+          id=alt.id;
+        }
+        altId=id;
+        exercise.selectedAlternativeId=id;
+        api.schedule();
+      },
       issue(key){return parse(read(key)).issue||'';}
     };
   }
 
 class AthleteSpreadsheet extends HTMLElement {
   disconnectedCallback(){this.observer?.disconnect();}
+  focusPrescription(id,key){
+    const area=this.shadowRoot?.querySelector('[data-week-id="e'+id+'-'+key+'"]');
+    if(area)area.focus({preventScroll:true});
+  }
   mount(athlete,api){
     const shadow=this.attachShadow({mode:'open'});
-    shadow.innerHTML="<link rel=\"stylesheet\" href=\"athlete-sheet.css?v=weekly3\"><div id=\"workout-sheet\">\n  <div class=\"wp-nav\"><div class=\"wp-switch\" role=\"group\" aria-label=\"Board layout\"><button type=\"button\" data-mode=\"cards\" aria-pressed=\"false\">Cards</button><button type=\"button\" data-mode=\"sheet\" aria-pressed=\"true\">Spreadsheet</button></div>\n  </div>\n  <div class=\"wp-filters\"><b><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 6h18M6 12h12M9 18h6\"/></svg>Show workouts</b><div data-filters role=\"group\" aria-label=\"Visible workouts\"></div><span class=\"wp-legend\">Goal exercise</span></div>\n  <div class=\"wp-comparebar\" data-tray><b><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"7\" height=\"16\" rx=\"2\"/><rect x=\"14\" y=\"4\" width=\"7\" height=\"16\" rx=\"2\"/></svg>Compare</b><span data-hint>Drop exercises or workouts here</span><div data-pins></div><button type=\"button\" data-open-compare hidden>View comparison</button></div>\n  <div data-placement hidden></div>\n  <div data-workouts></div>\n  <span class=\"wp-sr\" role=\"status\" aria-live=\"polite\" data-status></span>\n</div>\n";
+    shadow.innerHTML="<link rel=\"stylesheet\" href=\"athlete-sheet.css?v=alternatives4\"><div id=\"workout-sheet\">\n  <div class=\"wp-nav\"><div class=\"wp-switch\" role=\"group\" aria-label=\"Board layout\"><button type=\"button\" data-mode=\"cards\" aria-pressed=\"false\">Cards</button><button type=\"button\" data-mode=\"sheet\" aria-pressed=\"true\">Spreadsheet</button></div>\n  </div>\n  <div class=\"wp-filters\"><b><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 6h18M6 12h12M9 18h6\"/></svg>Show workouts</b><div data-filters role=\"group\" aria-label=\"Visible workouts\"></div><span class=\"wp-legend\">Goal exercise</span></div>\n  <div class=\"wp-comparebar\" data-tray><b><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"7\" height=\"16\" rx=\"2\"/><rect x=\"14\" y=\"4\" width=\"7\" height=\"16\" rx=\"2\"/></svg>Compare</b><span data-hint>Drop exercises or workouts here</span><div data-pins></div><button type=\"button\" data-open-compare hidden>View comparison</button></div>\n  <div data-placement hidden></div>\n  <div data-workouts></div>\n  <span class=\"wp-sr\" role=\"status\" aria-live=\"polite\" data-status></span>\n</div>\n";
     const root=shadow.querySelector('#workout-sheet'),stage=root.querySelector('[data-workouts]');
   const fields=['name','weeks','alternative'],heads=['Exercise','Sets × reps × load / RIR','Alternative progressions'];
   const days=athlete.days.slice();
@@ -141,7 +160,7 @@ class AthleteSpreadsheet extends HTMLElement {
     selected[d]={id,key,line};
     part.querySelector('td[data-picked]')?.removeAttribute('data-picked');
     area.closest('td').dataset.picked='';
-    const num=numberOf(lines[line]),track=key==='alternative'?'Alternative':'Prescription';
+    const num=numberOf(lines[line]),track=key==='alternative'?(area.closest('td').querySelector('select')?.selectedOptions[0]?.textContent||'Alternative'):'Prescription';
     const text=itemName(id)+' · '+track+(num?' · Week '+num:'');
     part.querySelector('.wp-target').textContent=text;
     const remove=part.querySelector('[data-remove]');remove.disabled=!area.value.length;
@@ -168,14 +187,30 @@ class AthleteSpreadsheet extends HTMLElement {
   function editor(d,e,key,parent){
     const box=el('div','wp-box'),area=el('textarea'),hasWeeks=weeklyField(key);area.rows=1;
     if(key==='name')area.dataset.nameId=e.id;
+    if(key==='alternative')area.placeholder='Week 1';
     area.value=e[key];
     area.setAttribute('aria-label',e.name+', '+heads[fields.indexOf(key)]+(e.goal&&key==='name'?', goal exercise':''));
     box.dataset.copy=area.value||area.placeholder;box.append(area);parent.append(box);
     function select(){const old=selected[d];mark(d,e.id,hasWeeks?key:old.id===e.id?old.key:'weeks',hasWeeks?lineAt(area):old.id===e.id?old.line:0);}
     area.addEventListener('focus',select);
-    area.addEventListener('input',()=>{e[key]=area.value;box.dataset.copy=area.value||area.placeholder;select();if(hasWeeks)suggest(area);if(key==='name')updateTray();if(hasWeeks){const issue=e.issue(key);area.setAttribute('aria-invalid',String(!!issue));warning.textContent=issue;}});
+    area.addEventListener('input',event=>{
+      if(key==='alternative'&&!event.isComposing&&event.inputType?.startsWith('insert')&&
+         area.value.trim()&&!/\n|^\s*(?:w|we|wee|week\b.*)$/i.test(area.value)&&
+         /^(?:w|we|wee)?$/i.test(e.alternative)){
+        area.setRangeText('Week 1: ',0,0,'preserve');
+      }
+      e[key]=area.value;
+      box.dataset.copy=area.value||area.placeholder;
+      select();
+      if(hasWeeks){
+        suggest(area);
+        const issue=e.issue(key);
+        area.setAttribute('aria-invalid',String(!!issue));
+        warning.textContent=issue;
+      }else updateTray();
+    });
     if(key==='name')area.addEventListener('change',()=>{api.bindExerciseName(e.source,area.value);api.automaticRoles();area.value=e.name;box.dataset.copy=e.name;area.closest('tr').toggleAttribute('data-goal',e.goal);api.schedule();updateTray();});
-    if(!hasWeeks)return;
+    if(!hasWeeks)return area;
     const warning=el('small','wp-warning',e.issue(key));warning.setAttribute('role','status');parent.append(warning);area.setAttribute('aria-invalid',String(!!e.issue(key)));
     area.dataset.weekId=e.id+'-'+key;area.setAttribute('role','combobox');area.setAttribute('aria-autocomplete','list');area.setAttribute('aria-expanded','false');area.spellcheck=false;
     area.addEventListener('click',()=>{select();suggest(area);});
@@ -185,6 +220,45 @@ class AthleteSpreadsheet extends HTMLElement {
       if(openMenu?.area!==area||ev.isComposing)return;
       if((ev.key==='Enter'||ev.key==='Tab')&&!ev.shiftKey){ev.preventDefault();openMenu.accept();}
       else if(ev.key==='Escape'){ev.preventDefault();dismiss();}
+    });
+    return area;
+  }
+  function alternativeCell(td,d,e){
+    td.classList.add('wp-alternative');
+    const chooser=el('select','wp-alt-select');
+    chooser.setAttribute('aria-label',e.name+' alternative track');
+    td.append(chooser);
+    const area=editor(d,e,'alternative',td);
+    function options(){
+      const tracks=e.alternatives;
+      chooser.hidden=!tracks.length;
+      if(chooser.hidden)return;
+      chooser.replaceChildren();
+      for(const track of tracks)chooser.add(new Option(window.LZProgression.trackName(track),String(track.id)));
+      chooser.add(new Option('Add '+window.LZProgression.trackName({id:e.nextAlternativeId}),'new'));
+      chooser.value=String(e.alternativeId);
+    }
+    function focusText(){
+      area.focus({preventScroll:true});
+      const end=area.value.length;
+      area.setSelectionRange(end,end);
+      mark(d,e.id,'alternative',lineAt(area));
+    }
+    options();
+    area.addEventListener('input',()=>{if(chooser.hidden&&e.alternatives.length)options();});
+    chooser.addEventListener('change',()=>{
+      dismiss();
+      e.selectAlternative(chooser.value==='new'?'new':Number(chooser.value));
+      area.value=e.alternative;
+      area.parentElement.dataset.copy=area.value||area.placeholder;
+      const issue=e.issue('alternative');
+      td.querySelector('.wp-warning').textContent=issue;
+      area.setAttribute('aria-invalid',String(!!issue));
+      options();
+      focusText();
+    });
+    td.addEventListener('click',event=>{
+      if(!event.target.closest('select,textarea,button'))focusText();
     });
   }
   function grip(id){
@@ -201,7 +275,7 @@ class AthleteSpreadsheet extends HTMLElement {
     if(!workouts[d].length){part.append(addExercise);return part;}
     if(mode==='cards'){
       workouts[d].forEach(e=>{const card=el('div','wp-card'),name=el('div','wp-card-name');card.dataset.row=e.id;
-        if(e.goal)card.dataset.goal='';name.append(grip(e.id),document.createTextNode(e.name));card.append(name,el('p','',e.weeks),el('p','','Alternative progressions\n'+e.alternative));part.append(card);});part.append(addExercise);return part;
+        if(e.goal)card.dataset.goal='';name.append(grip(e.id),document.createTextNode(e.name));card.append(name,el('p','',e.weeks),el('p','',e.alternativeId?window.LZProgression.trackName({id:e.alternativeId})+'\n'+e.alternative:''));part.append(card);});part.append(addExercise);return part;
     }
     const plus=button('+ Week',()=>weekAction(d,true)),minus=button('Remove week',()=>weekAction(d,false));
     plus.dataset.add='';minus.dataset.remove='';tools.append(el('span','wp-target'),plus,minus);
@@ -209,10 +283,9 @@ class AthleteSpreadsheet extends HTMLElement {
     const cg=el('colgroup');[21,54,25].forEach(w=>{const c=el('col');c.style.width=w+'%';cg.append(c);});table.append(cg);
     const head=table.createTHead().insertRow();heads.forEach(txt=>{const th=el('th','',txt);th.scope='col';head.append(th);});
     const body=table.createTBody();workouts[d].forEach(e=>{const tr=body.insertRow();tr.dataset.row=e.id;if(e.goal)tr.dataset.goal='';
-      fields.forEach(key=>{const td=tr.insertCell();if(key==='name'){td.className='wp-name';const wrap=el('div','wp-name-wrap');wrap.append(grip(e.id));td.append(wrap);editor(d,e,key,wrap);}else{
-        if(key==='alternative'&&e.alternatives.length>1){const chooser=el('select','wp-alt-select');chooser.setAttribute('aria-label',e.name+' alternative track');e.alternatives.forEach(t=>{const opt=el('option','','Alternative '+t.id);opt.value=t.id;chooser.append(opt);});chooser.value=e.alternativeId;chooser.onchange=()=>{e.alternativeId=Number(chooser.value);render();};td.append(chooser);}
-        editor(d,e,key,td);
-      }});});
+      fields.forEach(key=>{const td=tr.insertCell();if(key==='name'){td.className='wp-name';const wrap=el('div','wp-name-wrap');wrap.append(grip(e.id));td.append(wrap);editor(d,e,key,wrap);}else if(key==='alternative'){
+        alternativeCell(td,d,e);
+      }else editor(d,e,key,td);});});
     part.append(table,addExercise);return part;
   }
   function filterBar(){
@@ -243,7 +316,13 @@ class AthleteSpreadsheet extends HTMLElement {
       wrap.append(el('h3','',whole?workoutName(d)+' · '+dayName(d):dayName(d)+' · '+workoutName(d)));
       const items=whole?workouts[d]:workouts[d].filter(e=>e.id===id);
       for(const e of items){const c=el('div','wp-comp-ex');if(e.goal)c.dataset.goal='';c.append(el('strong','',e.name));
-        for(const key of ['weeks','alternative'])c.append(el('small','',heads[fields.indexOf(key)]),el('p','',e[key]));wrap.append(c);}
+        c.append(el('small','',heads[1]),el('p','',e.weeks));
+        const progress=window.LZProgression.forExercise(e.source);
+        for(const track of progress.alternatives){
+          const text=Array.from({length:track.weeks},(_,i)=>'Week '+(i+1)+': '+track.rows[i].planned).join('\n');
+          c.append(el('small','',window.LZProgression.trackName(track)),el('p','',text));
+        }
+        wrap.append(c);}
       if(!items.length)wrap.append(el('p','wp-empty','No exercises'));comp.append(wrap);
     }return comp;
   }

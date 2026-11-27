@@ -4,10 +4,24 @@
 
 button[data-teaching-launch], #student-learning-board .actions button[data-teaching-launch] {
   display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:none;
-  min-width:40px; min-height:38px; padding:6px 10px; border:1px solid #05615d;
-  border-radius:8px; background:#08736d; color:white; font-weight:600; cursor:pointer;
+  min-width:40px; min-height:38px; padding:6px 10px; border:1px solid transparent;
+  border-radius:8px; font-weight:600; cursor:pointer;
 }
-button[data-teaching-launch]:hover, #student-learning-board .actions button[data-teaching-launch]:hover {background:#075e58;color:white;}
+/* Keep both whiteboard entry points identifiable across themes and builder dialogs. */
+:root {
+  --lz-whiteboard-green:#187443;
+  --lz-whiteboard-green-hover:#115b34;
+  --lz-whiteboard-green-border:#105b34;
+}
+:is(#workspace-navigation, #student-learning-board, .app-topbar, dialog) button:is([data-nav="whiteboard"], [data-teaching-launch]) {
+  background:var(--lz-whiteboard-green); color:#fff; border-color:var(--lz-whiteboard-green-border);
+}
+:is(#workspace-navigation, #student-learning-board, .app-topbar, dialog) button:is([data-nav="whiteboard"], [data-teaching-launch]):is(:hover,:active) {
+  background:var(--lz-whiteboard-green-hover); color:#fff;
+}
+#workspace-navigation button[data-nav="whiteboard"][aria-current="page"] {
+  box-shadow:inset 3px 0 0 #b6f5cc; font-weight:650;
+}
 [data-teaching-launch] svg {width:20px;height:20px;flex:none;}
 [data-teaching-launch]:focus-visible, .teaching-dialog button:focus-visible {outline:3px solid var(--lz-focus,#2455a4);outline-offset:2px;}
 dialog > [data-teaching-launch] {float:right;margin:0 0 6px 8px;}
@@ -18,7 +32,7 @@ dialog > [data-teaching-launch] {float:right;margin:0 0 6px 8px;}
 .teaching-dialog > header {display:flex;gap:8px;align-items:center;padding:6px 12px;background:var(--lz-paper);border-bottom:1px solid var(--lz-line);flex:none;}
 .teaching-dialog > header h2 {margin:0 auto 0 0;font-size:1rem;}
 .teaching-dialog > header button {font:inherit;font-size:.875rem;padding:6px 10px;border:1px solid var(--lz-line);border-radius:6px;color:inherit;background:var(--lz-paper);cursor:pointer;}
-.teaching-dialog > header [data-return] {background:#08736d;border-color:#05615d;color:white;}
+.teaching-dialog > header [data-return] {background:var(--lz-whiteboard-green);border-color:var(--lz-whiteboard-green-border);color:white;}
 .teaching-host, .teaching-host .lz-wb {flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;}
 .teaching-host .lz-wb {border:0;border-radius:0;overflow:auto;}
 .teaching-host .lz-wb > :not(.wb-surface, dialog) {flex-shrink:0;}

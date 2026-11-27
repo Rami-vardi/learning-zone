@@ -2882,7 +2882,7 @@ bootstrap();
 </script>
 <script src="whiteboard-v2-store.js?v=20261117-empty-trash"></script>
 <script src="whiteboard-shared-store.js?v=20261116"></script>
-<script src="whiteboard-v2.js?v=20261119-cell-color"></script>
+<script src="whiteboard-v2.js?v=20261127-teaching"></script>
 <script src="anatomy-zone.js?v=20261125-anatomy-desktop-4"></script>
 <script>
 (()=>{'use strict';
@@ -2956,5 +2956,5 @@ document.querySelector('#restore-complete').addEventListener('click',openLocalIm
 window.addEventListener('lz-cloud-import-complete',async()=>{try{await closeContent();await LZStudent.leave();await LZStudent.students();showMessage('Local import finished. Review the import report for any skipped items.');}catch(e){showMessage(e.message,true);}});
 window.LZShell={navigate,refreshAccount,showMessage,flushContent,closeContent};refreshAccount();if(LZStudent.context().admin&&!LZStudent.context().owner)dashboardChrome();iconify();
 })();
-</script><script src="appearance-settings.js?v=63a49a16"></script>
-</body></html>
+</script><script src="appearance-settings.js?v=20261127-teaching"></script>
+<link rel="stylesheet" href="teaching-board.css?v=1"><script src="teaching-board.js?v=1"></script></body></html>

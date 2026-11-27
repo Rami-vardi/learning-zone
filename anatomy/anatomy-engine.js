@@ -334,8 +334,8 @@
       return seat;
     }
     const squatBarRadius=.035, comparisonBarRadius=.04;
-    const barbell=new T.Group();equipment.add(barbell);between(barbell,[-1.6,0,0],[1.6,0,0],squatBarRadius,squatBarRadius,steel);
-    for(const side of [-1,1]){const p=mesh(new T.CylinderGeometry(.26,.26,.12,24),steel,barbell);p.rotation.z=Math.PI/2;p.position.x=side*1.55;}
+    const barbell=new T.Group();equipment.add(barbell);between(barbell,[-2.06,0,0],[2.06,0,0],squatBarRadius,squatBarRadius,steel);
+    for(const side of [-1,1]){const p=mesh(new T.CylinderGeometry(.26,.26,.12,24),steel,barbell);p.rotation.z=Math.PI/2;p.position.x=side*1.94;}
     const dumbbellHeads=new T.MeshStandardMaterial({color:0x304b65,roughness:.62,metalness:.12});
     const dumbbells=[];for(const side of [-1,1]){const g=new T.Group();equipment.add(g);between(g,[-.38,0,0],[.38,0,0],.043,.043,steel);for(const x of [-.32,.32]){const w=mesh(new T.CylinderGeometry(.205,.205,.18,6),dumbbellHeads,g);w.rotation.z=Math.PI/2;w.position.x=x;}dumbbells.push({side,node:g});}
     const seat=new T.Group();equipment.add(seat);box(seat,[1.72,.15,1.0],[0,1.65,-.08],seatMat);for(const side of [-1,1])between(seat,[side*.65,1.57,-.15],[side*.65,.05,-.15],.045,.045,steel);
@@ -621,13 +621,13 @@
       // Bring the rear hip farther toward the fixed bench near the bottom.
       const benchOffloadShift=mix(.37,-.06)-.56*phase*phase;
       const hipZ=elevated?(rear?benchOffloadShift:mix(.32,.13))
-        :rear?(offload?heelDownShift:mix(-.30,-.75)):mix(.28,.70)+(moreFront?mix(.12,.15):0);
+        :rear?(offload?heelDownShift:mix(-.30,-.75)):mix(.28,.70)+(moreFront?mix(0,.08):0);
       const hipX=rear?(offload?mix(.12,.20):.045):(moreFront?mix(-.12,-.18):-.045);
-      const pelvicRoll=moreFront?(elevated?mix(-.135,-.195):mix(-.148,-.204))
+      const pelvicRoll=moreFront?(elevated?mix(-.135,-.195):mix(-.070,-.145))
         :rear?mix(.056,.080):mix(-.070,-.100);
       const pelvicYaw=heelDown?mix(.24,.55):rear?(offload?mix(.13,.26):mix(.075,.10))
-        :(moreFront?mix(-.11,-.18):mix(-.075,-.10));
-      const pelvicPitch=elevated?mix(.06,.18):offload?mix(.025,.075):.025;
+        :(moreFront?mix(-.075,-.12):mix(-.075,-.10));
+      const pelvicPitch=elevated?mix(.06,.18):offload?mix(.025,.075):moreFront?mix(.025,.38):.025;
       const trunkPitch=elevated?mix(.08,rear?.235:.27):rear?(offload?mix(.035,.17):mix(-.025,-.050)):mix(.055,moreFront?.195:.170);
       const trunkYaw=heelDown?mix(.16,.44):moreFront?pelvicYaw-mix(.095,.155):pelvicYaw*.50;
       const frameQ=new T.Quaternion().setFromEuler(new T.Euler(trunkPitch,trunkYaw,pelvicRoll*.25,'XYZ'));
@@ -754,6 +754,11 @@
       };
       const pelvicOffset=extension?.32:profile?0:-.075*tuck;
       let pitch=pitchForSeat(pelvicOffset),pelvicPitch=pitch+pelvicOffset;
+      if(!profile&&!extension&&phase>.64){
+        // At deep flexion the pelvis follows the thigh while the balanced bar stays above midfoot.
+        pelvicPitch-=.21*T.MathUtils.smoothstep(phase,.64,1);
+        for(let i=0;i<14;i++)pitch=pitchForSeat(pelvicPitch-pitch);
+      }
       if(extension&&phase>.60){
         // The femur keeps flexing in space while the pelvis yields around its
         // head. Specify the angle between them so trunk lean cannot cancel it.

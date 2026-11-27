@@ -218,16 +218,18 @@ function correctionLoader(file) {
 const loadHipFootModule = correctionLoader('muscle-hip-foot.js');
 const loadLimbModule = correctionLoader('muscle-limb-fit.js');
 const loadPoseModule = correctionLoader('muscle-pose-correction.js');
+const loadContourModule = correctionLoader('muscle-contour.js');
 const loadDepthModule = correctionLoader('muscle-software-depth.js');
 
 export async function prepare(movement) {
   const list = families[movement];
-  const [assets, hipFoot, limb, poseModule, depthModule] = await Promise.all([
+  const [assets, hipFoot, limb, poseModule, depthModule, contourModule] = await Promise.all([
     Promise.all(list.map(loadFamily)),
     list.includes('gluteal') || list.includes('ankle') ? loadHipFootModule() : null,
     list.includes('thigh') ? loadLimbModule() : null,
     list.includes('shoulder') || list.includes('thigh') ? loadPoseModule() : null,
-    loadDepthModule()
+    loadDepthModule(),
+    list.includes('thigh') || movement === 'pullup' ? loadContourModule() : null
   ]);
   if (poseModule) {
     for (const asset of assets) {
@@ -240,10 +242,10 @@ export async function prepare(movement) {
       }
     }
   }
-  return context => createLayer(context, movement, assets, hipFoot, limb, poseModule, depthModule);
+  return context => createLayer(context, movement, assets, hipFoot, limb, poseModule, depthModule, contourModule);
 }
 
-function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, sternum, floor, floorRing, pressureMarks = [], ghost, inspectionSupports = [], software, arms, exArms }, movement, assets, hipFoot, limb, poseModule, depthModule) {
+function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, sternum, floor, floorRing, pressureMarks = [], ghost, inspectionSupports = [], software, arms, exArms }, movement, assets, hipFoot, limb, poseModule, depthModule, contourModule) {
   const nodes = new Map();
   for (const mesh of pelvis.children) nodes.set(mesh.name.replace('BodyParts3D ', ''), mesh);
   for (const section of [...axial, ...neck]) {
@@ -287,13 +289,22 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
     for (let i = 0; i < tone.length; i++) paint.copy(muscle).lerp(tendon, tone[i] / 255).toArray(colors, 3 * i);
     geo.setAttribute('color', new T.BufferAttribute(colors, 3));
     if (part.mesh) {
-      part.mesh.geometry.dispose();
+      part.sourceGeometry.dispose();
+      part.contour?.geometry.dispose();
       part.mesh.geometry = geo;
     } else {
       part.mesh = new T.Mesh(geo, material);
       part.mesh.name = part.side + ' ' + part.name;
       group.add(part.mesh);
     }
+    const needsContour = ['adductor','semitendinosus','semimembranosus','bicepsFemoris'].includes(part.name) ||
+      movement === 'pullup' && part.name === 'teresMajor';
+    part.sourceGeometry = geo;
+    const hip = part.side === 'R' ? 'rightHip' : 'leftHip';
+    const supports = part.name === 'teresMajor' ? [part.side+'scapula',part.side+'humerus'] :
+      [hip,part.side+'femur',part.side+'tibia'];
+    part.contour = needsContour && contourModule ? contourModule.createMuscleContour(T,geo,software,
+      supports.map(key=>nodes.get(key)).filter(node=>node?.geometry?.index)) : null;
     Object.assign(part, { rest, bone, weight, positions, dome, sourceVertices });
   }
   const eligible = new Set(profiles[movement].flat());
@@ -358,9 +369,10 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
     const focused = highlighted ? [highlighted.mesh.name] : inspection;
     for (const part of parts) {
       if (!part.mesh.visible || (focused.length && !focused.includes(part.mesh.name))) continue;
-      const step = Math.max(1,Math.floor(part.positions.count / 12));
-      for (let i = 0; i < part.positions.count; i += step) {
-        sample.fromBufferAttribute(part.positions,i).applyMatrix4(part.mesh.matrixWorld);
+      const surface = part.mesh.geometry.attributes.position;
+      const step = Math.max(1,Math.floor(surface.count / 12));
+      for (let i = 0; i < surface.count; i += step) {
+        sample.fromBufferAttribute(surface,i).applyMatrix4(part.mesh.matrixWorld);
         direction.subVectors(sample,cameraOrigin);
         supportRay.far = direction.length() - .001;
         supportRay.set(cameraOrigin,direction.normalize());
@@ -443,8 +455,13 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
         out[v + 1] = py - (dome ? state.amount * .082 * dome[i] / 255 : 0);
         out[v + 2] = pz;
       }
+      part.mesh.geometry = part.sourceGeometry;
       correctHipFoot?.(part, software);
       if (!correctPose?.(part, state)) correctLimb?.(part, software);
+      if (part.contour) {
+        part.contour.update();
+        part.mesh.geometry = part.contour.geometry;
+      }
       positions.needsUpdate = true;
       if (!software) part.mesh.geometry.computeVertexNormals();
       part.mesh.geometry.computeBoundingSphere();
@@ -494,7 +511,7 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
       const targets = highlighted ? [highlighted.mesh.name] : inspection;
       for (const p of parts) {
         if (p.mesh.visible && (!focusTarget || !targets.length || targets.includes(p.mesh.name))) {
-          box.union(currentBounds.setFromBufferAttribute(p.positions));
+          box.union(currentBounds.setFromBufferAttribute(p.mesh.geometry.attributes.position));
         }
       }
       return box;
@@ -596,7 +613,7 @@ function createLayer({ T, scene, pelvis, legs, ribs, scapulae, axial, neck, ster
       correctHipFoot?.dispose();
       correctLimb?.dispose?.();
       scene.remove(group);
-      parts.forEach(part => part.mesh.geometry.dispose());
+      parts.forEach(part => { part.sourceGeometry.dispose(); part.contour?.geometry.dispose(); });
       material.dispose();
       for (const highlight of highlightedMaterials.values()) highlight.dispose();
     }

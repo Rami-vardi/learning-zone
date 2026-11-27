@@ -365,3 +365,9 @@ html[data-lz-theme-ready] #student-learning-board .progression-dialog .progressi
 #student-learning-board .athlete-program .comparison-sheet table .grid-week{width:48px}
 #student-learning-board .athlete-program .compare-picker .workout-options{left:auto;right:0}
 #student-learning-board .athlete-program .compare-picker label input:checked{accent-color:var(--lz-blue)}
+
+@container athlete (max-width:540px){
+ #student-learning-board .athlete-program .athlete-nav{position:relative}
+ #student-learning-board .athlete-program .athlete-nav .workout-filter{position:static}
+ #student-learning-board .athlete-program .athlete-nav .workout-options{left:0;right:auto;max-width:100%}
+}

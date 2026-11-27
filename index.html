@@ -2096,7 +2096,7 @@ async function open(){
 window.LZMigration={preview,run,open};
 })();
 </script>
-<script src="athlete-spreadsheet.js?v=program-layouts1"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
+<script src="athlete-spreadsheet.js?v=workout-audit2"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
 'use strict';
 const formats = ['fixed', 'range', 'top'];
 const text = value => String(value ?? '');
@@ -2334,7 +2334,7 @@ function setWorkoutSelection(ids){selectedWorkouts=ids===null?null:new Set(ids);
 function matchesDay(d){return includesWorkout(d)&&(mirrorDayFilter==='all'||d.type.toLowerCase()===mirrorDayFilter);}
 function matchesBody(e){return mirrorExerciseFilter==='all'||bodyRegion(e)===mirrorExerciseFilter;}
 function bodyFilterControls(){return `<div class="comparison-controls body-filter-controls"><label>Days<select data-body-day><option value="all">All Days</option><option value="upper" ${mirrorDayFilter==='upper'?'selected':''}>Upper days</option><option value="lower" ${mirrorDayFilter==='lower'?'selected':''}>Lower days</option></select></label><label>Exercises Across Days<select data-body-exercise><option value="all">All Exercises</option><option value="upper" ${mirrorExerciseFilter==='upper'?'selected':''}>Upper body</option><option value="lower" ${mirrorExerciseFilter==='lower'?'selected':''}>Lower body</option></select></label>${mirrorDayFilter!=='all'||mirrorExerciseFilter!=='all'?'<button type="button" data-clear-body-filters>Clear Filters</button>':''}</div>`;}
-screen.addEventListener('change',event=>{const t=event.target;if(t.hasAttribute('data-body-day')){mirrorDayFilter=t.value;render();}else if(t.hasAttribute('data-body-exercise')){mirrorExerciseFilter=t.value;render();}});
+screen.addEventListener('change',event=>{const t=event.target;if(t.hasAttribute('data-body-day')){mirrorDayFilter=t.value;refreshFilter('data-body-day');}else if(t.hasAttribute('data-body-exercise')){mirrorExerciseFilter=t.value;refreshFilter('data-body-exercise');}});
 screen.addEventListener('click',event=>{if(event.target.closest('[data-clear-body-filters]')){mirrorDayFilter=mirrorExerciseFilter='all';render();}},true);
 function toggleExerciseHeader(event){if(!current||event.target.closest('button,input,select,textarea,a,.lz-drag-handle'))return;const summary=event.target.closest('.exercise-summary');const card=summary?.closest('[data-drag-id]');if(!card)return;const e=allEntries().find(x=>x.e.id===Number(card.dataset.dragId))?.e;if(!e)return;if(window.getSelection?.().toString())return;e.collapsed=!e.collapsed;render();}
 screen.addEventListener('click',toggleExerciseHeader);screen.addEventListener('keydown',event=>{const t=event.target.closest('[data-header-toggle]');if(t&&['Enter',' '].includes(event.key)){event.preventDefault();const e=allEntries().find(x=>x.e.id===Number(t.dataset.headerToggle))?.e;if(e){e.collapsed=!e.collapsed;render();}}});
@@ -2394,48 +2394,73 @@ function contextState(active,match){return active?(match?'match':'muted'):'';}
 function hasWorkoutPair(type){return current.days.length===4&&current.days.filter(d=>d.type===type).length===2;}
 function inWorkoutPair(d){return !pairType||d.type===pairType;}
 function workoutVisible(d){return inWorkoutPair(d)&&(comparisonPins.size>0||includesWorkout(d));}
-function comparePicker(){
+function revealWorkout(day){
+ if(workoutVisible(day))return false;
+ pairType='';setWorkoutSelection([day.id]);return true;
+}
+function comparePicker(pairOnly=false){
  const types=['Upper','Lower'].filter(hasWorkoutPair);
  const pairs=types.length?`<label class="pair-choice">Side by side<select data-workout-pair><option value="">All four days</option>${types.map(type=>`<option value="${type}" ${pairType===type?'selected':''}>${type} pair</option>`).join('')}</select></label>`:'';
- const choices=current.days.filter(inWorkoutPair).map(d=>{
+ if(pairOnly&&!types.length)return '';
+ const choices=pairOnly?'':current.days.filter(inWorkoutPair).map(d=>{
    const choice=(key,name)=>`<label><input type="checkbox" data-compare-pin="${key}" ${comparisonPins.has(key)?'checked':''}>${esc(name)}</label>`;
    return `<div class="compare-day-choice">${choice('w'+d.id,d.name||'Unnamed workout')}${d.exercises.map(e=>choice('e'+e.id,e.name||'Unnamed exercise')).join('')}</div>`;
  }).join('');
- return `<details class="workout-filter compare-picker"><summary aria-label="Compare workouts or exercises" title="Compare workouts or exercises">${icon('columns-2')}<span>${pairType?pairType+' pair':'Compare'}${comparisonPins.size?' ('+comparisonPins.size+')':''}</span></summary><div class="workout-options">${pairs}${comparisonPins.size?'<button type="button" data-clear-pins>Clear comparison</button>':''}${choices||'No workouts yet.'}</div></details>`;
+ const label=pairOnly?'Compare workout pairs':'Compare workouts or exercises';
+ return `<details class="workout-filter compare-picker"><summary aria-label="${label}" title="${label}">${icon('columns-2')}<span>${pairType?pairType+' pair':'Compare'}${!pairOnly&&comparisonPins.size?' ('+comparisonPins.size+')':''}</span></summary><div class="workout-options">${pairs}${!pairOnly&&comparisonPins.size?'<button type="button" data-clear-pins>Clear comparison</button>':''}${choices||(!current.days.length?'No workouts yet.':'')}</div></details>`;
 }
 function setComparisonPin(key,checked,keepOpen=false){
- if(checked)comparisonPins.add(key);else comparisonPins.delete(key);
+ if(checked){
+   const day=current.days.find(d=>key==='w'+d.id||d.exercises.some(e=>key==='e'+e.id));
+   if(day&&!includesWorkout(day))setWorkoutSelection(null);
+   comparisonPins.add(key);
+ }else comparisonPins.delete(key);
  render();
  const menu=screen.querySelector('.compare-picker');
  if(keepOpen&&menu){menu.open=true;(menu.querySelector(`[data-compare-pin="${key}"]`)||menu.querySelector('summary')).focus({preventScroll:true});}
 }
+function workoutSelectionLabel(){
+ const selected=current.days.filter(d=>inWorkoutPair(d)&&includesWorkout(d));
+ return pairType?selected.map(d=>d.name).join(' + '):comparisonPins.size&&view==='workouts'?'All workouts':!selectedWorkouts?'All workouts':selected.length===1?selected[0].name:selected.length+' workouts';
+}
 function workoutFilter(){
  const highlighting=view==='mirror'||view==='exercise';
  const selected=current.days.filter(d=>inWorkoutPair(d)&&includesWorkout(d));
- const label=pairType?selected.map(d=>d.name).join(' + '):comparisonPins.size&&view==='workouts'?'All workouts':!selectedWorkouts?'All workouts':selected.length===1?selected[0].name:selected.length+' workouts';
+ const label=workoutSelectionLabel();
  return `<details class="workout-filter workout-picker"><summary aria-label="Filter workouts" title="Choose workouts">${icon('list-filter')}<span>${esc(label)}</span></summary><div class="workout-options">
  <label>${view==='mirror'||view==='exercise'?'Highlight workouts':'Show workouts'}<select data-workout-preset>${pairType?`<option value="pair" selected disabled>${pairType} pair</option>`:''}<option value="all" ${!selectedWorkouts&&!pairType?'selected':''}>All workouts</option><option value="custom" disabled ${selectedWorkouts&&selected.length!==1?'selected':''}>Custom selection</option>${current.days.map(d=>`<option value="${d.id}" ${selectedWorkouts&&selected.length===1&&includesWorkout(d)?'selected':''}>${esc(d.name)}${highlighting?'':' only'}</option>`).join('')}</select></label>
  ${current.days.map(d=>`<label data-workout-destination="${d.id}"><input type="checkbox" data-workout-pick="${d.id}" ${includesWorkout(d)&&inWorkoutPair(d)?'checked':''}>${esc(d.name||'Unnamed workout')}</label>`).join('')}</div></details>`;
 }
 function weekFilter(){
  const last=allEntries().reduce((n,{e})=>Math.max(n,e.progression?.weeks||1,...(e.progression?.alternatives||[]).map(a=>a.weeks)),1);
- return `<select data-comparison-week aria-label="Comparison week"><option value="0">All weeks</option>${Array.from({length:Math.max(last,comparisonWeek)},(_,i)=>`<option value="${i+1}" ${comparisonWeek===i+1?'selected':''}>Week ${i+1}</option>`).join('')}</select>`;
+ comparisonWeek=Math.min(comparisonWeek,last);
+ return `<select data-comparison-week aria-label="Comparison week"><option value="0">All weeks</option>${Array.from({length:last},(_,i)=>`<option value="${i+1}" ${comparisonWeek===i+1?'selected':''}>Week ${i+1}</option>`).join('')}</select>`;
 }
 function trainingSection(){
  const nav=programTabs(programLayouts,layout,'layout','Program layout')+programTabs(programViews,view,'view','Program view');
  const compact=`<select data-program-view aria-label="Program view">${programViews.map(([id,name])=>`<option value="${id}" ${id===view?'selected':''}>${name}</option>`).join('')}</select>`;
+ const weekControl=view==='workouts'?'':weekFilter();
  const content=view==='workouts'?(layout==='board'?board():'<athlete-spreadsheet></athlete-spreadsheet>'):view==='mirror'?mirror():view==='exercise'?exerciseMirror():goalProgressionView();
- return `<section class="athlete-training" data-program-layout="${layout}" data-program-section="${view}" data-day-count="${current.days.filter(workoutVisible).length}" data-pair="${pairType}"><div class="athlete-nav">${nav}${compact}${workoutFilter()}${view!=='progression'?comparePicker():''}${view==='workouts'?'':weekFilter()}<button type="button" data-action="add-day">+ Add day</button></div>${content}</section>`;
+ return `<section class="athlete-training" data-program-layout="${layout}" data-program-section="${view}" data-day-count="${current.days.filter(workoutVisible).length}" data-pair="${pairType}"><div class="athlete-nav">${nav}${compact}${workoutFilter()}${comparePicker(view==='progression')}${weekControl}<button type="button" data-action="add-day">+ Add day</button></div>${content}</section>`;
 }
 function rawRender(keepGoals){
  if(pairType&&!hasWorkoutPair(pairType))pairType='';
  const available=new Set(current.days.flatMap(d=>['w'+d.id,...d.exercises.map(e=>'e'+e.id)]));
  for(const key of comparisonPins)if(!available.has(key))comparisonPins.delete(key);
+ for(const id of excludedEntries)if(!available.has('e'+id))excludedEntries.delete(id);
  if(selectedWorkouts?.size){
    const present=current.days.filter(includesWorkout);
    selectedWorkouts=present.length?new Set(present.map(d=>d.id)):null;
  }
- if(keepGoals){const program=screen.querySelector('.athlete-training');if(program){program.outerHTML=trainingSection();return;}}
+ if(keepGoals){
+   const program=screen.querySelector('.athlete-training');
+   if(program){
+     const template=document.createElement('template');template.innerHTML=trainingSection();
+     for(const child of [...program.children])if(!child.matches('.athlete-nav'))child.remove();
+     program.append(...[...template.content.firstElementChild.children].slice(1));
+     return;
+   }
+ }
  screen.innerHTML=`<main class="athlete-program"><header class="athlete-bar"><div class="athlete-identity"><span class="athlete-mark" aria-hidden="true">${icon('dumbbell')}</span><strong>${esc(current.name)}</strong><span>Training Program</span></div><button data-goals-toggle aria-expanded="${goalsOpen}" aria-controls="athlete-goal-panel">${icon('target')}Athlete Goals <b>${current.goals.length}</b><span aria-hidden="true">${goalsOpen?'▴':'▾'}</span></button><div class="athlete-whiteboard actions"></div></header><div id="athlete-goal-panel" ${goalsOpen?'':'hidden'}>${goalTable()}</div>${trainingSection()}</main>`;
 }
 screen.addEventListener('click',event=>{
@@ -2470,8 +2495,15 @@ function render(keepGoals=false){normalize();rawRender(keepGoals===true);const s
    schedule,bindExerciseName,automaticRoles,openProgression,setExerciseRole,isGoalExercise,applyWeekToSets,includesWorkout:workoutVisible,
    isolateWorkout(day){comparisonPins.clear();pairType='';setWorkoutSelection([day.id]);render();},
    pinExercise(key){setComparisonPin(key,true);},
+   revealMovedExercise(day,id){
+     if(!revealWorkout(day))return false;
+     render();
+     screen.querySelector('athlete-spreadsheet')?.shadowRoot?.querySelector(`[data-grip="${id}"]`)?.focus({preventScroll:true});
+     return true;
+   },
    pinState(day,exercise){return contextState(comparisonPins.size,pinMatch(day,exercise));},
    get paired(){return !!pairType;},
+   refreshProgramNames,
    refreshWorkoutFilter(){const menu=screen.querySelector('.workout-picker');if(menu)menu.outerHTML=workoutFilter();const compare=screen.querySelector('.compare-picker');if(compare)compare.outerHTML=comparePicker();},
    addExercise(day){
      const exercise=ex('','1','fixed','','','');exercise.collapsed=true;
@@ -2523,26 +2555,36 @@ function update(event){
    }
    return;
  }
- if(v.goal!==undefined){current.goals[Number(v.goal)][v.key]=el.value;
+ if(v.goal!==undefined){
+   const goal=current.goals[Number(v.goal)],previousName=goal.name,previousId=goal.exerciseId;
+   goal[v.key]=el.value;
    if(el.parentElement.matches('.goal-name-editor'))el.nextElementSibling.textContent=el.value||el.placeholder;
    if(el.parentElement.matches('.goal-value-editor'))el.parentElement.dataset.value=el.value||el.placeholder;
    if(v.key==='name'){
-     const goal=current.goals[Number(v.goal)];
+     bindExerciseName(goal,el.value);
      if(event.type==='change'){
-       bindExerciseName(goal,el.value);el.value=goal.name;el.nextElementSibling.textContent=goal.name||el.placeholder;
+       el.value=goal.name;el.nextElementSibling.textContent=goal.name||el.placeholder;
        el.closest('tr').querySelector('[data-goal-handle]').setAttribute('aria-label','Reorder '+(goal.name||'Goal '+(Number(v.goal)+1))+'; drag or use arrow keys');
      }
-     automaticRoles();
-     if(event.type==='change' && allEntries().length)render(true);
+     if((goal.name!==previousName||goal.exerciseId!==previousId)&&allEntries().length){
+       automaticRoles();if(view==='workouts')refreshProgramNames();else render(true);
+     }
    }else if(event.type==='change'&&view==='progression'&&['ceiling','floor','goal'].includes(v.key)){
-     render(true);
+     const identity=exerciseIdentity(goal);
+     for(const {e} of allEntries()){
+       if(exerciseIdentity(e)!==identity)continue;
+       const card=screen.querySelector(`[data-progression-entry="${e.id}"]`);if(!card)continue;
+       const html=progressionGoal(e),old=card.querySelector('.progression-goal');
+       if(old)old.outerHTML=html;
+       else if(html)card.querySelector('header').insertAdjacentHTML('afterend',html);
+     }
    }if(v.key==='priority')el.className=el.value==='Floor'?'priority-floor':el.value==='Ceiling'?'priority-ceiling':'';return}
  if(v.day){const d=current.days.find(d=>d.id===Number(v.day));if(!d)return;const target=v.ex?d.exercises.find(e=>e.id===Number(v.ex)):d;if(!target)return;
  if(v.ex&&(v.set!==undefined||['sets','mode','low','high','load'].includes(v.key)))applyWeekToSets(target);
  if(v.set!==undefined){rows(target);target.setRows[Number(v.set)][v.setKey]=el.value;publishSetEdit(target);if(event.type==='change')refreshEntry(target,v.setKey==='kind')}
  else if(v.key==='sets'){if(event.type==='input')return;const n=Number(el.value);if(!Number.isInteger(n)||n<1||n>20){el.value=target.sets;say('Enter a whole number from 1 to 20 sets.');return}if(n<Number(target.sets)){el.value=target.sets;askDelete('Remove '+(Number(target.sets)-n)+' sets?','The removed set targets will be deleted. Undo is available afterward.',()=>{target.sets=String(n);target.setRows=target.setRows.slice(0,n);rows(target);publishSetEdit(target)},'Remove sets');return}target.sets=String(n);rows(target);publishSetEdit(target);refreshEntry(target,true)}
  else if(v.key==='mode'){if(event.type==='input')return;const mode=el.value;el.value=target.mode;convertPrescription(target,mode)}
- else if(v.key){target[v.key]=el.value;if(['low','high','load'].includes(v.key)&&target.sharedPrescription)rows(target);if(['low','high','load'].includes(v.key)){publishSetEdit(target);refreshEntry(target);}else if(event.type==='change'&&(v.key==='type'||v.key==='name'&&!v.ex))render()}
+ else if(v.key){target[v.key]=el.value;if(['low','high','load'].includes(v.key)&&target.sharedPrescription)rows(target);if(['low','high','load'].includes(v.key)){publishSetEdit(target);refreshEntry(target);}else if(event.type==='change'&&v.key==='type')render();else if(event.type==='change'&&v.key==='name'&&!v.ex)refreshProgramNames()}
  }
 }
 let compareGoal='all',compareRoles=new Set(['Goal','Primary','Secondary','Tertiary','Choose']),excludedEntries=new Set(),pickerOpen=false;
@@ -2603,6 +2645,7 @@ function editComparisonCell(event){
  const p=LZProgression.forExercise(exercise),track=Number(gridTrack)?p.alternatives.find(t=>t.id===Number(gridTrack)):p;
  const row=track?.rows[Number(gridWeek)];if(!row)return;
  row[gridField]=el.value;exercise.progression=p;exercise.weeklyPrescription=true;
+ if(track.id)exercise.selectedAlternativeId=track.id;
  if(gridField==='planned'){
    if(exercise.sheetDrafts)delete exercise.sheetDrafts[track.id?'alt'+track.id:'main'];
    if(event.type==='change'&&!track.id&&gridWeek==='0')applyWeekToSets(exercise);
@@ -2630,7 +2673,11 @@ function miniExercise(e,context=''){
 }
 
 function advancedClick(event){const button=event.target.closest('button');if(!button||!current)return false;const v=button.dataset;const entry=allEntries().find(x=>x.e.id===Number(v.toggleEx||v.ex));if(v.convertShared!==undefined){convertPrescription(entry.e,entry.e.mode);return true}if(v.toggleEx){entry.e.collapsed=!entry.e.collapsed;render();return true}if(v.insertSet!==undefined){const e=entry.e;if(Number(e.sets)>=20)return true;const index=Number(v.insertSet);const active=rows(e);const next={...active[index],id:uid(),kind:e.mode==='top'?'Back off':active[index].kind};e.setRows=active;e.setRows.splice(index+1,0,next);e.sets=String(e.setRows.length);publishSetEdit(e);render();say('Set added. Set count updated.');return true}if(v.deleteSet!==undefined){const e=entry.e;const index=Number(v.deleteSet);if(Number(e.sets)===1){say('Keep at least one set. You can delete the exercise instead.');return true}askDelete('Delete Set '+(index+1)+'?', 'Remove this set target from '+(e.name||'this exercise')+'?',()=>{e.setRows=rows(e);e.setRows.splice(index,1);e.sets=String(e.setRows.length);publishSetEdit(e)});return true}return false}
-function advancedUpdate(event){const el=event.target,v=el.dataset;if(v.compareGoal!==undefined){compareGoal=el.value;render();return true}if(v.compareRole){if(el.checked)compareRoles.add(v.compareRole);else compareRoles.delete(v.compareRole);render();return true}if(v.compareEntry){pickerOpen=true;if(el.checked)excludedEntries.delete(Number(v.compareEntry));else excludedEntries.add(Number(v.compareEntry));render();return true}if(v.linkKey){if(event.type==='input')return true;const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;e[v.linkKey]=el.value;if(v.linkKey==='goalId')e.parentId='';if(v.linkKey==='role'){e.parentId='';if(e.role==='Primary'){const g=current.goals.find(g=>g.name.trim().toLowerCase()===e.name.trim().toLowerCase());if(g)e.goalId=g.id}}render();return true}return false}
+function refreshFilter(attribute,value=''){
+ render();
+ screen.querySelector(`[${attribute}="${CSS.escape(value)}"]`)?.focus({preventScroll:true});
+}
+function advancedUpdate(event){const el=event.target,v=el.dataset;if(v.compareGoal!==undefined){compareGoal=el.value;render();return true}if(v.compareRole){if(event.type!=='change')return true;if(el.checked)compareRoles.add(v.compareRole);else compareRoles.delete(v.compareRole);refreshFilter('data-compare-role',v.compareRole);return true}if(v.compareEntry){if(event.type!=='change')return true;pickerOpen=true;if(el.checked)excludedEntries.delete(Number(v.compareEntry));else excludedEntries.add(Number(v.compareEntry));refreshFilter('data-compare-entry',v.compareEntry);return true}if(v.linkKey){if(event.type==='input')return true;const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;e[v.linkKey]=el.value;if(v.linkKey==='goalId')e.parentId='';if(v.linkKey==='role'){e.parentId='';if(e.role==='Primary'){const g=current.goals.find(g=>g.name.trim().toLowerCase()===e.name.trim().toLowerCase());if(g)e.goalId=g.id}}render();return true}return false}
 screen.addEventListener('input',update);screen.addEventListener('change',update);undoButton.addEventListener('click',undoDeletion);
 let session=null,member=null,owner=null,revision=0,lastSaved='',saveTimer=null,saving=null,conflict=false,dragged=null,switching=false,loadSequence=0,workspaceActive=false,workspaceName='',pendingRecovery=null,restoredDraft=null;
 const writerId=String(uid())+'-'+Math.random().toString(36).slice(2);
@@ -2917,7 +2964,33 @@ function convertPrescription(e,mode){
  askDelete('Choose shared prescription','Select the target to use for every set. This replaces the individual targets; no target is selected automatically.',()=>{const choice=root.querySelector('[data-shared-source]').value;if(choice==='')return;const r=rs[Number(choice)];e.mode=mode;e.low=r.reps;e.high=String(r.high??'');e.load=r.load;e.sharedPrescription=true;rows(e);publishSetEdit(e)},'Use shared prescription',`<label>Prescription to use<select data-shared-source><option value="">Choose a set target</option>${rs.map((r,i)=>`<option value="${i}">Set ${i+1}: ${esc(r.reps)}${mode==='range'?' to '+esc(r.high):''} · ${esc(r.load||'Load Not Set')}</option>`).join('')}</select></label>`);
  root.querySelector('[data-accept-delete]').disabled=true;
 }
-function learningUpdate(event){const el=event.target,v=el.dataset;if(v.patternFilter!==undefined){compareGoal=el.value;render();return true}if(v.linkKey==='role'){if(event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;setExerciseRole(e,el.value);render()}return true}if(v.key==='name'&&v.ex&&event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;bindExerciseName(e,el.value);automaticRoles();render();return true}return false}
+function refreshProgramNames(){
+ const days=new Map(current.days.map(d=>[d.id,d]));
+ const exercises=new Map(allEntries().map(({e})=>[e.id,e]));
+ for(const option of screen.querySelectorAll('[data-move-ex] option[value]:not([value=""]),[data-workout-preset] option')){
+   const day=days.get(Number(option.value));if(day)option.textContent=day.name+(option.closest('[data-workout-preset]')&&view==='workouts'?' only':'');
+ }
+ for(const field of screen.querySelectorAll('[data-workout-pick],[data-compare-pin]')){
+   const key=field.dataset.comparePin;
+   const value=key?.startsWith('e')?exercises.get(Number(key.slice(1))):days.get(Number(key?.slice(1)||field.dataset.workoutPick));
+   if(value)field.parentElement.lastChild.textContent=value.name||'Unnamed';
+ }
+ const summary=screen.querySelector('.workout-picker summary span');
+ if(summary)summary.textContent=workoutSelectionLabel();
+ for(const card of screen.querySelectorAll('[data-drag-id]')){
+   const e=exercises.get(Number(card.dataset.dragId));if(!e)continue;
+   card.querySelector('[data-header-toggle]').textContent=e.name||'New Exercise';
+   card.querySelector('[data-toggle-ex]').setAttribute('aria-label',(e.collapsed?'Expand ':'Minimize ')+(e.name||'exercise'));
+   if(!card.classList.contains('role-'+e.role.toLowerCase())){
+     for(const c of [...card.classList])if(c.startsWith('role-'))card.classList.remove(c);
+     card.classList.add('role-'+e.role.toLowerCase());
+     card.dataset.athleteGoal=String(isGoalExercise(e));card.querySelector('.role-badge').outerHTML=roleBadge(e);
+     const field=card.querySelector('[data-link-key=role]');if(field)field.value=e.role;
+   }
+ }
+ if(window.lucide)lucide.createIcons({attrs:{width:16,height:16}});
+}
+function learningUpdate(event){const el=event.target,v=el.dataset;if(v.patternFilter!==undefined){if(event.type!=='change')return true;compareGoal=el.value;refreshFilter('data-pattern-filter');return true}if(v.linkKey==='role'){if(event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;setExerciseRole(e,el.value);render()}return true}if(v.key==='name'&&v.ex&&event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;bindExerciseName(e,el.value);el.value=e.name;automaticRoles();refreshProgramNames();return true}return false}
 function learningClick(event){const b=event.target.closest('button');if(!b)return false;if(b.dataset.addEx){const d=current.days.find(d=>d.id===Number(b.dataset.addEx));const e=ex('','','fixed','','','');e.sets='1';e.collapsed=false;d.exercises.push(e);render();return true}return false}
 function decorateLearning(){
   screen.querySelectorAll('[data-remove-goal]').forEach(button=>{button.innerHTML=icon('trash-2');button.setAttribute('aria-label','Delete Goal');});
@@ -2945,7 +3018,7 @@ function decorateLearning(){
 }
 root.addEventListener('dragstart',event=>{const handle=event.target.closest('.lz-drag-handle');const element=handle?.closest('[data-drag-id]');if(!element)return;dragged={id:Number(element.dataset.dragId),day:Number(element.dataset.dragDay)};event.dataTransfer.setData('text/plain','learning-exercise');event.dataTransfer.effectAllowed='move';});
 root.addEventListener('dragover',event=>{if(dragged&&event.target.closest('.day')){event.preventDefault();event.dataTransfer.dropEffect='move'}});
-function moveExercise(id,destination,before=null){const source=current.days.find(d=>d.exercises.some(e=>e.id===id));const target=current.days.find(d=>d.id===destination);if(!source||!target||before===id)return;const e=source.exercises.find(e=>e.id===id);source.exercises=source.exercises.filter(x=>x.id!==id);const index=before===null?target.exercises.length:target.exercises.findIndex(x=>x.id===before);target.exercises.splice(index<0?target.exercises.length:index,0,e);if(!includesWorkout(target))setWorkoutSelection([target.id]);render();schedule();say((e.name||'Exercise')+' moved to '+(target.name||'the selected workout')+'.');}
+function moveExercise(id,destination,before=null){const source=current.days.find(d=>d.exercises.some(e=>e.id===id));const target=current.days.find(d=>d.id===destination);if(!source||!target||before===id)return;const e=source.exercises.find(e=>e.id===id);source.exercises=source.exercises.filter(x=>x.id!==id);const index=before===null?target.exercises.length:target.exercises.findIndex(x=>x.id===before);target.exercises.splice(index<0?target.exercises.length:index,0,e);revealWorkout(target);render();schedule();say((e.name||'Exercise')+' moved to '+(target.name||'the selected workout')+'.');}
 root.addEventListener('drop',event=>{const dayCard=event.target.closest('.day');if(!dragged||!dayCard)return;event.preventDefault();const dest=Number(dayCard.querySelector('[data-key="type"]').dataset.day),before=event.target.closest('[data-drag-id]');moveExercise(dragged.id,dest,before?Number(before.dataset.dragId):null);dragged=null});root.addEventListener('dragend',()=>{dragged=null});
 root.addEventListener('change',event=>{
   if(!event.target.dataset.moveEx||!event.target.value)return;
@@ -3281,7 +3354,7 @@ window.LZStudent={context(){return {username:member?.username||'',admin:member?.
  const selected=await chooseExerciseTarget();if(!selected)return null;
  current=athletes.find(a=>a.id===selected.athlete);if(!current)throw Error('The selected athlete is unavailable.');
  resetComparison();setWorkoutSelection([selected.day]);normalize();
- }let d=selectedWorkouts?.size===1?current.days.find(includesWorkout):null;if(!current.days.length)throw Error('Add a workout first.');if(!d){const chosen=await chooseWorkout();if(chosen===null)return null;d=current.days.find(d=>d.id===chosen);}if(!d)throw Error('Choose a workout.');const e=ex(data.name||data.exerciseName||'','','fixed','','','');e.sets='1';e.collapsed=false;bindExerciseName(e,data);d.exercises.push(e);automaticRoles();render();schedule();return d.name;}};
+ }let d=selectedWorkouts?.size===1?current.days.find(includesWorkout):null;if(!current.days.length)throw Error('Add a workout first.');if(!d){const chosen=await chooseWorkout();if(chosen===null)return null;d=current.days.find(d=>d.id===chosen);}if(!d)throw Error('Choose a workout.');const e=ex(data.name||data.exerciseName||'','','fixed','','','');e.sets='1';e.collapsed=false;bindExerciseName(e,data);d.exercises.push(e);automaticRoles();view='workouts';comparisonPins.clear();revealWorkout(d);render();schedule();return d.name;}};
 
 bootstrap();
 })();
@@ -3365,4 +3438,4 @@ window.addEventListener('lz-cloud-import-complete',async()=>{try{await closeCont
 window.LZShell={navigate,refreshAccount,showMessage,flushContent,closeContent};refreshAccount();if(LZStudent.context().admin&&!LZStudent.context().owner)dashboardChrome();iconify();
 })();
 </script><script src="appearance-settings.js?v=20261127-builder-fit2"></script>
-<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=progress-dialog5"></script><link rel="stylesheet" href="athlete-program.css?v=program-layouts1"></body></html>
+<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=workout-audit2"></script><link rel="stylesheet" href="athlete-program.css?v=workout-audit2"></body></html>

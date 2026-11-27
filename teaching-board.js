@@ -37,12 +37,13 @@
     sequence++; panel.close(); const old=editor;editor=null;pending=null;actor=null;
     old?.destroy({discard:true}).catch(()=>{});host.replaceChildren();
   }
-  async function open(button) {
+  function open(button) {
     if (!inBuilder() || panel.open) return;
     const id=context().member.id;
     if (actor && actor!==id) resetOwner();
     actor=id;returnField=focusBeforeButton?.isConnected?focusBeforeButton:button;focusBeforeButton=null;
-    returnScope=returnField.closest('dialog')||document.querySelector('#student-learning-board');
+    const fieldRoot=returnField.getRootNode();
+    returnScope=fieldRoot.host?fieldRoot:returnField.closest('dialog')||document.querySelector('#student-learning-board');
     const identity=[...returnField.attributes].filter(a=>a.name.startsWith('data-')||a.name==='name'||a.name==='id');
     returnSelector=identity.length?returnField.localName+identity.map(a=>'['+CSS.escape(a.name)+'="'+CSS.escape(a.value)+'"]').join(''):'';
     try {selection=[returnField.selectionStart,returnField.selectionEnd,returnField.selectionDirection];} catch {selection=null;}
@@ -53,7 +54,10 @@
       maximize(!!size.full);
     } catch {maximize(false);}
     panel.showModal();panel.querySelector('[data-return]').focus({preventScroll:true});
-    if(editor || pending)return;
+    loadEditor(id);
+  }
+  function loadEditor(id){
+    if(editor||pending)return;
     const ticket=++sequence;
     const mount=document.createElement('div');mount.className='teaching-host';host.replaceChildren(mount);
     pending=(async()=>{
@@ -66,7 +70,7 @@
         if(ticket!==sequence)return;
         mount.replaceChildren();const message=document.createElement('p');message.setAttribute('role','alert');
         message.textContent=e.message;const retry=document.createElement('button');retry.textContent='Retry opening whiteboard';
-        retry.onclick=()=>{panel.close();open(button);};mount.append(message,retry);
+        retry.onclick=()=>loadEditor(id);mount.append(message,retry);
       } finally {if(ticket===sequence)pending=null;}
     })();
   }
@@ -75,7 +79,10 @@
       const p=host.querySelector('[data-wb-message]');if(p){p.hidden=false;p.textContent=e.message+' ';const b=document.createElement('button');b.textContent='Export recovery copy';b.onclick=()=>editor.exportTeaching();p.append(b);}return;
     }
     saveSize();panel.close();
-    if(!returnField?.isConnected && returnSelector)returnField=returnScope?.querySelector(returnSelector);
+    if(!returnField?.isConnected && returnSelector){
+      const scope=returnScope?.host&&!returnScope.host.isConnected?document.querySelector('#student-learning-board athlete-spreadsheet')?.shadowRoot:returnScope;
+      returnField=scope?.querySelector(returnSelector);
+    }
     if(returnField?.isConnected){
       returnField.focus({preventScroll:true});if(selection && typeof selection[0]==='number')try{returnField.setSelectionRange(...selection);}catch{}
     }

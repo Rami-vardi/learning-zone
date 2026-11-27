@@ -217,7 +217,7 @@ class AthleteSpreadsheet extends HTMLElement {
         api.applyWeekToSets(e.source);api.schedule();
       }
     });
-    if(key==='name')area.addEventListener('change',()=>{api.bindExerciseName(e.source,area.value);api.automaticRoles();area.value=e.name;box.dataset.copy=e.name;area.closest('tr').toggleAttribute('data-goal',e.goal);api.schedule();api.refreshWorkoutFilter();});
+    if(key==='name')area.addEventListener('change',()=>{api.bindExerciseName(e.source,area.value);api.automaticRoles();area.value=e.name;box.dataset.copy=e.name;area.closest('tr').toggleAttribute('data-goal',e.goal);api.schedule();api.refreshProgramNames();});
     if(!hasWeeks)return area;
     const warning=el('small','wp-warning',e.issue(key));warning.setAttribute('role','status');parent.append(warning);area.setAttribute('aria-invalid',String(!!e.issue(key)));
     area.dataset.weekId=e.id+'-'+key;area.setAttribute('role','combobox');area.setAttribute('aria-autocomplete','list');area.setAttribute('aria-expanded','false');area.spellcheck=false;
@@ -300,7 +300,9 @@ class AthleteSpreadsheet extends HTMLElement {
     const {d,whole}=details(id);
     api.pinExercise(whole?'w'+days[d].id:id);
   }
-  function render(){
+  function render(reflow=false){
+    const units=reflow?new Map([...stage.querySelectorAll('.wp-unit')].map(node=>[Number(node.dataset.workout),node])):null;
+    const focused=reflow?shadow.activeElement:null;
     sheetSessions.set(athlete,{picks});
     dismiss();placement.hidden=true;
     const shown=schedule.filter(d=>visible.has(d)),n=api.paired?2:Math.max(1,Math.min(columns,shown.length));
@@ -308,9 +310,10 @@ class AthleteSpreadsheet extends HTMLElement {
     stage.style.gridTemplateColumns='repeat('+n+','+(api.paired?'minmax(min(245px,82vw),1fr)':'minmax(0,1fr)')+')';
     if(!shown.length){stage.replaceChildren(el('p','wp-empty',schedule.length?'Choose a workout above.':'Add a day to start your program.'));return;}
     const stacks=Array.from({length:n},()=>el('div','wp-stack'));stage.replaceChildren(...stacks);
-    shown.forEach((d,i)=>{stacks[i%n].append(unit(d));
+    shown.forEach((d,i)=>{stacks[i%n].append(units?.get(d)||unit(d));
       if(workouts[d].length){let s=selected[d];if(!workouts[d].some(e=>e.id===s.id))s={id:workouts[d][0].id,key:'weeks',line:0};mark(d,s.id,s.key,s.line);}
     });
+    if(focused?.isConnected&&stage.contains(focused)&&shadow.activeElement!==focused)focused.focus({preventScroll:true});
   }
   function relocate(id,d,anchor=null,after=false){
     const source=details(id);if(source.whole){
@@ -323,7 +326,9 @@ class AthleteSpreadsheet extends HTMLElement {
     }
     athlete.days.splice(0,athlete.days.length,...schedule.map(index=>days[index]));
     workouts.forEach((list,index)=>{days[index].exercises=list.map(entry=>entry.source);});
-    api.schedule();api.refreshWorkoutFilter();
+    api.schedule();
+    if(!source.whole&&api.revealMovedExercise(days[d],id))return;
+    api.refreshWorkoutFilter();
     render();status(itemName(id)+' moved to '+dayName(source.whole?source.d:d));
   }
   function openPlacement(id){
@@ -415,7 +420,7 @@ class AthleteSpreadsheet extends HTMLElement {
   root.addEventListener('lostpointercapture',ev=>{if(drag&&ev.pointerId===drag.pointer)clearDrag();});
   root.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&drag)clearDrag();});
   root.addEventListener('click',ev=>{if(suppressClick&&ev.detail){suppressClick=false;ev.stopImmediatePropagation();ev.preventDefault();}},true);
-  function resize(){const w=root.clientWidth,n=w>=1000&&schedule.length===4?4:w>=1560?4:w>=1000?3:w>=650?2:1;if(n!==columns){columns=n;render();}}
+  function resize(){const w=root.clientWidth,n=w>=1000&&schedule.length===4?4:w>=1560?4:w>=1000?3:w>=650?2:1;if(n!==columns){columns=n;render(true);}}
   resize();this.observer=new ResizeObserver(resize);this.observer.observe(root);
 
   }

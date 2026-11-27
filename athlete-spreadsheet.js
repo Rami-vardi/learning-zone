@@ -104,28 +104,24 @@ class AthleteSpreadsheet extends HTMLElement {
   }
   mount(athlete,api){
     const shadow=this.attachShadow({mode:'open'});
-    shadow.innerHTML="<link rel=\"stylesheet\" href=\"athlete-sheet.css?v=alternatives4\"><div id=\"workout-sheet\">\n  <div class=\"wp-nav\"><div class=\"wp-switch\" role=\"group\" aria-label=\"Board layout\"><button type=\"button\" data-mode=\"cards\" aria-pressed=\"false\">Cards</button><button type=\"button\" data-mode=\"sheet\" aria-pressed=\"true\">Spreadsheet</button></div>\n  </div>\n  <div class=\"wp-filters\"><b><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 6h18M6 12h12M9 18h6\"/></svg>Show workouts</b><div data-filters role=\"group\" aria-label=\"Visible workouts\"></div><span class=\"wp-legend\">Goal exercise</span></div>\n  <div class=\"wp-comparebar\" data-tray><b><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"7\" height=\"16\" rx=\"2\"/><rect x=\"14\" y=\"4\" width=\"7\" height=\"16\" rx=\"2\"/></svg>Compare</b><span data-hint>Drop exercises or workouts here</span><div data-pins></div><button type=\"button\" data-open-compare hidden>View comparison</button></div>\n  <div data-placement hidden></div>\n  <div data-workouts></div>\n  <span class=\"wp-sr\" role=\"status\" aria-live=\"polite\" data-status></span>\n</div>\n";
+    shadow.innerHTML="<link rel=\"stylesheet\" href=\"athlete-sheet.css?v=program-layouts1\"><div id=\"workout-sheet\">\n  <div data-placement hidden></div>\n  <div data-workouts></div>\n  <span class=\"wp-sr\" role=\"status\" aria-live=\"polite\" data-status></span>\n</div>\n";
     const root=shadow.querySelector('#workout-sheet'),stage=root.querySelector('[data-workouts]');
+    const style=shadow.querySelector('link');if(!style.sheet){root.style.visibility='hidden';style.onload=style.onerror=()=>root.style.removeProperty('visibility');}
   const fields=['name','weeks','alternative'],heads=['Exercise','Sets × reps × load / RIR','Alternative progressions'];
   const days=athlete.days.slice();
   const schedule=days.map((_,index)=>index);
   const workouts=days.map(day=>day.exercises.map(exercise=>sheetExercise(exercise,api)));
   const saved=sheetSessions.get(athlete);
   const visible=new Set(schedule.filter(d=>api.includesWorkout(days[d])));
-  function saveSelection(){api.setWorkoutSelection(visible.size===schedule.length?null:[...visible].map(d=>days[d].id));}
-  const pins=new Set();
-  for(const item of saved?.pins||[]){
-    if(item.day!=null){const d=days.findIndex(day=>day.id===item.day);if(d>=0)pins.add('w'+d);}
-    else if(workouts.some(list=>list.some(e=>e.id===item.exercise)))pins.add(item.exercise);
-  }
-  const selected=workouts.map(list=>({id:list[0]?.id||'',key:'weeks',line:0}));
+  const picks=new Map(saved?.picks||[]);
+  const selected=workouts.map((list,d)=>picks.get(days[d].id)||{id:list[0]?.id||'',key:'weeks',line:0});
   const weeklyField=k=>k==='weeks'||k==='alternative';
   const workoutName=d=>days[d].name||'Workout '+(d+1);
   const dayName=d=>'Day '+(schedule.indexOf(d)+1);
   const locate=id=>workouts.findIndex(list=>list.some(e=>e.id===id));
   const details=id=>id.startsWith('w')?{d:Number(id.slice(1)),whole:true}:{d:locate(id),whole:false};
   function itemName(id){const {d,whole}=details(id);return whole?workoutName(d):workouts[d].find(e=>e.id===id).name;}
-  let columns=0,mode=saved?.mode||'sheet',comparing=!!(saved?.comparing&&pins.size),openMenu=null,drag=null;
+  let columns=0,openMenu=null,drag=null;
   const placement=root.querySelector('[data-placement]');
   function status(msg){root.querySelector('[data-status]').textContent=msg;}
   function el(tag,cls,text){const node=document.createElement(tag);if(cls)node.className=cls;if(text!=null)node.textContent=text;return node;}
@@ -160,7 +156,7 @@ class AthleteSpreadsheet extends HTMLElement {
     const part=stage.querySelector('[data-workout="'+d+'"]'),area=fieldFor(id,key);
     if(!part||!area)return;
     const lines=linesOf(area.value);line=Math.max(0,Math.min(line,lines.length-1));
-    selected[d]={id,key,line};
+    selected[d]={id,key,line};picks.set(days[d].id,selected[d]);
     part.querySelector('td[data-picked]')?.removeAttribute('data-picked');
     area.closest('td').dataset.picked='';
     const num=numberOf(lines[line]),track=key==='alternative'?(area.closest('td').querySelector('select')?.selectedOptions[0]?.textContent||'Alternative'):'Prescription';
@@ -214,14 +210,14 @@ class AthleteSpreadsheet extends HTMLElement {
         const issue=e.issue(key);
         area.setAttribute('aria-invalid',String(!!issue));
         warning.textContent=issue;
-      }else updateTray();
+      }
     });
     if(key==='weeks')area.addEventListener('change',()=>{
       if(window.LZProgression.forExercise(e.source).rows[0].planned!==initialWeek){
         api.applyWeekToSets(e.source);api.schedule();
       }
     });
-    if(key==='name')area.addEventListener('change',()=>{api.bindExerciseName(e.source,area.value);api.automaticRoles();area.value=e.name;box.dataset.copy=e.name;area.closest('tr').toggleAttribute('data-goal',e.goal);api.schedule();updateTray();});
+    if(key==='name')area.addEventListener('change',()=>{api.bindExerciseName(e.source,area.value);api.automaticRoles();area.value=e.name;box.dataset.copy=e.name;area.closest('tr').toggleAttribute('data-goal',e.goal);api.schedule();api.refreshWorkoutFilter();});
     if(!hasWeeks)return area;
     const warning=el('small','wp-warning',e.issue(key));warning.setAttribute('role','status');parent.append(warning);area.setAttribute('aria-invalid',String(!!e.issue(key)));
     area.dataset.weekId=e.id+'-'+key;area.setAttribute('role','combobox');area.setAttribute('aria-autocomplete','list');area.setAttribute('aria-expanded','false');area.spellcheck=false;
@@ -281,77 +277,39 @@ class AthleteSpreadsheet extends HTMLElement {
   function unit(d){
     const part=el('section','wp-unit'),tools=el('div','wp-tools');part.dataset.workout=d;tools.dataset.destination=d;
     const h=el('h3','',workoutName(d)+' ');if(workoutName(d)!==dayName(d))h.append(el('span','',dayName(d)));
-    tools.append(grip('w'+d),h);part.append(tools);
+    tools.dataset.context=workouts[d].some(e=>api.pinState(days[d],e.source)==='match')?'match':api.pinState(days[d]);tools.append(grip('w'+d),h);part.append(tools);
     const addExercise=button('+ Exercise',()=>api.addExercise(days[d]));
     addExercise.classList.add('wp-add-exercise');addExercise.setAttribute('aria-label','Add exercise to '+workoutName(d));
     if(!workouts[d].length){part.append(addExercise);return part;}
-    if(mode==='cards'){
-      workouts[d].forEach(e=>{const card=el('div','wp-card'),name=el('div','wp-card-name');card.dataset.row=e.id;
-        if(e.goal)card.dataset.goal='';name.append(grip(e.id),document.createTextNode(e.name));card.append(name,el('p','',e.weeks),el('p','',e.alternativeId?window.LZProgression.trackName(e.alternatives,e.alternativeId)+'\n'+e.alternative:''));part.append(card);});part.append(addExercise);return part;
-    }
     const plus=button('+ Week',()=>weekAction(d,true)),minus=button('Remove week',()=>weekAction(d,false));
     plus.dataset.add='';minus.dataset.remove='';tools.append(el('span','wp-target'),plus,minus);
     const table=el('table');table.setAttribute('aria-label',workoutName(d)+' weekly progression');
     const cg=el('colgroup');[21,54,25].forEach(w=>{const c=el('col');c.style.width=w+'%';cg.append(c);});table.append(cg);
-    const head=table.createTHead().insertRow();heads.forEach(txt=>{const th=el('th','',txt);th.scope='col';head.append(th);});
-    const body=table.createTBody();workouts[d].forEach(e=>{const tr=body.insertRow();tr.dataset.row=e.id;if(e.goal)tr.dataset.goal='';
+    const head=table.createTHead().insertRow();heads.forEach((txt,i)=>{
+      const th=el('th');th.scope='col';th.setAttribute('aria-label',txt);
+      th.append(el('span','wp-wide-label',txt),el('span','wp-small-label',['Exercise','Weekly plan','Alternatives'][i]));
+      head.append(th);
+    });
+    const body=table.createTBody();workouts[d].forEach(e=>{const tr=body.insertRow();tr.dataset.row=e.id;tr.dataset.context=api.pinState(days[d],e.source);if(e.goal)tr.dataset.goal='';
       fields.forEach(key=>{const td=tr.insertCell();if(key==='name'){td.className='wp-name';const wrap=el('div','wp-name-wrap');wrap.append(grip(e.id));td.append(wrap);editor(d,e,key,wrap);}else if(key==='alternative'){
         alternativeCell(td,d,e);
       }else editor(d,e,key,td);});});
     part.append(table,addExercise);return part;
   }
-  function filterBar(){
-    const box=root.querySelector('[data-filters]');box.replaceChildren();
-    const preset=el('select');preset.setAttribute('aria-label','Show one or all workouts');preset.dataset.preset='';
-    const custom=el('option','','Custom selection');custom.value='custom';custom.disabled=true;preset.append(custom);
-    const all=el('option','','All workouts');all.value='all';preset.append(all);
-    for(const d of schedule){const only=el('option','',workoutName(d)+' only');only.value=String(d);preset.append(only);}
-    preset.value=visible.size===schedule.length?'all':visible.size===1?String([...visible][0]):'custom';
-    preset.addEventListener('change',()=>{visible.clear();if(preset.value==='all')schedule.forEach(d=>visible.add(d));else visible.add(Number(preset.value));
-      saveSelection();comparing=false;render();root.querySelector('[data-preset]').focus({preventScroll:true});});
-    box.append(preset);
-    schedule.forEach(d=>{const b=button(workoutName(d),()=>{if(visible.has(d))visible.delete(d);else visible.add(d);saveSelection();comparing=false;render();root.querySelector('[data-filter="'+d+'"]').focus({preventScroll:true});});b.dataset.filter=d;
-      b.dataset.destination=d;b.setAttribute('aria-pressed',String(visible.has(d)));b.setAttribute('aria-label',workoutName(d)+', '+dayName(d));
-      box.append(b);});
-  }
-  function updateTray(){
-    const chipbox=root.querySelector('[data-pins]'),toggle=root.querySelector('[data-open-compare]');
-    root.querySelector('[data-hint]').hidden=!!pins.size;
-    chipbox.replaceChildren();for(const id of pins){const chip=button(itemName(id)+' ×',()=>{pins.delete(id);if(!pins.size)comparing=false;render();});
-      chip.setAttribute('aria-label','Remove '+itemName(id)+' from comparison');chipbox.append(chip);}
-    toggle.hidden=!pins.size;toggle.textContent=comparing?'Back to board':'View comparison';
-  }
-  function pin(id){pins.add(id);comparing=false;render();status(itemName(id)+' added to comparison');}
-  function comparison(){
-    const comp=el('div','wp-comparison');comp.setAttribute('aria-label','Comparison');
-    for(const id of pins){const {d,whole}=details(id),wrap=el('section','wp-compare-item');
-      wrap.append(el('h3','',whole?workoutName(d)+' · '+dayName(d):dayName(d)+' · '+workoutName(d)));
-      const items=whole?workouts[d]:workouts[d].filter(e=>e.id===id);
-      for(const e of items){const c=el('div','wp-comp-ex');if(e.goal)c.dataset.goal='';c.append(el('strong','',e.name));
-        c.append(el('small','',heads[1]),el('p','',e.weeks));
-        const progress=window.LZProgression.forExercise(e.source);
-        for(const track of progress.alternatives){
-          const text=Array.from({length:track.weeks},(_,i)=>'Week '+(i+1)+': '+track.rows[i].planned).join('\n');
-          c.append(el('small','',window.LZProgression.trackName(progress.alternatives,track.id)),el('p','',text));
-        }
-        wrap.append(c);}
-      if(!items.length)wrap.append(el('p','wp-empty','No exercises'));comp.append(wrap);
-    }return comp;
+  function pin(id){
+    const {d,whole}=details(id);
+    api.pinExercise(whole?'w'+days[d].id:id);
   }
   function render(){
-    sheetSessions.set(athlete,{
-      mode,comparing,
-      pins:[...pins].map(id=>id.startsWith('w')?{day:days[Number(id.slice(1))].id}:{exercise:id})
-    });
-    dismiss();placement.hidden=true;filterBar();updateTray();
-    const shown=schedule.filter(d=>visible.has(d)),n=Math.max(1,Math.min(columns,shown.length));
-    stage.style.gridTemplateColumns='repeat('+(comparing?1:n)+',minmax(0,1fr))';
-    root.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(!comparing&&mode===b.dataset.mode)));
-    if(comparing){stage.replaceChildren(comparison());return;}
+    sheetSessions.set(athlete,{picks});
+    dismiss();placement.hidden=true;
+    const shown=schedule.filter(d=>visible.has(d)),n=api.paired?2:Math.max(1,Math.min(columns,shown.length));
+    stage.classList.toggle('pair-spreadsheet',api.paired);
+    stage.style.gridTemplateColumns='repeat('+n+','+(api.paired?'minmax(min(245px,82vw),1fr)':'minmax(0,1fr)')+')';
     if(!shown.length){stage.replaceChildren(el('p','wp-empty',schedule.length?'Choose a workout above.':'Add a day to start your program.'));return;}
     const stacks=Array.from({length:n},()=>el('div','wp-stack'));stage.replaceChildren(...stacks);
     shown.forEach((d,i)=>{stacks[i%n].append(unit(d));
-      if(workouts[d].length&&mode==='sheet'){let s=selected[d];if(!workouts[d].some(e=>e.id===s.id))s={id:workouts[d][0].id,key:'weeks',line:0};mark(d,s.id,s.key,s.line);}
+      if(workouts[d].length){let s=selected[d];if(!workouts[d].some(e=>e.id===s.id))s={id:workouts[d][0].id,key:'weeks',line:0};mark(d,s.id,s.key,s.line);}
     });
   }
   function relocate(id,d,anchor=null,after=false){
@@ -365,7 +323,7 @@ class AthleteSpreadsheet extends HTMLElement {
     }
     athlete.days.splice(0,athlete.days.length,...schedule.map(index=>days[index]));
     workouts.forEach((list,index)=>{days[index].exercises=list.map(entry=>entry.source);});
-    api.schedule();
+    api.schedule();api.refreshWorkoutFilter();
     render();status(itemName(id)+' moved to '+dayName(source.whole?source.d:d));
   }
   function openPlacement(id){
@@ -393,13 +351,20 @@ class AthleteSpreadsheet extends HTMLElement {
       placement.append(button('Edit progression',()=>{done();api.openProgression(exercise.id);}),
         button('Add alternative progression',()=>{done();api.openProgression(exercise.id,true);}));
     }
-    if(whole)placement.append(button('Show only this workout',()=>{visible.clear();visible.add(d);saveSelection();render();done();}));
+    if(whole)placement.append(button('Show only this workout',()=>api.isolateWorkout(days[d])));
     placement.append(button('Cancel',done));placement.onkeydown=ev=>{if(ev.key==='Escape'){ev.preventDefault();done();}};
     select.focus();
   }
   function destination(x,y,id){
+    const filter=document.elementFromPoint(x,y)?.closest('.workout-filter');
+    if(filter?.matches('.compare-picker'))return {node:filter,type:'compare'};
+    if(filter){
+      filter.open=true;
+      const label=document.elementFromPoint(x,y)?.closest('[data-workout-destination]');
+      const d=label?days.findIndex(day=>day.id===Number(label.dataset.workoutDestination)):-1;
+      return d<0||(details(id).whole&&details(id).d===d)?null:{node:label,type:'move',d};
+    }
     const target=shadow.elementFromPoint(x,y);if(!target||!root.contains(target))return null;
-    if(target.closest('[data-tray]'))return {node:root.querySelector('[data-tray]'),type:'compare'};
     const dest=target.closest('[data-destination],[data-workout]');if(!dest)return null;
     const d=Number(dest.dataset.destination??dest.dataset.workout),source=details(id);
     if(source.whole&&source.d===d)return null;
@@ -412,10 +377,12 @@ class AthleteSpreadsheet extends HTMLElement {
   }
   function clearDrag(){
     root.querySelector('[data-drop]')?.removeAttribute('data-drop');
+    document.querySelector('.athlete-nav [data-drop]')?.removeAttribute('data-drop');
     if(drag){const last=drag;drag=null;cancelAnimationFrame(last.frame);delete last.handle.dataset.dragActive;if(last.handle.hasPointerCapture(last.pointer))last.handle.releasePointerCapture(last.pointer);}
   }
   function markDrop(){
     root.querySelector('[data-drop]')?.removeAttribute('data-drop');
+    document.querySelector('.athlete-nav [data-drop]')?.removeAttribute('data-drop');
     const dest=destination(drag.clientX,drag.clientY,drag.id);
     if(dest)dest.node.dataset.drop=dest.anchor?(dest.after?'after':'before'):'target';
   }
@@ -448,9 +415,7 @@ class AthleteSpreadsheet extends HTMLElement {
   root.addEventListener('lostpointercapture',ev=>{if(drag&&ev.pointerId===drag.pointer)clearDrag();});
   root.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&drag)clearDrag();});
   root.addEventListener('click',ev=>{if(suppressClick&&ev.detail){suppressClick=false;ev.stopImmediatePropagation();ev.preventDefault();}},true);
-  root.querySelector('[data-open-compare]').addEventListener('click',()=>{comparing=!comparing;render();});
-  root.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;comparing=false;render();}));
-  function resize(){const w=root.clientWidth,n=w>=1560?4:w>=1220?3:w>=700?2:1;if(n!==columns){columns=n;render();}}
+  function resize(){const w=root.clientWidth,n=w>=1000&&schedule.length===4?4:w>=1560?4:w>=1000?3:w>=650?2:1;if(n!==columns){columns=n;render();}}
   resize();this.observer=new ResizeObserver(resize);this.observer.observe(root);
 
   }

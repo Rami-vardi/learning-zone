@@ -105,3 +105,18 @@
 #workout-sheet :is(.wp-filters,.wp-comparebar)>b{display:inline-flex;gap:5px;align-items:center}
 #workout-sheet .wp-add-exercise{border-color:transparent;background:transparent;color:var(--focus);font-weight:600}
 #workout-sheet .wp-comparebar svg,#workout-sheet .wp-filters svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#workout-sheet [data-context=muted]{opacity:.5}
+#workout-sheet [data-context=muted]:focus-within{opacity:1}
+#workout-sheet tr[data-context=match] .wp-name{box-shadow:inset 3px 0 var(--focus)}
+#workout-sheet .pair-spreadsheet{overflow-x:auto;align-items:start}
+#workout-sheet .wp-unit{container:sheetday / inline-size}
+#workout-sheet .wp-small-label{display:none}
+@container sheetday (max-width:325px){
+ #workout-sheet .wp-wide-label{display:none}
+ #workout-sheet .wp-small-label{display:inline}
+ #workout-sheet col:first-child{width:28%!important}
+ #workout-sheet col:nth-child(2){width:45%!important}
+ #workout-sheet col:nth-child(3){width:27%!important}
+ #workout-sheet .wp-tools .wp-target{display:none}
+ #workout-sheet .wp-grip{min-width:16px;padding-inline:1px}
+}

@@ -209,7 +209,7 @@ html:has(#student-learning-board:not([hidden]) .athlete-program){--lz-fit-scale:
 #student-learning-board .athlete-program table.goal-comparison>thead>tr>th:first-child{width:80px}
 #student-learning-board .athlete-program table.goal-comparison>thead>tr>th{padding:4px 7px;background:var(--card-top);font-size:13px}
 #student-learning-board .athlete-program table.goal-comparison>tbody>tr>td{padding:1px 2px;font-size:12px;border-color:var(--card-border);vertical-align:top}
-#student-learning-board .athlete-program table.goal-comparison>tbody>tr>td:first-child{padding:6px;background:var(--well);font-weight:600}
+#student-learning-board .athlete-program table.goal-comparison>tbody>tr>th:first-child{padding:6px;background:var(--well);font-weight:600}
 #student-learning-board .athlete-program .goal-progressions {display:flex;flex-wrap:wrap;align-items:flex-start;gap:7px}
 #student-learning-board .athlete-program .goal-progression-card{box-sizing:border-box;flex:1 1 min(100%,275px);padding:7px;margin:0;min-width:0}
 #student-learning-board .athlete-program .goal-progression-card:not([data-tracks="1"]){flex-basis:min(100%,740px)}
@@ -301,3 +301,67 @@ html[data-lz-theme-ready] #student-learning-board .progression-dialog .progressi
   #student-learning-board .progression-dialog .progression-config .weeks-label {gap:4px}
   #student-learning-board .progression-dialog .progression-actions {gap:4px}
 }
+
+/* Shared layout, view and workout controls */
+#student-learning-board .athlete-program .athlete-nav{align-items:center;gap:4px 7px}
+#student-learning-board .athlete-program :is(.athlete-layout-tabs,.athlete-view-tabs){display:inline-flex;align-items:center;gap:2px}
+#student-learning-board .athlete-program .athlete-layout-tabs{padding:2px;border:1px solid var(--card-border);border-radius:9px;background:var(--well)}
+#student-learning-board .athlete-program .athlete-layout-tabs button{background:transparent;color:var(--nav-ink);border:0;border-radius:6px;padding-inline:8px;font-weight:650}
+#student-learning-board .athlete-program .athlete-layout-tabs button[aria-selected=true]{background:var(--lz-blue);color:white;box-shadow:0 1px 3px #12274238}
+#student-learning-board .athlete-program .athlete-view-tabs button{border:1px solid transparent;background:transparent;color:var(--lz-sub);border-radius:6px}
+#student-learning-board .athlete-program .athlete-view-tabs button[aria-selected=true]{color:var(--lz-blue);background:var(--lz-soft);border-color:var(--card-border)}
+#student-learning-board .athlete-program .athlete-nav select{width:auto;max-width:100%;border-radius:6px}
+#student-learning-board .athlete-program .athlete-nav [data-program-view]{display:none}
+#student-learning-board .athlete-program .workout-filter{position:relative;margin:0;padding:0;background:transparent;border:0;font-size:13px;min-width:0}
+#student-learning-board .athlete-program .workout-filter summary{display:flex;gap:4px;align-items:center;max-width:18ch;cursor:pointer;min-height:28px;line-height:1.2;padding:2px 7px;box-sizing:border-box;border-radius:6px;background:var(--lz-paper);border:1px solid var(--card-border);color:var(--nav-ink)}
+#student-learning-board .athlete-program .workout-filter summary svg{height:14px;width:14px;flex:none}
+#student-learning-board .athlete-program .workout-filter summary span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#student-learning-board .athlete-program .workout-filter summary::-webkit-details-marker{display:none}
+#student-learning-board .athlete-program .workout-options{position:absolute;z-index:8;top:calc(100% + 3px);left:0;width:max-content;min-width:155px;max-width:min(240px,75vw);max-height:55vh;overflow:auto;box-shadow:0 4px 16px #11294229;border:1px solid var(--card-border);border-radius:8px;padding:5px;background:var(--lz-paper)}
+#student-learning-board .athlete-program .workout-options label{display:flex;align-items:center;gap:5px;padding:3px 4px;margin:0;color:var(--nav-ink);overflow-wrap:anywhere}
+#student-learning-board .athlete-program .workout-options label:first-child{display:grid;font-weight:650;padding-bottom:6px}
+#student-learning-board .athlete-program .workout-options input{width:15px;height:15px;min-height:0;margin:0}
+#student-learning-board .athlete-program .workout-options [data-drop]{outline:2px solid var(--lz-blue);outline-offset:-2px}
+#student-learning-board .athlete-program .workout-options select{width:100%}
+#student-learning-board .athlete-program .comparison-sheet{min-width:0;max-width:100%;margin:0 0 4px;background:var(--lz-paper)}
+#student-learning-board .athlete-program .comparison-sheet table{width:100%;max-width:none;min-width:0;margin:0;table-layout:fixed;border-collapse:collapse}
+#student-learning-board .athlete-program .comparison-sheet :is(td,th){min-width:0;padding:3px 5px;border:1px solid var(--card-border);background:var(--lz-paper);font-size:13px;line-height:1.3;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+#student-learning-board .athlete-program .comparison-sheet th{color:var(--nav-ink);background:var(--well);font-weight:600}
+#student-learning-board .athlete-program .comparison-sheet .grid-week{width:3.15em}
+#student-learning-board .athlete-program .comparison-sheet td:has(textarea){padding:0}
+#student-learning-board .athlete-program .comparison-sheet .grid-cell{display:grid;min-width:0;margin:0;align-items:stretch}
+#student-learning-board .athlete-program .grid-cell::after,#student-learning-board .athlete-program .grid-cell textarea{grid-area:1/1;min-width:0;margin:0;padding:4px 5px;box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.35}
+#student-learning-board .athlete-program .grid-cell::after{content:attr(data-copy) " ";visibility:hidden}
+#student-learning-board .athlete-program .grid-cell textarea{width:100%;max-width:100%;height:100%;min-height:26px;border:0;border-radius:0;background:transparent;color:var(--lz-ink);resize:none;overflow:hidden}
+#student-learning-board .athlete-program .grid-cell textarea:focus{outline:2px solid var(--lz-blue);outline-offset:-2px}
+#student-learning-board .athlete-program .sheet-exercise-name{display:flex;align-items:center;gap:5px;padding:2px 5px;background:var(--well);color:var(--nav-ink);border:1px solid var(--card-border);border-bottom:0;font-size:14px}
+#student-learning-board .athlete-program .sheet-exercise-name button{min-height:24px;margin-left:auto;padding:2px 5px;background:transparent;color:inherit;border:0}
+#student-learning-board .athlete-program .sheet-exercise-name[data-goal=true],#student-learning-board [data-program-layout=sheet] .goal-progression-card[data-goal-role=true] .goal-progress-title h3{background:#176b47;color:white}
+#student-learning-board .athlete-program .comparison-sheet :is(.sheet-actual,.sheet-track-title th){background:var(--lz-soft)}
+@container athlete (max-width:860px){
+ #student-learning-board .athlete-program .athlete-nav .athlete-view-tabs{display:none}
+ #student-learning-board .athlete-program .athlete-nav [data-program-view]{display:block}
+}
+@container athlete (max-width:450px){
+ #student-learning-board .athlete-program .athlete-nav{gap:3px}
+ #student-learning-board .athlete-program .athlete-layout-tabs button{padding-inline:5px}
+ #student-learning-board .athlete-program .athlete-nav [data-action=add-day]{margin-left:0}
+}
+#student-learning-board .athlete-program [data-context=muted],
+#student-learning-board .athlete-program [data-day-context=muted] :is(.day-title,.day-tools){opacity:.5}
+#student-learning-board .athlete-program [data-context=muted]:focus-within{opacity:1}
+#student-learning-board .athlete-program :is(.mirror-entry,.comparison-sheet,.day-body>.exercise)[data-context=match]{box-shadow:inset 3px 0 var(--lz-blue)}
+#student-learning-board .athlete-program .compare-picker[data-drop]{outline:2px solid var(--lz-blue);border-radius:6px}
+#student-learning-board .athlete-program .compare-picker .compare-day-choice{padding-block:2px}
+#student-learning-board .athlete-program .compare-picker .compare-day-choice+.compare-day-choice{border-top:1px solid var(--card-border)}
+#student-learning-board .athlete-program .compare-picker .compare-day-choice label{display:flex;padding:2px 5px 2px 15px}
+#student-learning-board .athlete-program .compare-picker .compare-day-choice label:first-child{padding-left:3px;font-weight:650}
+@container athlete (min-width:1000px){
+ #student-learning-board .athlete-program .athlete-training[data-day-count="4"] .day-grid:has(>.day){display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+#student-learning-board .athlete-program .athlete-training:not([data-pair=""]) .day-grid{display:grid;grid-template-columns:repeat(2,minmax(min(245px,82vw),1fr));width:100%;max-width:none}
+#student-learning-board .athlete-program .athlete-training:not([data-pair=""]) :is(.workout-scroll,.mirror-block){max-width:100%;overflow-x:auto}
+#student-learning-board .athlete-program .comparison-sheet table th[scope=col]:first-child{width:auto;white-space:nowrap}
+#student-learning-board .athlete-program .comparison-sheet table .grid-week{width:48px}
+#student-learning-board .athlete-program .compare-picker .workout-options{left:auto;right:0}
+#student-learning-board .athlete-program .compare-picker label input:checked{accent-color:var(--lz-blue)}

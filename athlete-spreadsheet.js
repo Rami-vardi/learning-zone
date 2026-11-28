@@ -214,9 +214,21 @@ class AthleteSpreadsheet extends HTMLElement {
   const model=window.LZProgression;
   const entriesById=new Map(workouts.flat().map(e=>[e.id,e]));
   const exerciseById=id=>entriesById.get(id);
-  function focusTrack(e,key,i=0){
+  function applyWeekFilter(){
+    const week=api.week;
+    for(const cell of stage.querySelectorAll('.wp-track')){
+      const lines=cell.querySelectorAll('.wp-week-line');
+      for(const line of lines)line.hidden=!!week&&Number(line.dataset.index)!==week-1;
+      cell.querySelector('.wp-missing-week')?.remove();
+      if(week&&lines.length&&week>lines.length)cell.append(el('small','wp-missing-week','No Week '+week));
+    }
+  }
+  function focusTrack(e,key,i){
     const cell=stage.querySelector('[data-track-ex="'+e.id+'"][data-track-key="'+key+'"]');
-    (cell?.querySelector('[data-index="'+i+'"] textarea')||cell?.querySelector('textarea'))?.focus({preventScroll:true});
+    if(!cell)return;
+    const target=i??Math.min(Math.max(0,api.week-1),Math.max(0,cell.querySelectorAll('.wp-week-line').length-1));
+    if(api.week&&api.week!==target+1){api.focusWeek(target+1);applyWeekFilter();}
+    (cell.querySelector('[data-index="'+target+'"] textarea')||cell.querySelector('textarea'))?.focus({preventScroll:true});
   }
   function saveTrack(e,key){
     if(e.source.sheetDrafts)delete e.source.sheetDrafts[e.tag(key)];
@@ -564,7 +576,7 @@ class AthleteSpreadsheet extends HTMLElement {
         alternativeCell(td,e);
       }else{
         drawWeeks(e,key,td);
-        const sets=button('Set targets',()=>setTargets(e));sets.classList.add('wp-sets');td.append(sets);
+        const sets=button('Set targets',()=>setTargets(e,Math.min(e.track('weeks').weeks-1,Math.max(0,api.week-1))));sets.classList.add('wp-sets');td.append(sets);
       }});});
     part.append(table,addExercise);return part;
   }
@@ -596,7 +608,8 @@ class AthleteSpreadsheet extends HTMLElement {
       if(days[d].sheetWidths)applyWidths(part,days[d].sheetWidths);
       return part;
     }));
-    stage.scrollLeft=left;
+    if(shown.length===1)stage.firstElementChild.style.minWidth='100%';
+    applyWeekFilter();stage.scrollLeft=left;
   }
   function relocate(id,d,anchor=null,after=false,swap=false){
     const source=details(id);if(source.whole){

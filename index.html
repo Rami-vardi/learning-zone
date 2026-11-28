@@ -2112,7 +2112,7 @@ async function open(){
 window.LZMigration={preview,run,open};
 })();
 </script>
-<script src="athlete-spreadsheet.js?v=sheet-views2"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
+<script src="athlete-spreadsheet.js?v=sheet-focus1"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
 'use strict';
 const formats = ['fixed', 'range', 'top'];
 const text = value => String(value ?? '');
@@ -2334,7 +2334,11 @@ function backup(before){
 function clearUndo(){undo=null;undoButton.hidden=true}
 function undoDeletion(){if(!undo||undo.owner!==owner||undo.id!==current?.id)return;const additions=new Map();for(const r of undo.removed.filter(r=>r.type==='set')){const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(e&&!e.setRows.some(x=>x.id===r.item.id))additions.set(e,(additions.get(e)||0)+1)}if([...additions].some(([e,n])=>e.setRows.length+n>20)){say('Undo would exceed 20 sets. Your current targets are unchanged; this deletion cannot be undone at the current set count.');return}for(const r of undo.removed){let list;if(r.type==='goal')list=current.goals;else if(r.type==='day')list=current.days;else if(r.type==='exercise')list=current.days.find(d=>d.id===r.parent)?.exercises;else{const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(!e)continue;list=e.setRows;if(!list.some(x=>x.id===r.item.id)){list.splice(Math.min(r.index,list.length),0,r.item);e.sets=String(list.length);publishSetEdit(e)}continue}if(list&&!list.some(x=>x.id===r.item.id))list.splice(Math.min(r.index,list.length),0,r.item)}clearUndo();automaticRoles();render();schedule();say('Deletion undone. Subsequent edits were kept.')}
 const clone=value=>JSON.parse(JSON.stringify(value));
-function resetComparison(){sheetGrouped=false;sheetTarget=null;layout='sheet';view='workouts';comparisonWeek=0;pairType='';openMirrorWeeks.clear();collapsedGoalEntries.clear();comparisonPins.clear();goalsOpen=false;mirrorDayFilter=mirrorExerciseFilter='all';compareGoal='all';compareRoles=new Set(['Goal','Primary','Secondary','Tertiary','Choose']);selectedWorkouts=null;clearUndo()}
+function defaultSpreadsheet(){
+ selectProgramLayout('sheet');sheetGrouped=false;pairType='';selectedWorkouts=null;comparisonWeek=0;
+ highlightedExercises.clear();comparisonPins.clear();mirrorDayFilter=mirrorExerciseFilter=compareGoal='all';compareRoles=new Set(mirrorRoles);
+}
+function resetComparison(){defaultSpreadsheet();collapsedGoalEntries.clear();goalsOpen=false;clearUndo()}
 /* Helpers run inside the existing student workspace closure. */
 let mirrorDayFilter='all',mirrorExerciseFilter='all',goalDragged=null;
 function bindExerciseName(target,value){
@@ -2392,16 +2396,17 @@ function updateWorkoutType(day,type){
  const host=screen.querySelector('athlete-spreadsheet')?.shadowRoot||screen;
  host.querySelector(`[data-day-type="${day.id}"]`)?.focus({preventScroll:true});
 }
-function mirror(){
- const days=visibleDays();
- if(!days.length)return '<p>No visible workouts.</p>';
- return `<div class="mirror-block"><div class="day-grid sheet-day-overview">${days.map(d=>`<article class="mirror-workout"><h3 class="label-icon" data-context="${highlightState(d)}">${icon('dumbbell')}${esc(d.name)} ${workoutTypeControl(d)}</h3>${d.exercises.map(e=>miniExercise(e,highlightState(d,e))).join('')||'<p>No exercises yet.</p>'}</article>`).join('')}</div></div>`;
-}
 let sheetGrouped=false,sheetTarget=null;
-const openMirrorWeeks=new Set(),comparisonPins=new Set(),collapsedGoalEntries=new Set();
+const highlightedExercises=new Set(),comparisonPins=new Set(),collapsedGoalEntries=new Set();
 let goalsOpen=false;
+function highlightKey(e){return exerciseIdentity(e)||'entry:'+e.id;}
+function pruneHighlightedExercises(){
+ if(!highlightedExercises.size)return;
+ const keys=new Set(allEntries().map(({e})=>highlightKey(e)));
+ for(const key of highlightedExercises)if(!keys.has(key))highlightedExercises.delete(key);
+}
 function pinMatch(d,e){
- return !comparisonPins.size||comparisonPins.has('w'+d.id)||!!e&&comparisonPins.has('e'+e.id);
+ return (!comparisonPins.size&&!highlightedExercises.size)||comparisonPins.has('w'+d.id)||!!e&&(comparisonPins.has('e'+e.id)||highlightedExercises.has(highlightKey(e)));
 }
 function contextState(active,match){return active?(match?'match':'muted'):'';}
 function hasWorkoutPair(type){return current.days.length===4&&current.days.filter(d=>d.type===type).length===2;}
@@ -2417,7 +2422,7 @@ function visibleDays(){
  return groupedDays()?days.sort((a,b)=>Number(b.type==='Upper')-Number(a.type==='Upper')):days;
 }
 function hasHighlights(){
- return comparisonPins.size>0||mirrorDayFilter!=='all'||mirrorExerciseFilter!=='all'||compareGoal!=='all'||compareRoles.size!==mirrorRoles.length;
+ return highlightedExercises.size>0||comparisonPins.size>0||mirrorDayFilter!=='all'||mirrorExerciseFilter!=='all'||compareGoal!=='all'||compareRoles.size!==mirrorRoles.length;
 }
 function highlightState(d,e,pattern){
  if(!hasHighlights())return '';
@@ -2425,10 +2430,23 @@ function highlightState(d,e,pattern){
  const match=matchesDay(d)&&pinMatch(d,e)&&(e?matchesBody(e)&&compareRoles.has(e.role)&&(compareGoal==='all'||(pattern?compareGoal===pattern:e.patterns?.includes(compareGoal))):mirrorExerciseFilter==='all'&&compareGoal==='all'&&compareRoles.size===mirrorRoles.length);
  return contextState(true,match);
 }
+function exerciseChoices(){
+ const groups=new Map();
+ for(const d of visibleDays())for(const e of d.exercises){
+   const key=highlightKey(e);
+   if(!groups.has(key))groups.set(key,{name:e.name||'Unnamed exercise',exercises:[]});
+   groups.get(key).exercises.push(e);
+ }
+ return [...groups].sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([key,{name,exercises}])=>{
+   const marked=exercises.filter(e=>comparisonPins.has('e'+e.id)).length;
+   const checked=highlightedExercises.has(key)||marked===exercises.length;
+   return `<label><input type="checkbox" data-focus-exercise="${esc(key)}" ${checked?'checked':marked?'data-partial':''}>${esc(name)}</label>`;
+ }).join('')||'<p>No exercises in the visible days.</p>';
+}
 function comparisonChoices(){
  return visibleDays().map(d=>{
    const choice=(key,name)=>`<label><input type="checkbox" data-compare-pin="${key}" ${comparisonPins.has(key)?'checked':''}>${esc(name)}</label>`;
-   return `<div class="compare-day-choice">${choice('w'+d.id,d.name||'Unnamed workout')}${d.exercises.map(e=>choice('e'+e.id,e.name||'Unnamed exercise')).join('')}</div>`;
+   return `<div class="compare-day-choice">${choice('w'+d.id,d.name||'Unnamed workout')}${view==='exercise'?'':d.exercises.map(e=>choice('e'+e.id,e.name||'Unnamed exercise')).join('')}</div>`;
  }).join('');
 }
 function setComparisonPin(key,checked,keepOpen=false){
@@ -2441,13 +2459,14 @@ function setComparisonPin(key,checked,keepOpen=false){
 function workoutSelectionLabel(){
  if(pairType)return 'Days · '+pairType;
  if(groupedDays())return 'Days · Grouped';
+ if(selectedWorkouts?.size===1)return current.days.find(workoutVisible)?.name||'Days · 1';
  return selectedWorkouts?'Days · '+current.days.filter(workoutVisible).length:'Days · All';
 }
 function workoutFilter(){
  const types=['Upper','Lower'].filter(hasWorkoutPair);
- const value=selectedWorkouts?'custom':pairType|| (groupedDays()?'group':'');
- const presets=[['','Program order'],...(types.length===2?[['group','Upper together, Lower together']]:[]),...types.map(type=>[type,type+' only'])];
- return `<details class="workout-filter workout-picker"><summary aria-label="Days" title="Visible days and order">${icon('columns-2')}<span>${esc(workoutSelectionLabel())}</span></summary><div class="workout-options"><label>Layout<select data-sheet-order>${presets.map(([id,label])=>`<option value="${id}" ${id===value?'selected':''}>${label}</option>`).join('')}${selectedWorkouts?'<option selected disabled value="custom">Selected days</option>':''}</select></label>${current.days.map(d=>`<label data-workout-destination="${d.id}"><input type="checkbox" data-workout-pick="${d.id}" ${workoutVisible(d)?'checked':''}>${esc(d.name||'Unnamed workout')}</label>`).join('')}</div></details>`;
+ const value=selectedWorkouts?.size===1?'day:'+Array.from(selectedWorkouts)[0]:selectedWorkouts?'custom':pairType||(groupedDays()?'group':'');
+ const presets=[['','Program order'],...(types.length===2?[['group','Upper together, Lower together']]:[]),...types.map(type=>[type,type+' only']),...current.days.map(d=>['day:'+d.id,(d.name||'Unnamed workout')+' only'])];
+ return `<details class="workout-filter workout-picker"><summary aria-label="Days" title="Visible days and order">${icon('columns-2')}<span>${esc(workoutSelectionLabel())}</span></summary><div class="workout-options"><label>Layout<select data-sheet-order>${presets.map(([id,label])=>`<option value="${id}" ${id===value?'selected':''}>${esc(label)}</option>`).join('')}${value==='custom'?'<option selected disabled value="custom">Selected days</option>':''}</select></label>${current.days.map(d=>`<label data-workout-destination="${d.id}"><input type="checkbox" data-workout-pick="${d.id}" ${workoutVisible(d)?'checked':''}>${esc(d.name||'Unnamed workout')}</label>`).join('')}</div></details>`;
 }
 function weekFilter(){
  const last=allEntries().reduce((n,{e})=>Math.max(n,e.progression?.weeks||1,...(e.progression?.alternatives||[]).map(a=>a.weeks)),1);
@@ -2458,23 +2477,25 @@ const mirrorRoles=['Goal','Primary','Secondary','Tertiary','Choose'];
 function mirrorFilterMenu(){
  const patterns=[...new Set(allEntries().flatMap(({e})=>e.patterns))];
  const active=hasHighlights();
+ const byExercise=view==='exercise';
  const selectedOption=(value,label,currentValue)=>`<option value="${esc(value)}" ${value===currentValue?'selected':''}>${esc(label)}</option>`;
  const dayOptions=[['all','All types'],['upper','Upper days'],['lower','Lower days']];
- return `<details class="workout-filter mirror-filter-picker compare-picker"><summary aria-label="Highlight" title="Highlight matching workouts or exercises">${icon('list-filter')}<span>Highlight${active?' · active':''}</span></summary><div class="workout-options"><div class="mirror-filter-fields">
+ return `<details class="workout-filter mirror-filter-picker compare-picker"><summary aria-label="${byExercise?'Choose exercises':'Highlight'}" title="Highlight matching workouts or exercises">${icon('list-filter')}<span>${byExercise?'Exercises':'Highlight'}${active?' · active':''}</span></summary><div class="workout-options">${byExercise||highlightedExercises.size?`<fieldset class="focus-exercises"><legend>Highlight exercises</legend><div data-exercise-choices>${exerciseChoices()}</div></fieldset>`:''}<div class="mirror-filter-fields">
  <label>Workout type<select data-mirror-days>${dayOptions.map(([v,t])=>selectedOption(v,t,mirrorDayFilter)).join('')}</select></label>
  <label>Exercise region<select data-body-exercise>${[['all','All exercises'],['upper','Upper body'],['lower','Lower body']].map(([v,t])=>selectedOption(v,t,mirrorExerciseFilter)).join('')}</select></label>
  <label>Movement pattern<select data-pattern-filter>${selectedOption('all','All patterns',compareGoal)}${patterns.map(v=>selectedOption(v,v,compareGoal)).join('')}</select></label></div>
  <details class="mirror-filter-roles"><summary>Exercise roles</summary><div>${mirrorRoles.map(role=>`<label><input type="checkbox" data-compare-role="${role}" ${compareRoles.has(role)?'checked':''}>${role==='Choose'?'Unassigned':role}</label>`).join('')}</div></details>
- <details class="mirror-filter-entries"><summary>Specific days or exercises${comparisonPins.size?' ('+comparisonPins.size+')':''}</summary>${comparisonChoices()}</details>
+ <details class="mirror-filter-entries"><summary>${byExercise?'Specific days':'Specific days or exercises'}${comparisonPins.size?' ('+comparisonPins.size+')':''}</summary>${comparisonChoices()}</details>
  ${active?'<button type="button" data-reset-mirror-filters>Clear highlights</button>':''}</div></details>`;
 }
 function trainingSection(){
- const choices=[['workouts','Full program'],['mirror','By day'],['exercise','By exercise'],['progression','Goal progression']];
- const nav=`<strong class="sheet-title">${icon('table-2')}Spreadsheet</strong><label class="sheet-view-label">View <select data-sheet-view>${choices.map(([key,label])=>`<option value="${key}" ${view===key?'selected':''}>${label}</option>`).join('')}</select></label>${workoutFilter()}${mirrorFilterMenu()}${view==='workouts'?'':weekFilter()}`;
- const content=view==='workouts'?sheetWorkoutContent():view==='mirror'?mirror():view==='exercise'?exerciseMirror():goalProgressionView();
- return `<section class="athlete-training" data-program-layout="${layout}" data-program-section="${view}" data-day-count="${current.days.filter(workoutVisible).length}" data-pair="${pairType}"><div class="athlete-nav">${nav}${view==='workouts'&&!sheetTarget?'<span data-sheet-bin title="Drop an exercise here to delete" aria-label="Drop an exercise here to delete">'+icon('trash-2')+'</span>':''}<button type="button" data-action="add-day">+ Add day</button></div>${content}</section>`;
+ const choices=[['workouts','Full program'],['exercise','By exercise'],['progression','Goal progression']];
+ const nav=`<button type="button" class="sheet-title" data-default-sheet title="Show full program">${icon('table-2')}Spreadsheet</button><label class="sheet-view-label">View <select data-sheet-view>${choices.map(([key,label])=>`<option value="${key}" ${view===key?'selected':''}>${label}</option>`).join('')}</select></label>${workoutFilter()}${mirrorFilterMenu()}${view==='workouts'?'':weekFilter()}`;
+ const content=view==='progression'?goalProgressionView():sheetWorkoutContent();
+ return `<section class="athlete-training" data-program-layout="${layout}" data-program-section="${view}" data-day-count="${current.days.filter(workoutVisible).length}" data-pair="${pairType}"><div class="athlete-nav">${nav}${view!=='progression'&&!sheetTarget?'<span data-sheet-bin title="Drop an exercise here to delete" aria-label="Drop an exercise here to delete">'+icon('trash-2')+'</span>':''}<button type="button" data-action="add-day">+ Add day</button></div>${content}</section>`;
 }
 function rawRender(keepGoals){
+ pruneHighlightedExercises();
  if(pairType&&!hasWorkoutPair(pairType))pairType='';
  if(!hasWorkoutPair('Upper')||!hasWorkoutPair('Lower'))sheetGrouped=false;
  const available=new Set(current.days.flatMap(d=>['w'+d.id,...d.exercises.map(e=>'e'+e.id)]));
@@ -2495,6 +2516,9 @@ function rawRender(keepGoals){
  screen.innerHTML=`<main class="athlete-program"><header class="athlete-bar"><div class="athlete-identity"><span class="athlete-mark" aria-hidden="true">${icon('dumbbell')}</span><strong>${esc(current.name)}</strong><span>Training Program</span></div><button data-goals-toggle aria-expanded="${goalsOpen}" aria-controls="athlete-goal-panel">${icon('target')}Athlete Goals <b>${current.goals.length}</b><span aria-hidden="true">${goalsOpen?'▴':'▾'}</span></button><div class="athlete-whiteboard actions"></div></header><div id="athlete-goal-panel" ${goalsOpen?'':'hidden'}>${goalTable()}</div>${trainingSection()}</main>`;
 }
 screen.addEventListener('click',event=>{
+ if(event.target.closest('[data-default-sheet]')){
+   event.stopImmediatePropagation();defaultSpreadsheet();render();screen.querySelector('[data-default-sheet]').focus({preventScroll:true});return;
+ }
  const toggle=event.target.closest('[data-toggle-goal-entry]');
  if(toggle){
    event.stopImmediatePropagation();
@@ -2512,10 +2536,19 @@ screen.addEventListener('change',event=>{
  const el=event.target;
  if(el.matches('[data-day-type]')){updateWorkoutType(current.days.find(d=>d.id===Number(el.dataset.dayType)),el.value);
  }else if(el.matches('[data-sheet-view]')){
-   view=el.value;sheetTarget=null;render();screen.querySelector('[data-sheet-view]').focus({preventScroll:true});
+   view=el.value;sheetTarget=null;render();
+   if(view==='exercise'){
+     const menu=screen.querySelector('.mirror-filter-picker');menu.open=true;
+     (menu.querySelector('[data-focus-exercise]')||menu.querySelector('summary')).focus({preventScroll:true});
+   }else screen.querySelector('[data-sheet-view]').focus({preventScroll:true});
+ }else if(el.matches('[data-focus-exercise]')){
+   const key=el.dataset.focusExercise;
+   if(el.checked)highlightedExercises.add(key);else highlightedExercises.delete(key);
+   for(const {e} of allEntries())if(highlightKey(e)===key)comparisonPins.delete('e'+e.id);
+   refreshFilter('data-focus-exercise',key);
  }else if(el.matches('[data-sheet-order]')){
    sheetGrouped=el.value==='group';pairType=['Upper','Lower'].includes(el.value)?el.value:'';
-   setWorkoutSelection(null);render();screen.querySelector('.workout-picker summary').focus({preventScroll:true});
+   setWorkoutSelection(el.value.startsWith('day:')?[Number(el.value.slice(4))]:null);render();screen.querySelector('.workout-picker summary').focus({preventScroll:true});
  }else if(el.matches('[data-mirror-days]')){
    mirrorDayFilter=el.value;refreshFilter('data-mirror-days');
  }else if(el.matches('[data-body-exercise]')){mirrorExerciseFilter=el.value;refreshFilter('data-body-exercise');}
@@ -2532,12 +2565,12 @@ screen.addEventListener('change',event=>{
 document.addEventListener('pointerdown',event=>{screen.querySelectorAll('.workout-filter[open]').forEach(menu=>{if(!menu.contains(event.target))menu.open=false;});});
 screen.addEventListener('click',event=>{
  if(event.target.closest('[data-reset-mirror-filters]')){
-   event.stopImmediatePropagation();comparisonPins.clear();
+   event.stopImmediatePropagation();comparisonPins.clear();highlightedExercises.clear();
    mirrorDayFilter=mirrorExerciseFilter=compareGoal='all';compareRoles=new Set(mirrorRoles);refreshFilter('data-mirror-days');return;
  }
 },true);
 screen.addEventListener('keydown',event=>{const menu=event.target.closest('.workout-filter[open]');if(menu&&event.key==='Escape'){menu.open=false;menu.querySelector('summary').focus();}});
-function render(keepGoals=false){normalize();rawRender(keepGoals===true);screen.querySelectorAll('[data-legacy] [data-day-type]').forEach(el=>el.selectedIndex=-1);const sheet=screen.querySelector('athlete-spreadsheet');
+function render(keepGoals=false){normalize();rawRender(keepGoals===true);screen.querySelectorAll('[data-focus-exercise][data-partial]').forEach(el=>el.indeterminate=true);screen.querySelectorAll('[data-legacy] [data-day-type]').forEach(el=>el.selectedIndex=-1);const sheet=screen.querySelector('athlete-spreadsheet');
  if(sheet)sheet.mount(current,{
    schedule,bindExerciseName,automaticRoles(){automaticRoles();normalize();},openProgression,setExerciseRole,isGoalExercise,applyWeekToSets,includesWorkout:workoutVisible,
    removeWorkout,removeExercise,roleBadge,workoutTypeControl,updateWorkoutType,notify:say,refreshSheet:render,
@@ -2552,6 +2585,11 @@ function render(keepGoals=false){normalize();rawRender(keepGoals===true);screen.
    },
    pinState:highlightState,
    get grouped(){return groupedDays();},
+   get week(){return view==='exercise'?comparisonWeek:0;},
+   focusWeek(n){
+     comparisonWeek=n;const control=screen.querySelector('[data-comparison-week]');
+     if(control)control.outerHTML=weekFilter();
+   },
    refreshProgramNames,
    refreshWorkoutFilter(){
      const days=screen.querySelector('.workout-picker'),highlight=screen.querySelector('.mirror-filter-picker');
@@ -2633,7 +2671,7 @@ function update(event){
        el.closest('tr').querySelector('[data-goal-handle]').setAttribute('aria-label','Reorder '+(goal.name||'Goal '+(Number(v.goal)+1))+'; drag or use arrow keys');
      }
      if((goal.name!==previousName||goal.exerciseId!==previousId)&&allEntries().length){
-       automaticRoles();if(view==='workouts')refreshProgramNames();else render(true);
+       automaticRoles();if(view!=='progression')refreshProgramNames();else render(true);
      }
    }else if(event.type==='change'&&view==='progression'&&['ceiling','floor','goal'].includes(v.key)){
      const identity=exerciseIdentity(goal);
@@ -2688,11 +2726,6 @@ function firstWeekSummary(e){
  const first=e.progression&&LZProgression.forExercise(e).rows[0].planned.trim();
  return e.progression?'Week 1 · '+(first?first.split('\n').join(' · '):'Not entered'):'';
 }
-function comparisonSummary(e){
- if(!comparisonWeek)return firstWeekSummary(e)||summary(e);
- const p=LZProgression.forExercise(e);
- return 'Week '+comparisonWeek+' · '+(comparisonWeek>p.weeks?'Not scheduled':LZProgression.describe(p,comparisonWeek-1));
-}
 function comparisonGrid(e,heading=true,context=''){
  const p=LZProgression.forExercise(e);
  const name=e.name||'Unnamed exercise';
@@ -2724,53 +2757,27 @@ function editComparisonCell(event){
    if(exercise.sheetDrafts)delete exercise.sheetDrafts[track.id?'alt'+track.id:'main'];
    if(event.type==='change'&&!track.id&&gridWeek==='0')applyWeekToSets(exercise);
  }
- if(gridField==='planned'&&!track.id){
-   for(const cell of screen.querySelectorAll(`[data-summary-ex="${gridEx}"][data-summary-week="${gridWeek}"]`)){
-     const label=el.value||'Not entered',week=Number(gridWeek)+1,summary=cell.querySelector('summary');
-     summary.querySelector('[data-week-summary]').textContent='W'+week+' · '+label;
-     summary.setAttribute('aria-label',(exercise.name||'Exercise')+', '+(exercise.role==='Choose'?'Unassigned':exercise.role)+', Week '+week+', '+label);
-   }
- }
  for(const copy of screen.querySelectorAll(`[data-grid-ex="${gridEx}"][data-grid-track="${gridTrack}"][data-grid-week="${gridWeek}"][data-grid-field="${gridField}"]`)){
    if(copy!==el)copy.value=el.value;
    copy.parentElement.dataset.copy=el.value;
  }
  schedule();
 }
-function mirrorCell(e,context,showName=false){
- const p=LZProgression.forExercise(e),week=comparisonWeek||1;
- const plan=week<=p.weeks?p.rows[week-1].planned:'';
- const label=plan|| (week>p.weeks?'Not scheduled':'Not entered');
- const open=context!=='muted'&&openMirrorWeeks.has(e.id);
- return `<details class="mirror-cell role-${e.role.toLowerCase()}" ${open?'open':''} data-summary-ex="${e.id}" data-summary-week="${week-1}" data-context="${context}" data-goal="${isGoalExercise(e)}"><summary aria-label="${esc((e.name||'Exercise')+', '+(e.role==='Choose'?'Unassigned':e.role)+', Week '+week+', '+label)}">${showName?`<strong>${esc(e.name||'Unnamed exercise')}</strong> `:''}<span data-week-summary>W${week} · ${esc(label)}</span> ${roleBadge(e)}</summary><div class="mirror-detail">${open?mirrorDetail(e,p):''}</div></details>`;
-}
-function mirrorDetail(e,p){
- const content=layout==='sheet'?comparisonGrid(e,false):progressionComparison(p,comparisonWeek);
- return content+`<button type="button" data-create-progression="${e.id}">Edit progression</button>`;
-}
-function miniExercise(e,context=''){
- if(layout==='sheet')return mirrorCell(e,context,true);
- const week=comparisonWeek?comparisonSummary(e):firstWeekSummary(e),fields=weekSetFields(e);
- if(fields)e={...e,...fields,setRows:(fields.setRows||e.setRows||[]).map(r=>({...r}))};
- const perSet=e.mode==='top'||needsShared(e);
- return `<div class="exercise mirror-entry role-${e.role.toLowerCase()}" data-context="${context}" data-mirror-entry="${e.id}" data-athlete-goal="${isGoalExercise(e)}">
-   <div class="mirror-entry-title"><strong>${esc(e.name||'Unnamed exercise')}</strong>${roleBadge(e)}</div>
-   <div class="mirror-prescription">${esc(week||summary(e))}${!week&&e.rir?' · '+esc(e.rir)+' RIR':''} <span>${esc(goalLabel(e))}</span></div>
-   ${e.progression?`<details class="mirror-weeks" data-mirror-weeks="${e.id}" ${comparisonWeek||openMirrorWeeks.has(e.id)?'open':''}><summary>${e.progression.weeks} ${e.progression.weeks===1?'week':'weeks'}${e.progression.alternatives?.length?' · '+e.progression.alternatives.length+' alternative'+(e.progression.alternatives.length===1?'':'s'):''}</summary>${progressionComparison(LZProgression.forExercise(e),comparisonWeek)}</details>`:''}
-   ${comparisonWeek<2&&perSet&&(fields||!e.progression||LZProgression.forExercise(e).rows[0].planned===planFromSets(e).rows[0].planned)?`<details class="mirror-sets"><summary>Set targets</summary>${prescriptionRows(e)}</details>`:''}
- </div>`;
-}
-
 function advancedClick(event){const button=event.target.closest('button');if(!button||!current)return false;const v=button.dataset;const entry=allEntries().find(x=>x.e.id===Number(v.toggleEx||v.ex));if(v.convertShared!==undefined){convertPrescription(entry.e,entry.e.mode);return true}if(v.toggleEx){entry.e.collapsed=!entry.e.collapsed;render();return true}if(v.insertSet!==undefined){const e=entry.e;if(Number(e.sets)>=20)return true;const index=Number(v.insertSet);const active=rows(e);const next={...active[index],id:uid(),kind:e.mode==='top'?'Back off':active[index].kind};e.setRows=active;e.setRows.splice(index+1,0,next);e.sets=String(e.setRows.length);publishSetEdit(e);render();say('Set added. Set count updated.');return true}if(v.deleteSet!==undefined){const e=entry.e;const index=Number(v.deleteSet);if(Number(e.sets)===1){say('Keep at least one set. You can delete the exercise instead.');return true}askDelete('Delete Set '+(index+1)+'?', 'Remove this set target from '+(e.name||'this exercise')+'?',()=>{e.setRows=rows(e);e.setRows.splice(index,1);e.sets=String(e.setRows.length);publishSetEdit(e)});return true}return false}
 function refreshFilter(attribute,value=''){
  const before=screen.querySelector('.mirror-filter-picker');
+ const left=screen.querySelector('athlete-spreadsheet')?.shadowRoot?.querySelector('[data-workouts]')?.scrollLeft;
+ const menuScroll=before?.querySelector('.workout-options')?.scrollTop||0;
  const open=before?.open,roles=before?.querySelector('.mirror-filter-roles')?.open,entries=before?.querySelector('.mirror-filter-entries')?.open;
  render();
  const menu=screen.querySelector('.mirror-filter-picker');
+ const stage=screen.querySelector('athlete-spreadsheet')?.shadowRoot?.querySelector('[data-workouts]');
+ if(stage&&left)requestAnimationFrame(()=>{stage.scrollLeft=left;});
  if(menu&&open){
    menu.open=true;
    if(roles)menu.querySelector('.mirror-filter-roles').open=true;
    if(entries)menu.querySelector('.mirror-filter-entries').open=true;
+   menu.querySelector('.workout-options').scrollTop=menuScroll;
  }
  const control=screen.querySelector(`[${attribute}="${CSS.escape(value)}"]`);control?.focus({preventScroll:true});
 }
@@ -3085,6 +3092,12 @@ function refreshProgramNames(){
      const field=card.querySelector('[data-link-key=role]');if(field)field.value=e.role;
    }
  }
+ pruneHighlightedExercises();
+ const menu=screen.querySelector('.mirror-filter-picker');
+ if(menu){
+   menu.outerHTML=mirrorFilterMenu();
+   screen.querySelectorAll('[data-focus-exercise][data-partial]').forEach(el=>el.indeterminate=true);
+ }
  screen.querySelector('athlete-spreadsheet')?.refreshRoles?.();
  if(window.lucide)lucide.createIcons({attrs:{width:16,height:16}});
 }
@@ -3138,38 +3151,6 @@ root.addEventListener('click',event=>{
   if(menu){menu.open=true;(menu.querySelector(button.dataset.moveUp?'[data-move-up]:enabled':'[data-move-down]:enabled')||menu.querySelector('summary')).focus();}
   say((day.exercises[to].name||'Exercise')+' moved to position '+(to+1)+'.');
 });
-function exerciseMirror(){
- const days=visibleDays(),entries=days.flatMap(d=>d.exercises.map(e=>({d,e})));
- const patterns=[...new Set(entries.flatMap(({e})=>e.patterns))];
- const active=hasHighlights();
- const match=(d,e,pattern)=>highlightState(d,e,pattern)!=='muted';
- const groups=patterns.map(pattern=>{
-   const group=entries.filter(({e})=>e.patterns.includes(pattern));
-   const names=new Map();
-   for(const x of group){const key=exerciseIdentity(x.e)||x.e.id;if(!names.has(key))names.set(key,[]);names.get(key).push(x);}
-   const hit=group.some(({d,e})=>match(d,e,pattern)),dim=active&&!hit;
-   const rows=[...names.values()].map(list=>{
-     const name=list[0].e.name||'Unnamed exercise';
-     return `<tr><th scope="row" data-context="${contextState(active,list.some(({d,e})=>match(d,e,pattern)))}">${esc(name)}</th>${days.map(d=>`<td>${list.filter(x=>x.d===d).map(({e})=>mirrorCell(e,contextState(active,match(d,e,pattern)))).join('')||'&nbsp;'}</td>`).join('')}</tr>`;
-   }).join('');
-   return `<details class="pattern-group" ${dim?'':'open'}><summary data-context="${dim?'muted':''}"><strong>${esc(pattern)}</strong><span>${esc([...names.values()].map(list=>list[0].e.name||'Unnamed exercise').join(', '))}</span></summary><div class="table-wrap"><table class="mirror-matrix" style="--mirror-days:${days.length}"><thead><tr><th>Exercise</th>${days.map(d=>`<th>${esc(d.name)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></details>`;
- }).join('');
- return groups||'<p>No exercises yet.</p>';
-}
-
-screen.addEventListener('toggle',event=>{
- const el=event.target;if(!el.isConnected)return;
- if(el.open&&el.matches('[data-summary-ex]')){
-   const detail=el.querySelector('.mirror-detail');
-   if(!detail.hasChildNodes()){
-     const entry=allEntries().find(({e})=>e.id===Number(el.dataset.summaryEx));
-     if(entry)detail.innerHTML=mirrorDetail(entry.e,LZProgression.forExercise(entry.e));
-   }
- }
- if(!comparisonWeek&&el.matches('[data-mirror-weeks],[data-summary-ex]')){
-   const id=Number(el.dataset.mirrorWeeks||el.dataset.summaryEx);if(el.open)openMirrorWeeks.add(id);else openMirrorWeeks.delete(id);
- }
-},true);
 /* Runs inside the existing student workspace closure. */
 
 let progressionExercise=null,progressionDraft=null;
@@ -3547,4 +3528,4 @@ window.addEventListener('lz-cloud-import-complete',async()=>{try{await closeCont
 window.LZShell={navigate,refreshAccount,showMessage,flushContent,closeContent};refreshAccount();if(LZStudent.context().admin&&!LZStudent.context().owner)dashboardChrome();iconify();
 })();
 </script><script src="appearance-settings.js?v=20261127-builder-fit2"></script>
-<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=workout-audit2"></script><link rel="stylesheet" href="athlete-program.css?v=goal-fold1"></body></html>
+<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=workout-audit2"></script><link rel="stylesheet" href="athlete-program.css?v=sheet-focus1"></body></html>

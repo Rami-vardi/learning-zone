@@ -104,10 +104,10 @@ class AthleteSpreadsheet extends HTMLElement {
   }
   mount(athlete,api){
     const shadow=this.attachShadow({mode:'open'});
-    shadow.innerHTML="<link rel=\"stylesheet\" href=\"athlete-sheet.css?v=unified-sheet1\"><div id=\"workout-sheet\">\n  <div data-placement hidden></div>\n  <div data-workouts></div>\n  <span class=\"wp-sr\" role=\"status\" aria-live=\"polite\" data-status></span>\n</div>\n";
+    shadow.innerHTML="<link rel=\"stylesheet\" href=\"athlete-sheet.css?v=sheet-views2\"><div id=\"workout-sheet\">\n  <div data-placement hidden></div>\n  <div data-workouts></div>\n  <span class=\"wp-sr\" role=\"status\" aria-live=\"polite\" data-status></span>\n</div>\n";
     const root=shadow.querySelector('#workout-sheet'),stage=root.querySelector('[data-workouts]');
     const style=shadow.querySelector('link');if(!style.sheet){root.style.visibility='hidden';style.onload=style.onerror=()=>root.style.removeProperty('visibility');}
-  const fields=['name','weeks','alternative'],heads=['Exercise','Sets × reps × load / RIR','Alternative progressions'];
+  const fields=['name','weeks','alternative'],heads=['Exercise','Scheme','Alt. Prog.'];
   const days=athlete.days.slice();
   const schedule=days.map((_,index)=>index);
   const workouts=days.map(day=>day.exercises.map(exercise=>sheetExercise(exercise,api)));
@@ -212,7 +212,8 @@ class AthleteSpreadsheet extends HTMLElement {
     return handle;
   }
   const model=window.LZProgression;
-  const exerciseById=id=>workouts.flat().find(e=>e.id===id);
+  const entriesById=new Map(workouts.flat().map(e=>[e.id,e]));
+  const exerciseById=id=>entriesById.get(id);
   function focusTrack(e,key,i=0){
     const cell=stage.querySelector('[data-track-ex="'+e.id+'"][data-track-key="'+key+'"]');
     (cell?.querySelector('[data-index="'+i+'"] textarea')||cell?.querySelector('textarea'))?.focus({preventScroll:true});
@@ -533,7 +534,10 @@ class AthleteSpreadsheet extends HTMLElement {
   function unit(d){
     const part=el('section','wp-unit'),tools=el('div','wp-tools');part.dataset.workout=d;tools.dataset.destination=d;
     const h=el('h3','',workoutName(d)+' ');if(workoutName(d)!==dayName(d))h.append(el('span','',dayName(d)));
-    tools.dataset.context=workouts[d].some(e=>api.pinState(days[d],e.source)==='match')?'match':api.pinState(days[d]);h.append(el('span','', ' '+days[d].type));tools.append(grip('w'+d),h);
+    tools.dataset.context=api.pinState(days[d]);
+    tools.append(grip('w'+d),h);tools.insertAdjacentHTML('beforeend',api.workoutTypeControl(days[d]));
+    const type=tools.querySelector('[data-day-type]');if(type.closest('[data-legacy]'))type.selectedIndex=-1;
+    type.onchange=()=>api.updateWorkoutType(days[d],type.value);
     const trash=button('',()=>api.removeWorkout(days[d]));
     trash.classList.add('wp-delete-day');
     trash.title='Delete '+workoutName(d);
@@ -547,21 +551,35 @@ class AthleteSpreadsheet extends HTMLElement {
     const cg=el('colgroup');[29,42,29].forEach(w=>{const c=el('col');c.style.width=w+'%';cg.append(c);});table.append(cg);
     const head=table.createTHead().insertRow();heads.forEach((txt,i)=>{
       const th=el('th');th.scope='col';th.setAttribute('aria-label',txt);
-      th.append(el('span','wp-wide-label',txt),el('span','wp-small-label',['Exercise','Weekly plan','Alternatives'][i]));
+      th.append(el('span','',txt));
       th.append(resizer(d,i));head.append(th);
     });
     const body=table.createTBody();workouts[d].forEach(e=>{const tr=body.insertRow();tr.dataset.row=e.id;tr.dataset.context=api.pinState(days[d],e.source);if(e.goal)tr.dataset.goal='';
       fields.forEach(key=>{const td=tr.insertCell();if(key==='name'){td.className='wp-name';const wrap=el('div','wp-name-wrap');wrap.append(grip(e.id));td.append(wrap);editor(e,key,wrap);
         const role=el('select','wp-role');role.setAttribute('aria-label','Exercise role for '+(e.name||'new exercise'));
         for(const value of ['Choose','Goal','Primary','Secondary','Tertiary'])role.add(new Option(value==='Choose'?'Unassigned':value,value));
-        role.value=e.source.role||'Choose';role.onchange=()=>{api.setExerciseRole(e.source,role.value);tr.toggleAttribute('data-goal',e.goal);api.schedule();};
-        td.append(role);}else if(key==='alternative'){
+        role.value=e.source.role||'Choose';
+        const badge=el('label','wp-role-picker');badge.innerHTML=api.roleBadge(e.source);badge.append(role);td.append(badge);
+        role.onchange=()=>{api.setExerciseRole(e.source,role.value);refreshRoles();api.schedule();};}else if(key==='alternative'){
         alternativeCell(td,e);
       }else{
         drawWeeks(e,key,td);
         const sets=button('Set targets',()=>setTargets(e));sets.classList.add('wp-sets');td.append(sets);
       }});});
     part.append(table,addExercise);return part;
+  }
+  this.refreshRoles=refreshRoles;
+  function refreshRoles(){
+    for(const part of stage.querySelectorAll('.wp-unit')){
+      const d=Number(part.dataset.workout);
+      part.querySelector('.wp-tools').dataset.context=api.pinState(days[d]);
+      for(const tr of part.querySelectorAll('[data-row]')){
+        const e=exerciseById(tr.dataset.row),role=tr.querySelector('.wp-role'),badge=tr.querySelector('.role-badge');
+        if(badge.dataset.badge!==e.source.role)badge.outerHTML=api.roleBadge(e.source);
+        role.value=e.source.role;role.setAttribute('aria-label','Exercise role for '+(e.name||'new exercise'));
+        tr.toggleAttribute('data-goal',e.goal);tr.dataset.context=api.pinState(days[d],e.source);
+      }
+    }
   }
   function pin(id){
     const {d,whole}=details(id);
@@ -609,29 +627,17 @@ class AthleteSpreadsheet extends HTMLElement {
       for(const e of workouts[Number(select.value)])if(e.id!==id){const opt=el('option','','Before '+e.name);opt.value=e.id;pos.append(opt);}}
     if(!whole){positions();select.addEventListener('change',positions);placement.append(posLabel);}
     const done=()=>{placement.hidden=true;root.querySelector('[data-grip="'+id+'"]')?.focus({preventScroll:true});};
-    const move=button(whole?'Swap days':'Move',()=>{relocate(id,Number(select.value),pos.value,false,whole);done();});move.disabled=whole&&!select.options.length;placement.append(move,button('Add to comparison',()=>{pin(id);done();}));
+    const move=button(whole?'Swap days':'Move',()=>{relocate(id,Number(select.value),pos.value,false,whole);done();});move.disabled=whole&&!select.options.length;placement.append(move);
     if(!whole){
       const exercise=workouts[d].find(entry=>entry.id===id).source;
-      const role=el('select'),label=el('label','','Exercise role');
-      for(const value of ['Choose','Goal','Primary','Secondary','Tertiary']){
-        role.add(new Option(value==='Choose'?'Unassigned':value,value));
-      }
-      role.value=exercise.role||'Choose';label.append(role);placement.append(label);
-      role.onchange=()=>{
-        api.setExerciseRole(exercise,role.value);api.schedule();render();done();
-      };
       placement.append(button('Edit set targets',()=>{done();api.editSetTargets(exercise);}),button('Edit progression',()=>{done();api.openProgression(exercise.id);}),
         button('Add alternative progression',()=>{done();api.openProgression(exercise.id,true);}),
         button('Delete exercise',()=>{done();api.removeExercise(days[d],exercise);}));
     }
     if(whole){
-      const name=el('input'),type=el('select');
-      name.value=days[d].name;name.setAttribute('aria-label','Workout name');
-      type.setAttribute('aria-label','Workout type');
-      for(const value of ['Full body','Upper','Lower','Other'])type.add(new Option(value,value));
-      type.value=days[d].type;
-      placement.append(name,type,button('Save workout',()=>{done();api.updateDay(days[d],name.value.trim(),type.value);}),
-        button('Show only this workout',()=>api.isolateWorkout(days[d])));
+      const name=el('input');name.value=days[d].name;name.setAttribute('aria-label','Workout name');
+      placement.append(name,button('Save name',()=>{done();api.updateDay(days[d],name.value.trim(),days[d].type);}));
+
     }
     placement.append(button('Cancel',done));placement.onkeydown=ev=>{if(ev.key==='Escape'){ev.preventDefault();done();}};
     select.focus();

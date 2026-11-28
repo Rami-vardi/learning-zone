@@ -446,3 +446,19 @@ html[data-lz-theme-ready] #student-learning-board .progression-dialog .progressi
 #student-learning-board .athlete-program .athlete-layout-tabs [data-layout=sheet][aria-pressed=true]{background:var(--lz-blue);color:white;box-shadow:0 1px 3px #12274238}
 #student-learning-board [data-sheet-bin]{display:inline-grid;place-items:center;min-width:32px;height:30px;color:var(--lz-sub);border:1px dashed var(--card-border);border-radius:6px}
 #student-learning-board [data-sheet-bin][data-drop]{color:var(--lz-danger);border:2px solid currentColor;background:var(--well)}
+#student-learning-board .athlete-program{
+ --bg-Goal:light-dark(#d9f0e1,#244c38);--ink-Goal:light-dark(#195a38,#cbf3d8);
+ --bg-Primary:light-dark(#dbeaff,#283e5c);--ink-Primary:light-dark(#234e82,#c9e1ff);
+ --bg-Secondary:light-dark(#eae1fa,#483255);--ink-Secondary:light-dark(#583780,#efdcff);
+ --bg-Tertiary:light-dark(#fff0bc,#524420);--ink-Tertiary:light-dark(#694e10,#ffedb2);
+ --bg-Choose:light-dark(#e9edf1,#34404c);--ink-Choose:light-dark(#495664,#dae0e6);
+}
+#student-learning-board .athlete-program [data-badge].role-badge,
+#student-learning-board .athlete-program .mirror-cell[data-goal=true]>summary [data-badge].role-badge{display:inline-flex;align-items:center;gap:3px;background:var(--badge-bg);color:var(--badge-ink);border-radius:8px;padding:1px 5px;vertical-align:middle}
+#student-learning-board .athlete-program .sheet-title,#student-learning-board .athlete-program .sheet-view-label{display:inline-flex;align-items:center;gap:5px;font-size:13px;margin:0}
+#student-learning-board .athlete-program .sheet-title svg{width:15px;height:15px}
+#student-learning-board .athlete-program .mirror-block .sheet-day-overview{display:grid;grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:minmax(min(180px,70vw),1fr);overflow-x:auto}
+#student-learning-board .athlete-program .goal-progression-card[data-context=muted]:not(:focus-within){opacity:.48}
+#student-learning-board .athlete-program .workout-type{position:relative;display:inline-block;margin:0}
+#student-learning-board .athlete-program .workout-type select{width:auto;min-height:22px;padding:1px 3px;font:500 11px/1.3 system-ui;color:var(--lz-sub);border-radius:5px;background:var(--well)}
+#student-learning-board .athlete-program .workout-type>span{position:absolute;inset:3px auto auto 3px;font-size:11px;pointer-events:none}

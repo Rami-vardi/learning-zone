@@ -492,7 +492,7 @@ body{margin:0;background:#f3f6fa;font-family:Arial,sans-serif;color-scheme:light
 <header class="chrome"><div class="brand"><span class="brandmark"><i data-lucide="book-open" aria-hidden="true"></i></span>Learning Zone</div><div class="account">Student workspace</div></header>
 <div data-account-bar></div><div data-screen></div><datalist id="lz-exercises"></datalist>
 <dialog data-confirm aria-labelledby="delete-title" aria-describedby="delete-description"><h2 id="delete-title" class="label-icon"><i data-lucide="triangle-alert" aria-hidden="true"></i><span data-confirm-title>Delete item?</span></h2><p id="delete-description"></p><div class="actions"><button type="button" class="cursor-interaction" data-cancel-delete autofocus>Keep it</button><button type="button" class="danger-button cursor-interaction" data-accept-delete>Delete</button></div></dialog>
-<div style="padding:0 26px 20px" class="notice"><span class="board-note" data-message aria-live="polite">Sign in to load your workspace.</span><button type="button" class="cursor-interaction" data-undo hidden>Undo deletion</button></div>
+<div style="padding:0 26px 20px" class="notice"><span class="board-note" data-message aria-live="polite">Sign in to load your workspace.</span><button type="button" class="cursor-interaction" data-undo hidden>Undo deletion</button><span data-undo-error role="alert" hidden></span></div>
 
 
 </div>
@@ -2112,7 +2112,7 @@ async function open(){
 window.LZMigration={preview,run,open};
 })();
 </script>
-<script src="athlete-spreadsheet.js?v=builder-polish1"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
+<script src="athlete-spreadsheet.js?v=builder-audit2"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
 'use strict';
 const formats = ['fixed', 'range', 'top'];
 const text = value => String(value ?? '');
@@ -2329,10 +2329,40 @@ function backup(before){
  const removed=[];const collect=(old,now,type,parent)=>old.forEach((item,index)=>{if(!now.some(x=>x.id===item.id))removed.push({type,parent,index,item:clone(item)})});
  collect(before.goals,current.goals,'goal');collect(before.days,current.days,'day');
  before.days.forEach(d=>{const live=current.days.find(x=>x.id===d.id);if(!live)return;collect(d.exercises,live.exercises,'exercise',d.id);d.exercises.forEach(e=>{const now=live.exercises.find(x=>x.id===e.id);if(now)collect(e.setRows||[],now.setRows||[],'set',e.id)})});
- if(removed.length){undo={owner,id:current.id,name:current.name,removed};undoButton.textContent='Undo deletion in '+current.name;undoButton.hidden=false}
+ if(removed.length){undoWarning();undo={owner,id:current.id,name:current.name,removed};undoButton.textContent='Undo deletion in '+current.name;undoButton.hidden=false}
 }
-function clearUndo(){undo=null;undoButton.hidden=true}
-function undoDeletion(){if(!undo||undo.owner!==owner||undo.id!==current?.id)return;const additions=new Map();for(const r of undo.removed.filter(r=>r.type==='set')){const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(e&&!e.setRows.some(x=>x.id===r.item.id))additions.set(e,(additions.get(e)||0)+1)}if([...additions].some(([e,n])=>e.setRows.length+n>20)){say('Undo would exceed 20 sets. Your current targets are unchanged; this deletion cannot be undone at the current set count.');return}for(const r of undo.removed){let list;if(r.type==='goal')list=current.goals;else if(r.type==='day')list=current.days;else if(r.type==='exercise')list=current.days.find(d=>d.id===r.parent)?.exercises;else{const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(!e)continue;list=e.setRows;if(!list.some(x=>x.id===r.item.id)){list.splice(Math.min(r.index,list.length),0,r.item);e.sets=String(list.length);publishSetEdit(e)}continue}if(list&&!list.some(x=>x.id===r.item.id))list.splice(Math.min(r.index,list.length),0,r.item)}clearUndo();automaticRoles();render();schedule();say('Deletion undone. Subsequent edits were kept.')}
+function undoRankConflict(removed){
+ const restored=[];
+ for(const {type,item,parent} of removed){
+   if(type==='day'&&!current.days.some(d=>d.id===item.id)){
+     for(const e of item.exercises)restored.push({d:item,e});
+   }else if(type==='exercise'){
+     const day=current.days.find(d=>d.id===parent);
+     if(day&&!day.exercises.some(e=>e.id===item.id))restored.push({d:day,e:item});
+   }
+ }
+ if(!restored.length)return '';
+ const entries=allEntries(),all=entries.concat(restored);
+ const assignments=collectSecondaryPriorities(all);
+ const goals=new Map(all.filter(({e})=>isGoalExercise(e)).map(({e})=>[e.id,e.name||'Unnamed goal']));
+ const restoredGoals=new Set(restored.filter(({e})=>isGoalExercise(e)).map(({e})=>e.id));
+ for(const [id,links] of assignments){
+   if(links.length<2)continue;
+   const [goalId,priority]=id.split(':').map(Number);
+   const returning=links.find(entry=>restored.includes(entry));
+   if(!goals.has(goalId)||(!returning&&!restoredGoals.has(goalId)))continue;
+   return secondaryConflict((returning||links[1]).e,goalId,priority,goals.get(goalId),assignments);
+ }
+ return '';
+}
+function undoWarning(text=''){
+ const notice=root.querySelector('[data-undo-error]');
+ notice.hidden=!text;notice.textContent=text;
+}
+function clearUndo(){undo=null;undoButton.hidden=true;undoWarning()}
+function undoDeletion(){if(!undo||undo.owner!==owner||undo.id!==current?.id)return;const rankConflict=undoRankConflict(undo.removed);
+ if(rankConflict){undoWarning('Undo blocked. '+rankConflict+' Then try Undo again.');return;}
+ const additions=new Map();for(const r of undo.removed.filter(r=>r.type==='set')){const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(e&&!e.setRows.some(x=>x.id===r.item.id))additions.set(e,(additions.get(e)||0)+1)}if([...additions].some(([e,n])=>e.setRows.length+n>20)){say('Undo would exceed 20 sets. Your current targets are unchanged; this deletion cannot be undone at the current set count.');return}for(const r of undo.removed){let list;if(r.type==='goal')list=current.goals;else if(r.type==='day')list=current.days;else if(r.type==='exercise')list=current.days.find(d=>d.id===r.parent)?.exercises;else{const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(!e)continue;list=e.setRows;if(!list.some(x=>x.id===r.item.id)){list.splice(Math.min(r.index,list.length),0,r.item);e.sets=String(list.length);publishSetEdit(e)}continue}if(list&&!list.some(x=>x.id===r.item.id))list.splice(Math.min(r.index,list.length),0,r.item)}clearUndo();automaticRoles();render();schedule();say('Deletion undone. Subsequent edits were kept.')}
 const clone=value=>JSON.parse(JSON.stringify(value));
 function defaultSpreadsheet(){
  selectProgramLayout('sheet');sheetGrouped=false;pairType='';selectedWorkouts=null;comparisonWeek=0;
@@ -2373,7 +2403,7 @@ function unusedDayName(){const used=new Set(current.days.map(d=>d.name.trim().to
 function options(values,value){return values.map(v=>`<option ${v===value?'selected':''}>${esc(v)}</option>`).join('')}
 function field(value,attrs=''){if(attrs.includes('data-key="name"')&&(attrs.includes('data-ex=')||attrs.includes('data-goal=')))attrs+=' list="lz-exercises" autocomplete="off"';return `<input value="${esc(value)}" ${attrs}>`}
 function roster(){current=null;clearUndo();screen.innerHTML=`<main><div class="intro"><div><h1>My practice athletes</h1><p>Create an athlete profile, then build their goals and training program.</p></div><button class="primary cursor-interaction" data-action="create">+ Create athlete</button></div><div class="roster">${athletes.filter(a=>!a.archived).map(a=>`<article class="athlete-card"><h2>${esc(a.name)}</h2><p>${a.days.length} workout${a.days.length===1?'':'s'}</p><button class="cursor-interaction" data-open="${a.id}">Open workspace</button><div class="actions"><button data-rename-athlete="${a.id}">Rename</button><button class="remove" data-archive-athlete="${a.id}">Archive</button></div></article>`).join('')}</div>${athletes.some(a=>a.archived)?`<details class="archive-list"><summary>Archived athletes</summary>${athletes.filter(a=>a.archived).map(a=>`<article class="athlete-card"><h2>${esc(a.name)}</h2><button data-restore-athlete="${a.id}">Restore athlete</button></article>`).join('')}</details>`:''}</main>`}
-function profile(){screen.innerHTML=`<main><section class="new-profile"><div><h1>Create practice athlete</h1><p>Start with a profile. Goals and the program come next.</p></div><form data-profile><label>Athlete name<input name="name" required placeholder="Enter name"></label><label>Workouts per week<input name="workouts" type="number" min="1" max="7" value="2" required></label><div class="actions" style="margin-top:20px"><button class="primary cursor-interaction" type="submit">Create and Open workspace</button><button class="cursor-interaction" type="button" data-action="roster">Cancel</button></div></form></section></main>`}
+function profile(){screen.innerHTML=`<main><section class="new-profile"><div><h1>Create practice athlete</h1><p>Start with a profile. Goals and the program come next.</p></div><form data-profile><label>Athlete name<input name="name" required placeholder="Enter name"></label><label>Workouts per week<input name="workouts" type="number" min="1" max="7" value="2" required></label><div class="actions" style="margin-top:20px"><button class="primary cursor-interaction" type="submit">Create and open workspace</button><button class="cursor-interaction" type="button" data-action="roster">Cancel</button></div></form></section></main>`}
 function goalEditor(g,i,key,label,placeholder){
   const attrs=`data-goal="${i}" data-key="${key}" aria-label="${label}" placeholder="${placeholder}"`;
   if(key==='name')return `<div class="goal-name-editor">${field(g[key],attrs)}<span aria-hidden="true">${esc(g[key]||placeholder)}</span></div>`;
@@ -2457,8 +2487,11 @@ function workoutFilter(){
  const presets=[['','Program order'],...(types.length===2?[['group','Upper together, Lower together']]:[]),...types.map(type=>[type,type+' only']),...current.days.map(d=>['day:'+d.id,(d.name||'Unnamed workout')+' only'])];
  return `<details class="workout-filter workout-picker"><summary aria-label="Days" title="Visible days and order">${icon('columns-2')}<span>${esc(workoutSelectionLabel())}</span></summary><div class="workout-options"><label>Layout<select data-sheet-order>${presets.map(([id,label])=>`<option value="${id}" ${id===value?'selected':''}>${esc(label)}</option>`).join('')}${value==='custom'?'<option selected disabled value="custom">Selected days</option>':''}</select></label>${current.days.map(d=>`<label data-workout-destination="${d.id}"><input type="checkbox" data-workout-pick="${d.id}" ${workoutVisible(d)?'checked':''}>${esc(d.name||'Unnamed workout')}</label>`).join('')}</div></details>`;
 }
+function lastProgramWeek(){
+ return allEntries().reduce((n,{e})=>Math.max(n,e.progression?.weeks||1,...(e.progression?.alternatives||[]).map(a=>a.weeks)),1);
+}
 function weekFilter(){
- const last=allEntries().reduce((n,{e})=>Math.max(n,e.progression?.weeks||1,...(e.progression?.alternatives||[]).map(a=>a.weeks)),1);
+ const last=lastProgramWeek();
  comparisonWeek=Math.min(comparisonWeek,last);
  return `<select data-comparison-week aria-label="Comparison week"><option value="0">All weeks</option>${Array.from({length:last},(_,i)=>`<option value="${i+1}" ${comparisonWeek===i+1?'selected':''}>Week ${i+1}</option>`).join('')}</select>`;
 }
@@ -2586,12 +2619,17 @@ function render(keepGoals=false){normalize();rawRender(keepGoals===true);screen.
    pinState:highlightState,
    get grouped(){return groupedDays();},
    get week(){return view==='exercise'?comparisonWeek:0;},
+   refreshWeekOptions(){
+     const control=screen.querySelector('[data-comparison-week]');
+     if(control&&control.options.length!==lastProgramWeek()+1)control.outerHTML=weekFilter();
+   },
    focusWeek(n){
      comparisonWeek=n;const control=screen.querySelector('[data-comparison-week]');
      if(control)control.outerHTML=weekFilter();
    },
    refreshProgramNames,
    refreshWorkoutFilter(){
+     indexSecondaryPriorities();
      const days=screen.querySelector('.workout-picker'),highlight=screen.querySelector('.mirror-filter-picker');
      if(days)days.outerHTML=workoutFilter();
      if(highlight)highlight.outerHTML=mirrorFilterMenu();
@@ -2987,8 +3025,40 @@ root.addEventListener('click',async event=>{const b=event.target.closest('button
  }catch(e){error(e)}});
 function exportWork(){if(!workspaceActive||!owner)return;const name=(workspaceName||member.username||member.email||'student').replace(/[^a-z0-9._-]/gi,'_');const url=URL.createObjectURL(new Blob([JSON.stringify({version:1,owner,username:workspaceName,exportedAt:new Date().toISOString(),...workspacePayload()},null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='learning-'+name+'-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function editName(title,value,label,action){let dialog=root.querySelector('[data-name-dialog]');if(!dialog){dialog=document.createElement('dialog');dialog.dataset.nameDialog='';root.append(dialog)}dialog.innerHTML=`<form><h2>${esc(title)}</h2><label>${esc(label)}<input name="newName" required maxlength="254" value="${esc(value)}"></label><p data-name-error role="alert"></p><div class="actions"><button type="button" data-close-name>Cancel</button><button type="submit">Save name</button></div></form>`;dialog.querySelector('[data-close-name]').onclick=()=>dialog.close();dialog.querySelector('form').onsubmit=async event=>{event.preventDefault();const input=dialog.querySelector('input'),button=dialog.querySelector('[type="submit"]'),name=input.value.trim();if(!name)return;button.disabled=true;try{await action(name);dialog.close()}catch(e){dialog.querySelector('[data-name-error]').textContent=e.message}finally{button.disabled=false}};dialog.showModal();dialog.querySelector('input').focus()}
-root.addEventListener('change',async event=>{if(event.target.matches('[data-shared-source]'))root.querySelector('[data-accept-delete]').disabled=event.target.value==='';if(!event.target.matches('[data-import-file]'))return;const file=event.target.files?.[0];if(!file)return;const importOwner=owner,importMember=member?.id;try{if(file.size>2000000)throw Error('Choose an export smaller than 2 MB.');const imported=JSON.parse(await file.text());if(!workspaceActive||owner!==importOwner||member?.id!==importMember)throw Error('The workspace changed while reading this export. Choose the file again in the intended workspace.');if(!Array.isArray(imported.athletes)||imported.athletes.length>200||imported.athletes.some(a=>!a||typeof a.name!=='string'||!Array.isArray(a.days)||!Array.isArray(a.goals)||a.days.some(d=>!d||!Array.isArray(d.exercises)||d.exercises.some(e=>!e||!['fixed','range','top'].includes(e.mode)||!Number.isInteger(Number(e.sets))||Number(e.sets)<1||Number(e.sets)>20))))throw Error('Choose a valid Learning Zone export.');if(imported.owner&&imported.owner!==owner)throw Error('This export belongs to a different student. Open that student’s workspace to restore it.');const incoming=sanitize(imported);if(incoming.some(a=>!a.name.trim()))throw Error('Every restored athlete must have a name.');askDelete('Restore exported workspace?','This replaces the current workspace with the exported athletes, goals and programs. A copy of your current work will be preserved first.',()=>{preserveDraft();try{localStorage.setItem(draftBase()+':before-import',JSON.stringify({owner,payload:workspacePayload(),revision}))}catch(e){throw Error('Export the current workspace before restoring.')}athletes.splice(0,athletes.length,...incoming);current=null;clearUndo();roster();account()},'Restore Work')}catch(e){error(e)}finally{event.target.value=''}});
-root.addEventListener('input',event=>{if(member&&!event.target.closest('[data-username-entry],[data-add-username],[data-profile]'))schedule()});root.addEventListener('change',()=>{if(member)schedule()});root.addEventListener('submit',event=>{if(event.target.matches('[data-profile]'))schedule()});
+root.addEventListener('change',async event=>{
+ const field=event.target;
+ if(field.matches('[data-shared-source]'))root.querySelector('[data-accept-delete]').disabled=field.value==='';
+ if(!field.matches('[data-import-file]'))return;
+ const file=field.files?.[0];
+ if(!file)return;
+ accountBar.querySelector('[data-import-error]')?.remove();
+ const importOwner=owner,importMember=member?.id;
+ try{
+   const imported=JSON.parse(await file.text());
+   if(!workspaceActive||owner!==importOwner||member?.id!==importMember)throw Error('Choose the file again in the intended workspace.');
+   const validExercise=e=>e&&['fixed','range','top'].includes(e.mode)&&Number.isInteger(Number(e.sets))&&Number(e.sets)>=1&&Number(e.sets)<=20;
+   const validDay=d=>d&&Array.isArray(d.exercises)&&d.exercises.every(validExercise);
+   const validAthlete=a=>a&&typeof a.name==='string'&&Array.isArray(a.goals)&&Array.isArray(a.days)&&a.days.every(validDay);
+   if(!Array.isArray(imported?.athletes)||!imported.athletes.every(validAthlete))throw Error('Choose a valid Learning Zone export.');
+   if(imported.owner&&imported.owner!==owner)throw Error('This export belongs to a different student. Open that student’s workspace to restore it.');
+   const incoming=sanitize(imported);
+   if(incoming.some(a=>!a.name.trim()))throw Error('Every restored athlete must have a name.');
+   askDelete('Restore exported workspace?','Your current workspace will be backed up before replacement. If browser storage is full, the backup will download.',()=>{
+     preserveDraft();
+     const key=draftBase()+':before-import';
+     try{localStorage.setItem(key,JSON.stringify({owner,payload:workspacePayload(),revision}));}
+     catch{exportWork();localStorage.removeItem(key);}
+     athletes.length=0;for(const athlete of incoming)athletes.push(athlete);
+     current=null;clearUndo();roster();account();
+   },'Restore work');
+ }catch(e){
+   if(owner===importOwner&&member?.id===importMember){
+     const notice=document.createElement('p');notice.dataset.importError='';notice.setAttribute('role','alert');
+     notice.textContent='Restore failed. '+e.message;accountBar.append(notice);
+   }
+ }finally{field.value='';}
+});
+root.addEventListener('input',event=>{if(member&&!event.target.closest('[data-username-entry],[data-add-username],[data-profile],[data-import-file]'))schedule()});root.addEventListener('change',event=>{if(member&&!event.target.matches('[data-import-file]'))schedule()});root.addEventListener('submit',event=>{if(event.target.matches('[data-profile]'))schedule()});
 window.addEventListener('blur',()=>{if(member&&workspaceActive){preserveDraft();flush().catch(error);}});window.addEventListener('beforeunload',()=>{if(member&&serialized()!==lastSaved){preserveDraft();flush().catch(()=>{});}});
 function normalize(){if(!current)return;current.goals.forEach(g=>{if(!g.id)g.id=uid()});allEntries().forEach(({e})=>{if(e.collapsed===undefined)e.collapsed=true;if(!e.role)e.role='Choose';bindExerciseName(e,e);const c=StudentPatterns.classify(e);e.patterns=c.patterns.length?c.patterns:['Needs classification'];delete e.parentId;delete e.goalId;rows(e)});const patterns=allEntries().flatMap(x=>x.e.patterns);if(compareGoal!=='all'&&!patterns.includes(compareGoal))compareGoal='all'}
 function matchesAthleteGoal(e){const id=exerciseIdentity(e);return !!e.name.trim()&&current.goals.some(g=>g.name.trim()&&exerciseIdentity(g)===id);}
@@ -3008,20 +3078,23 @@ function activeLinks(e){
 }
 // A goal has four secondary slots shared by every workout in the athlete's program.
 let secondaryPriorities=new Map();
-function indexSecondaryPriorities(){
- secondaryPriorities=new Map();
- for(const {d,e} of allEntries()){
+function indexSecondaryPriorities(){secondaryPriorities=collectSecondaryPriorities(allEntries());}
+function collectSecondaryPriorities(entries){
+ const assignments=new Map();
+ for(const entry of entries){
+   const e=entry.e;
    if(e.role!=='Secondary'||!Array.isArray(e.goalLinks))continue;
    for(const link of e.goalLinks){
      if(!link||![1,2,3,4].includes(Number(link.priority)))continue;
      const key=link.goalId+':'+link.priority;
-     if(!secondaryPriorities.has(key))secondaryPriorities.set(key,[]);
-     secondaryPriorities.get(key).push({d,e});
+     if(!assignments.has(key))assignments.set(key,[]);
+     assignments.get(key).push(entry);
    }
  }
+ return assignments;
 }
-function secondaryConflict(exercise,goalId,priority,goalName){
- const owner=secondaryPriorities.get(goalId+':'+priority)?.find(({e})=>e.id!==exercise.id);
+function secondaryConflict(exercise,goalId,priority,goalName,assignments=secondaryPriorities){
+ const owner=assignments.get(goalId+':'+priority)?.find(({e})=>e.id!==exercise.id);
  if(!owner)return '';
  const day=owner.d.name||'Day '+(current.days.indexOf(owner.d)+1);
  return 'Secondary '+priority+' for '+goalName+' is already assigned to '+(owner.e.name||'Unnamed exercise')+' on '+day+'. Choose another priority.';
@@ -3049,6 +3122,7 @@ function showRelated(e){
 function assignRole(e,role,links){
  e.role=role;e.roleManual=true;
  if(supportsRole(role))e.goalLinks=links;else delete e.goalLinks;
+ if(undo&&!root.querySelector('[data-undo-error]').hidden)undoWarning();
  renderWithSheetPosition();schedule();
 }
 function editRole(e,role,anchor){

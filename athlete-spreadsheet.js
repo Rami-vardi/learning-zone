@@ -52,6 +52,7 @@
     }
     function write(key,value){
       const parsed=parse(value),prior=track(key);
+      const previousWeeks=prior?.weeks;
       let t=prior;
       if(parsed.weeks&&(prior||value.trim())&&(!parsed.pending||parsed.weeks.size)){
         t=track(key,true);
@@ -68,6 +69,7 @@
       }else{
         (exercise.sheetDrafts||={})[id]={signature:signature(t),text:value};
       }
+      if(previousWeeks!==t?.weeks)api.refreshWeekOptions();
       api.schedule();
     }
     return {
@@ -220,7 +222,7 @@ class AthleteSpreadsheet extends HTMLElement {
       const lines=cell.querySelectorAll('.wp-week-line');
       for(const line of lines)line.hidden=!!week&&Number(line.dataset.index)!==week-1;
       cell.querySelector('.wp-missing-week')?.remove();
-      if(week&&lines.length&&week>lines.length)cell.append(el('small','wp-missing-week','No Week '+week));
+      if(week&&lines.length&&week>lines.length)cell.append(el('small','wp-missing-week','No week '+week));
     }
   }
   function focusTrack(e,key,i){
@@ -236,14 +238,16 @@ class AthleteSpreadsheet extends HTMLElement {
     api.schedule();
   }
   function weekChange(e,key,task,syncSets=true){
-    const t=e.track(key,true);task(t);saveTrack(e,key);
+    const t=e.track(key,true),previousWeeks=t.weeks;
+    task(t);saveTrack(e,key);
+    if(t.weeks!==previousWeeks)api.refreshWeekOptions();
     if(key==='weeks'&&syncSets)api.applyWeekToSets(e.source);
   }
   function trackHandle(e,key,i){
     const node=el('button',i===null?'wp-grip wp-track-grip':'wp-week-word',i===null?'':'Week');
     node.type='button';node.dataset.trackGrip=i===null?'alternative':'week';node.dataset.ex=e.id;node.dataset.key=key;
     if(i!==null)node.dataset.index=i;
-    node.title=i===null?'Move alternative to another exercise':'Move Week '+(i+1);
+    node.title=i===null?'Move alternative to another exercise':'Move week '+(i+1);
     node.setAttribute('aria-label',node.title);return node;
   }
   function drawWeeks(e,key,td){
@@ -261,7 +265,7 @@ class AthleteSpreadsheet extends HTMLElement {
       let labelRemoved=!!track?.rows[i]?.sheetHideWeek;
       chip.append(trackHandle(e,key,i),num);chip.hidden=!track||labelRemoved;
       area.rows=1;area.value=track?.rows[i]?.planned||'';area.dataset.weekId=e.id+'-'+key;
-      area.setAttribute('aria-label',(e.name||'Exercise')+' '+(key==='weeks'?'Main progression':'Alternative')+' Week '+(i+1));
+      labelWeekField(area,e,key,i);
       area.placeholder=track?'':'Week 1';box.dataset.copy=area.value||area.placeholder;box.append(area);row.append(chip,box);cell.append(row);
       let expanded=false,startedEmpty=!area.value;
       function input(){
@@ -330,21 +334,51 @@ class AthleteSpreadsheet extends HTMLElement {
         render();const next=stage.querySelector('[data-track-ex="'+e.id+'"][data-track-key="'+key+'"] .wp-week-line[data-index="'+(i+1)+'"]');
         next.querySelector('.wp-week-chip').hidden=!suffix;focusTrack(e,key,i+1);
       });
+      num.onblur=()=>{if(!num.value.trim())num.value=String(i+1);};
       num.onchange=()=>{
-        if(!num.value)return;
         const t=e.track(key),j=Number(num.value)-1;
         if(!t||!Number.isInteger(j)||j<0||j>=t.weeks){num.value=String(i+1);return;}
         if(j===i)return;
         weekChange(e,key,t=>{t.rows.splice(j,0,t.rows.splice(i,1)[0]);});render();focusTrack(e,key,j);
       };
       area.addEventListener('paste',ev=>{
-        const text=ev.clipboardData.getData('text/plain').replace(/\r\n?/g,'\n');
-        if(!/^\s*Week\s+\d+: /im.test(text)||!text.includes('\n'))return;
+        const text=ev.clipboardData.getData('text/plain').replace(/\r\n?/g,'\n').trimEnd();
+        if(!/^\s*week\s+[+-]?\d+\s*:/i.test(text))return;
         ev.preventDefault();
-        const lines=text.split(/\n(?=\s*Week\s+\d+:)/i).map(s=>s.replace(/^\s*Week\s+\d+:\s?/i,''));
-        if(i+lines.length>52){status('Maximum 52 weeks.');return;}
-        weekChange(e,key,t=>{model.setWeeks(t,Math.max(t.weeks,i+lines.length));lines.forEach((s,j)=>t.rows[i+j].planned=s);});
-        render();focusTrack(e,key,i);
+        const plans=new Map();
+        let week;
+        for(const line of text.trimStart().split('\n')){
+          const heading=/^\s*week\s+([+-]?\d+)\s*:\s?(.*)$/i.exec(line);
+          if(heading){
+            week=Number(heading[1]);
+            if(week<1||week>52||plans.has(week)){
+              api.notify('Paste canceled. Use each week number once, from 1 to 52.');
+              return;
+            }
+            plans.set(week,heading[2]);
+          }else{
+            if(/^\s*week\s+(?:[+-]?\d|[^:]*:)/i.test(line)){
+              api.notify('Paste canceled. Give each week its own numbered label, such as Week 3:.');
+              return;
+            }
+            plans.set(week,plans.get(week)+'\n'+line);
+          }
+        }
+        const current=e.track(key),replaced=[];
+        for(const [number,plan] of plans){
+          const old=current?.rows[number-1]?.planned;
+          if(old&&old!==plan)replaced.push(number);
+        }
+        if(replaced.length&&(plans.size>1||week!==i+1)&&
+           !window.confirm('Replace existing prescriptions for '+(replaced.length===1?'week ':'weeks ')+replaced.join(', ')+'?'))return;
+        weekChange(e,key,t=>{
+          model.setWeeks(t,Math.max(t.weeks,...plans.keys()));
+          for(const [number,plan] of plans){
+            t.rows[number-1].planned=plan;
+            delete t.rows[number-1].sheetHideWeek;
+          }
+        });
+        render();focusTrack(e,key,plans.keys().next().value-1);
       });
     }
   }
@@ -426,12 +460,18 @@ class AthleteSpreadsheet extends HTMLElement {
     }
     clickSource=source;if(source)status(source.title+' · select a destination, or press Escape');
   });
+  function labelEditor(area,e,key){
+    area.setAttribute('aria-label',(e.name||'Unnamed exercise')+', '+heads[fields.indexOf(key)]+(e.goal&&key==='name'?', goal exercise':''));
+  }
+  function labelWeekField(area,e,key,index){
+    area.setAttribute('aria-label',(e.name||'Exercise')+' '+(key==='weeks'?'main progression':'alternative')+' week '+(index+1));
+  }
   function editor(e,key,parent){
     const box=el('div','wp-box'),area=el('textarea'),hasWeeks=weeklyField(key);area.rows=1;
     if(key==='name'){area.dataset.nameId=e.id;nameSuggestions(area,e);}
     if(key==='alternative')area.placeholder='Week 1';
     area.value=e[key];
-    area.setAttribute('aria-label',e.name+', '+heads[fields.indexOf(key)]+(e.goal&&key==='name'?', goal exercise':''));
+    labelEditor(area,e,key);
     box.dataset.copy=area.value||area.placeholder;box.append(area);parent.append(box);
     let initialWeek;
     area.addEventListener('focus',()=>{
@@ -490,10 +530,13 @@ class AthleteSpreadsheet extends HTMLElement {
     }
     drawWeeks(e,'alternative',td);
   }
+  function labelGrip(g,id){
+    const label='Actions for '+(itemName(id)||'Unnamed exercise');
+    g.setAttribute('aria-label',label);g.setAttribute('data-tooltip',label);
+  }
   function grip(id){
     const g=button('',()=>openPlacement(id));g.classList.add('wp-grip');g.dataset.grip=id;
-    const label='Actions for '+(itemName(id)||'Unnamed exercise');
-    g.setAttribute('aria-label',label);g.setAttribute('data-tooltip',label);return g;
+    labelGrip(g,id);return g;
   }
   function unit(d){
     const part=el('section','wp-unit'),tools=el('div','wp-tools');part.dataset.workout=d;tools.dataset.destination=d;
@@ -558,6 +601,16 @@ class AthleteSpreadsheet extends HTMLElement {
       part.querySelector('.wp-tools').dataset.context=api.pinState(days[d]);
       for(const tr of part.querySelectorAll('[data-row]')){
         const e=exerciseById(tr.dataset.row);drawRole(e,tr.querySelector('.wp-role-picker'));
+        labelGrip(tr.querySelector('[data-grip]'),e.id);
+        labelEditor(tr.querySelector('[data-name-id]'),e,'name');
+        tr.querySelector('.wp-alt-select')?.setAttribute('aria-label',e.name+' alternative track');
+        for(const cell of tr.querySelectorAll('[data-track-key]')){
+          for(const area of cell.querySelectorAll('textarea')){
+            const line=area.closest('.wp-week-line'),key=cell.dataset.trackKey;
+            if(line)labelWeekField(area,e,key,Number(line.dataset.index));
+            else labelEditor(area,e,key);
+          }
+        }
         tr.toggleAttribute('data-goal',e.goal);tr.dataset.context=api.pinState(days[d],e.source);
       }
     }

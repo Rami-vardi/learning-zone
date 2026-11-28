@@ -104,7 +104,7 @@ class AthleteSpreadsheet extends HTMLElement {
   }
   mount(athlete,api){
     const shadow=this.attachShadow({mode:'open'});
-    shadow.innerHTML="<link rel=\"stylesheet\" href=\"athlete-sheet.css?v=sheet-views2\"><div id=\"workout-sheet\">\n  <div data-placement hidden></div>\n  <div data-workouts></div>\n  <span class=\"wp-sr\" role=\"status\" aria-live=\"polite\" data-status></span>\n</div>\n";
+    shadow.innerHTML="<link rel=\"stylesheet\" href=\"athlete-sheet.css?v=goal-relations1\"><div id=\"workout-sheet\">\n  <div data-placement hidden></div>\n  <div data-workouts></div>\n  <span class=\"wp-sr\" role=\"status\" aria-live=\"polite\" data-status></span>\n</div>\n";
     const root=shadow.querySelector('#workout-sheet'),stage=root.querySelector('[data-workouts]');
     const style=shadow.querySelector('link');if(!style.sheet){root.style.visibility='hidden';style.onload=style.onerror=()=>root.style.removeProperty('visibility');}
   const fields=['name','weeks','alternative'],heads=['Exercise','Scheme','Alt. Prog.'];
@@ -568,11 +568,8 @@ class AthleteSpreadsheet extends HTMLElement {
     });
     const body=table.createTBody();workouts[d].forEach(e=>{const tr=body.insertRow();tr.dataset.row=e.id;tr.dataset.context=api.pinState(days[d],e.source);if(e.goal)tr.dataset.goal='';
       fields.forEach(key=>{const td=tr.insertCell();if(key==='name'){td.className='wp-name';const wrap=el('div','wp-name-wrap');wrap.append(grip(e.id));td.append(wrap);editor(e,key,wrap);
-        const role=el('select','wp-role');role.setAttribute('aria-label','Exercise role for '+(e.name||'new exercise'));
-        for(const value of ['Choose','Goal','Primary','Secondary','Tertiary'])role.add(new Option(value==='Choose'?'Unassigned':value,value));
-        role.value=e.source.role||'Choose';
-        const badge=el('label','wp-role-picker');badge.innerHTML=api.roleBadge(e.source);badge.append(role);td.append(badge);
-        role.onchange=()=>{api.setExerciseRole(e.source,role.value);refreshRoles();api.schedule();};}else if(key==='alternative'){
+        const picker=el('span','wp-role-picker');td.append(picker);drawRole(e,picker);
+        }else if(key==='alternative'){
         alternativeCell(td,e);
       }else{
         drawWeeks(e,key,td);
@@ -580,15 +577,34 @@ class AthleteSpreadsheet extends HTMLElement {
       }});});
     part.append(table,addExercise);return part;
   }
+  function drawRole(e,picker){
+    const source=e.source,support=['Secondary','Tertiary'].includes(source.role);
+    picker.innerHTML=api.roleBadge(source);
+    const role=el(support?'button':'select','wp-role');role.setAttribute('aria-label','Exercise role for '+(e.name||'new exercise'));
+    if(support){
+      role.type='button';role.setAttribute('aria-haspopup','dialog');
+      role.onclick=()=>api.editRole(source,source.role,picker);
+    }else{
+      for(const v of ['Choose','Goal','Primary','Secondary','Tertiary'])role.add(new Option(v==='Choose'?'Unassigned':v,v));
+      role.value=source.role||'Choose';role.onchange=()=>{const v=role.value;role.value=source.role;api.editRole(source,v,picker);};
+    }
+    picker.append(role);
+    const td=picker.closest('td');td.querySelector('.wp-goal-link')?.remove();
+    if(e.goal){
+      const chain=button('',()=>api.showRelated(source));chain.classList.add('wp-goal-link');chain.dataset.relatedGoal=source.id;
+      chain.title='Show goal relationships for '+(e.name||'goal');chain.setAttribute('aria-label',chain.title);chain.setAttribute('aria-pressed',String(api.goalFocus===String(source.id)));
+      chain.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m10 13 4-4m-3 6-2 2a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m-2 2 2-2a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0"/></svg>';
+      td.querySelector('.wp-name-wrap').append(chain);
+    }
+    td.toggleAttribute('data-linked',support&&!!api.goalFocus&&api.pinState(days[locate(e.id)],source)==='match');
+  }
   this.refreshRoles=refreshRoles;
   function refreshRoles(){
     for(const part of stage.querySelectorAll('.wp-unit')){
       const d=Number(part.dataset.workout);
       part.querySelector('.wp-tools').dataset.context=api.pinState(days[d]);
       for(const tr of part.querySelectorAll('[data-row]')){
-        const e=exerciseById(tr.dataset.row),role=tr.querySelector('.wp-role'),badge=tr.querySelector('.role-badge');
-        if(badge.dataset.badge!==e.source.role)badge.outerHTML=api.roleBadge(e.source);
-        role.value=e.source.role;role.setAttribute('aria-label','Exercise role for '+(e.name||'new exercise'));
+        const e=exerciseById(tr.dataset.row);drawRole(e,tr.querySelector('.wp-role-picker'));
         tr.toggleAttribute('data-goal',e.goal);tr.dataset.context=api.pinState(days[d],e.source);
       }
     }

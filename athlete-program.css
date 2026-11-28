@@ -472,3 +472,24 @@ html[data-lz-theme-ready] #student-learning-board .progression-dialog .progressi
 #student-learning-board .athlete-program .focus-exercises legend{font-size:12px;font-weight:650;padding:0}
 #student-learning-board .athlete-program [data-exercise-choices] label{display:flex;align-items:center;gap:6px;min-height:27px;padding:2px 3px}
 #student-learning-board .athlete-program button.sheet-title{padding:3px 7px;min-height:28px;font-weight:650;cursor:pointer}
+#student-learning-board .athlete-program .mirror-filter-picker .workout-options>details{border:0;margin:0;padding:0}
+#student-learning-board .athlete-program [data-focus-section]>summary{cursor:pointer}
+#student-learning-board .athlete-program .focus-options{display:grid;gap:1px;padding:1px 0 5px 12px}
+#student-learning-board .athlete-program .focus-options>button{font:inherit;font-size:12px;min-height:26px;text-align:left;border:0;box-shadow:none;background:transparent;padding:3px 5px}
+#student-learning-board .athlete-program .focus-options>button[aria-pressed=true]{background:var(--lz-soft);color:var(--lz-blue)}
+#student-learning-board .athlete-program .focus-options>strong{font-size:11px;color:var(--lz-sub);margin-top:3px}
+dialog.goal-link-editor{background:var(--lz-paper,Canvas);color:var(--lz-ink,CanvasText);font:14px/1.4 system-ui,sans-serif;box-sizing:border-box;width:min(345px,calc(100vw - 24px));max-height:85dvh;overflow:auto;border:1px solid var(--card-border,#aab8c5);border-radius:10px;padding:14px;box-shadow:0 9px 35px #10243342}
+.goal-link-editor::backdrop{background:#0a1b2828}
+.goal-link-editor h3{font-size:16px;margin:0 0 6px}
+.goal-link-editor fieldset{margin:10px 0;padding:4px 0;border:0;min-width:0}
+.goal-link-editor legend{font-weight:600}
+.goal-link-editor select,.goal-link-editor button{font:inherit;color:inherit;background:var(--lz-paper,Canvas);border:1px solid var(--card-border,#bac4cf);border-radius:5px;padding:3px 6px}
+.goal-link-editor label,.goal-link-editor .support-row,.goal-link-editor footer{display:flex;gap:6px;align-items:center}
+.goal-link-editor .support-row{justify-content:space-between;min-height:30px}
+.goal-link-editor small{color:var(--lz-sub,GrayText)}
+.goal-link-editor footer{justify-content:flex-end}
+.goal-link-editor button[type=submit]{background:#31568a;color:#fff}
+.goal-link-editor button:disabled{opacity:.5}
+.goal-link-editor [hidden]{display:none}
+.goal-link-editor form>label{clear:both}
+#student-learning-board .athlete-program .focus-options>button{justify-content:flex-start}

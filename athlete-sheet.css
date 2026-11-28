@@ -178,3 +178,10 @@
 #workout-sheet .workout-type{position:relative;display:inline-block;margin:0}
 #workout-sheet .workout-type select{width:auto;border-radius:5px;padding:1px 3px;background:var(--paper);color:var(--ink);font:500 11px/1.4 system-ui;cursor:pointer}
 #workout-sheet .workout-type>span{position:absolute;top:2px;left:4px;font:500 11px/1.4 system-ui;color:var(--ink);pointer-events:none}
+#workout-sheet .wp-name-wrap:has(.wp-goal-link){padding-right:23px}
+#workout-sheet .wp-name-wrap .wp-goal-link{position:absolute;top:50%;right:1px;transform:translateY(-50%);display:grid;place-items:center;padding:2px;min-width:20px;min-height:22px;border:0;background:transparent;color:inherit;cursor:pointer}
+#workout-sheet .wp-goal-link svg{width:15px;height:15px}
+#workout-sheet .wp-goal-link:is(:hover,[aria-pressed=true]){background:#ffffff30;border-radius:4px}
+#workout-sheet .wp-name[data-linked]:has([data-badge=Secondary]){background:var(--bg-Secondary);color:var(--ink-Secondary)}
+#workout-sheet .wp-name[data-linked]:has([data-badge=Tertiary]){background:var(--bg-Tertiary);color:var(--ink-Tertiary)}
+#workout-sheet .wp-role-picker :is([data-badge=Secondary],[data-badge=Tertiary]) span{white-space:normal;overflow-wrap:anywhere}

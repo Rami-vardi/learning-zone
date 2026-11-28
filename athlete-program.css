@@ -493,3 +493,20 @@ dialog.goal-link-editor{background:var(--lz-paper,Canvas);color:var(--lz-ink,Can
 .goal-link-editor [hidden]{display:none}
 .goal-link-editor form>label{clear:both}
 #student-learning-board .athlete-program .focus-options>button{justify-content:flex-start}
+
+#student-learning-board .athlete-program .athlete-nav button.sheet-title[data-default-sheet]{
+ background:light-dark(#eaf2fc,#263d55);color:light-dark(#244e79,#d7e9ff);border-color:light-dark(#b9cee5,#516f89);
+}
+@media (hover:hover){
+ #student-learning-board .athlete-program .athlete-nav :is(button.sheet-title[data-default-sheet],[data-action=add-day],[data-sheet-view],[data-comparison-week],.workout-filter>summary):hover,
+ #student-learning-board .athlete-program .athlete-bar [data-goals-toggle]:hover{
+  background:light-dark(#d8e8fb,#34516c);color:light-dark(#173d6b,#f2f7ff);border-color:light-dark(#82a8d0,#7998b3);
+ }
+}
+#student-learning-board .athlete-program :is([data-default-sheet],[data-action=add-day],[data-sheet-view],[data-comparison-week],.workout-filter>summary,[data-goals-toggle]):focus-visible{
+ outline:2px solid light-dark(#345d98,#aacdfb);outline-offset:1px;
+}
+.goal-link-editor .support-row{flex-wrap:wrap;gap:4px 6px}
+.goal-link-editor .rank-message{flex-basis:100%;color:light-dark(#8a341f,#ffc8b5);font-size:12px}
+.goal-link-editor .rank-message:empty{display:none}
+.goal-link-editor select[aria-invalid=true]{border-color:light-dark(#a0432e,#f3ae93)}

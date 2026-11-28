@@ -2112,7 +2112,7 @@ async function open(){
 window.LZMigration={preview,run,open};
 })();
 </script>
-<script src="athlete-spreadsheet.js?v=goal-relations1"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
+<script src="athlete-spreadsheet.js?v=builder-polish1"></script><script>(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;if(root)root.LZProgression=api;})(typeof window==='undefined'?null:window,function(){
 'use strict';
 const formats = ['fixed', 'range', 'top'];
 const text = value => String(value ?? '');
@@ -2184,7 +2184,7 @@ function setWeeks(p, weeks) {
 
 function trackName(alternatives, id) {
   const position = id === 'new' ? alternatives.length : alternatives.findIndex(track => track.id === id);
-  return position < 0 ? 'Main Progression' : 'Alternative ' + (position + 2);
+  return position < 0 ? 'Main progression' : 'Alternative ' + (position + 2);
 }
 
 function addAlternative(p) {
@@ -2303,7 +2303,7 @@ const day=(name='',type='Full body',exercises=[])=>({id:uid(),name,type,exercise
 const athletes=[];
 let current=null,layout='sheet',view='workouts',comparisonWeek=0,pairType='',selectedWorkouts=null,undo=null,pendingDelete=null;
 const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
-function decorate(){screen.querySelectorAll('h2').forEach(h=>{if(h.textContent==='Athlete Goals')h.innerHTML=`<span class="label-icon" style="color:var(--green)">${icon('target')}Athlete Goals</span>`;if(h.textContent==='Training Program')h.innerHTML=`<span class="label-icon" style="color:var(--blue)">${icon('calendar-days')}Training Program</span>`});screen.querySelectorAll('.day').forEach(d=>{const t=d.querySelector('[data-key="type"]').value;d.classList.add(t.toLowerCase().replace(' ','-'));d.querySelector('.day-title').insertAdjacentHTML('afterbegin',icon(t==='Upper'?'arrow-up-right':t==='Lower'?'arrow-down-right':'dumbbell'))});screen.querySelectorAll('[data-key="priority"]').forEach(el=>el.className=el.value==='Floor'?'priority-floor':el.value==='Ceiling'?'priority-ceiling':'');screen.querySelectorAll('button').forEach(b=>{const text=b.textContent.trim();const name=b.dataset.removeDay||b.dataset.removeEx||b.dataset.removeGoal!==undefined?'trash-2':b.dataset.view==='mirror'?'columns-2':b.dataset.layout==='sheet'?'table-2':b.dataset.view==='progression'?'trending-up':b.dataset.view==='exercise'?'git-compare-arrows':b.dataset.layout==='board'?'layout-grid':b.dataset.view==='workouts'?'dumbbell':text.startsWith('+')?'plus':b.dataset.action==='roster'?'users':null;if(name){b.classList.add('label-icon');b.innerHTML=icon(name)+'<span>'+esc(text.replace(/^\+\s*/,''))+'</span>'}});if(typeof lucide!=='undefined')lucide.createIcons({attrs:{width:16,height:16}})}
+function decorate(){screen.querySelectorAll('h2').forEach(h=>{if(h.textContent==='Athlete goals')h.innerHTML=`<span class="label-icon" style="color:var(--green)">${icon('target')}Athlete goals</span>`;if(h.textContent==='Training program')h.innerHTML=`<span class="label-icon" style="color:var(--blue)">${icon('calendar-days')}Training program</span>`});screen.querySelectorAll('.day').forEach(d=>{const t=d.querySelector('[data-key="type"]').value;d.classList.add(t.toLowerCase().replace(' ','-'));d.querySelector('.day-title').insertAdjacentHTML('afterbegin',icon(t==='Upper'?'arrow-up-right':t==='Lower'?'arrow-down-right':'dumbbell'))});screen.querySelectorAll('[data-key="priority"]').forEach(el=>el.className=el.value==='Floor'?'priority-floor':el.value==='Ceiling'?'priority-ceiling':'');screen.querySelectorAll('button').forEach(b=>{const text=b.textContent.trim();const name=b.dataset.removeDay||b.dataset.removeEx||b.dataset.removeGoal!==undefined?'trash-2':b.dataset.view==='mirror'?'columns-2':b.dataset.layout==='sheet'?'table-2':b.dataset.view==='progression'?'trending-up':b.dataset.view==='exercise'?'git-compare-arrows':b.dataset.layout==='board'?'layout-grid':b.dataset.view==='workouts'?'dumbbell':text.startsWith('+')?'plus':b.dataset.action==='roster'?'users':null;if(name){b.classList.add('label-icon');b.innerHTML=icon(name)+'<span>'+esc(text.replace(/^\+\s*/,''))+'</span>'}});if(typeof lucide!=='undefined')lucide.createIcons({attrs:{width:16,height:16}})}
 
 function askDelete(title,description,action,label='Delete',extra=''){
  pendingDelete={action,owner,athlete:current?.id};root.querySelector('[data-confirm-title]').textContent=title;root.querySelector('#delete-description').textContent=description;
@@ -2372,20 +2372,20 @@ screen.addEventListener('input',event=>{const t=event.target;if(t.dataset.key!==
 function unusedDayName(){const used=new Set(current.days.map(d=>d.name.trim().toLowerCase()));let n=1;while(used.has('day '+n))n++;return 'Day '+n}
 function options(values,value){return values.map(v=>`<option ${v===value?'selected':''}>${esc(v)}</option>`).join('')}
 function field(value,attrs=''){if(attrs.includes('data-key="name"')&&(attrs.includes('data-ex=')||attrs.includes('data-goal=')))attrs+=' list="lz-exercises" autocomplete="off"';return `<input value="${esc(value)}" ${attrs}>`}
-function roster(){current=null;clearUndo();screen.innerHTML=`<main><div class="intro"><div><h1>My Practice Athletes</h1><p>Create an athlete profile, then build their goals and training program.</p></div><button class="primary cursor-interaction" data-action="create">+ Create Athlete</button></div><div class="roster">${athletes.filter(a=>!a.archived).map(a=>`<article class="athlete-card"><h2>${esc(a.name)}</h2><p>${a.days.length} workout${a.days.length===1?'':'s'}</p><button class="cursor-interaction" data-open="${a.id}">Open Workspace</button><div class="actions"><button data-rename-athlete="${a.id}">Rename</button><button class="remove" data-archive-athlete="${a.id}">Archive</button></div></article>`).join('')}</div>${athletes.some(a=>a.archived)?`<details class="archive-list"><summary>Archived athletes</summary>${athletes.filter(a=>a.archived).map(a=>`<article class="athlete-card"><h2>${esc(a.name)}</h2><button data-restore-athlete="${a.id}">Restore athlete</button></article>`).join('')}</details>`:''}</main>`}
-function profile(){screen.innerHTML=`<main><section class="new-profile"><div><h1>Create Practice Athlete</h1><p>Start with a profile. Goals and the program come next.</p></div><form data-profile><label>Athlete Name<input name="name" required placeholder="Enter name"></label><label>Workouts per Week<input name="workouts" type="number" min="1" max="7" value="2" required></label><div class="actions" style="margin-top:20px"><button class="primary cursor-interaction" type="submit">Create and Open Workspace</button><button class="cursor-interaction" type="button" data-action="roster">Cancel</button></div></form></section></main>`}
+function roster(){current=null;clearUndo();screen.innerHTML=`<main><div class="intro"><div><h1>My practice athletes</h1><p>Create an athlete profile, then build their goals and training program.</p></div><button class="primary cursor-interaction" data-action="create">+ Create athlete</button></div><div class="roster">${athletes.filter(a=>!a.archived).map(a=>`<article class="athlete-card"><h2>${esc(a.name)}</h2><p>${a.days.length} workout${a.days.length===1?'':'s'}</p><button class="cursor-interaction" data-open="${a.id}">Open workspace</button><div class="actions"><button data-rename-athlete="${a.id}">Rename</button><button class="remove" data-archive-athlete="${a.id}">Archive</button></div></article>`).join('')}</div>${athletes.some(a=>a.archived)?`<details class="archive-list"><summary>Archived athletes</summary>${athletes.filter(a=>a.archived).map(a=>`<article class="athlete-card"><h2>${esc(a.name)}</h2><button data-restore-athlete="${a.id}">Restore athlete</button></article>`).join('')}</details>`:''}</main>`}
+function profile(){screen.innerHTML=`<main><section class="new-profile"><div><h1>Create practice athlete</h1><p>Start with a profile. Goals and the program come next.</p></div><form data-profile><label>Athlete name<input name="name" required placeholder="Enter name"></label><label>Workouts per week<input name="workouts" type="number" min="1" max="7" value="2" required></label><div class="actions" style="margin-top:20px"><button class="primary cursor-interaction" type="submit">Create and Open workspace</button><button class="cursor-interaction" type="button" data-action="roster">Cancel</button></div></form></section></main>`}
 function goalEditor(g,i,key,label,placeholder){
   const attrs=`data-goal="${i}" data-key="${key}" aria-label="${label}" placeholder="${placeholder}"`;
   if(key==='name')return `<div class="goal-name-editor">${field(g[key],attrs)}<span aria-hidden="true">${esc(g[key]||placeholder)}</span></div>`;
   return `<div class="goal-value-editor" data-value="${esc(g[key]||placeholder)}"><textarea rows="1" ${attrs}>${esc(g[key]||'')}</textarea></div>`;
 }
 function goalTable(){
-  const fields=[['name','Exercise','Enter exercise'],['ceiling','Current Ceiling','Enter ceiling'],['floor','Current Floor','Optional'],['goal','Goal','Enter goal']];
-  return `<section class="athlete-goals"><div class="section-head"><div><h2>Athlete Goals</h2><p>Decide whether to build the floor or raise the ceiling.</p></div><button type="button" class="cursor-interaction" data-action="add-goal">+ Add Goal</button></div><div class="table-wrap"><table class="athlete-goals-table" aria-label="Athlete Goals"><colgroup><col class="goal-order-column"><col class="goal-exercise-column"><col><col><col><col class="goal-priority-column"><col class="goal-remove-column"></colgroup><thead><tr><th scope="col" class="goal-order-heading" aria-label="Goal Order"></th><th scope="col">Exercise</th><th scope="col">Current Ceiling</th><th scope="col">Current Floor<br>If Known</th><th scope="col">Goal</th><th scope="col">Build</th><th scope="col">Remove</th></tr></thead><tbody>${current.goals.map((g,i)=>`<tr data-goal-row="${g.id}"><td class="goal-drag-cell"><button type="button" draggable="false" class="goal-drag-handle" data-goal-handle="${g.id}" aria-label="Reorder ${esc(g.name||'Goal '+(i+1))}; drag or use arrow keys">${icon('grip-vertical')}</button></td>${fields.map(([key,label,placeholder])=>`<td class="goal-edit-cell"><span class="goal-field-label" aria-hidden="true">${label}</span>${goalEditor(g,i,key,label,placeholder)}</td>`).join('')}<td class="goal-edit-cell"><span class="goal-field-label" aria-hidden="true">Build</span><select data-goal="${i}" data-key="priority" aria-label="Build floor or ceiling">${options(['Choose','Floor','Ceiling'],g.priority)}</select></td><td class="goal-delete-cell"><button type="button" class="remove cursor-interaction" data-remove-goal="${i}" aria-label="Delete Goal">Delete</button></td></tr>`).join('')}</tbody></table></div></section>`;
+  const fields=[['name','Exercise','Enter exercise'],['ceiling','Current ceiling','Enter ceiling'],['floor','Current floor','Optional'],['goal','Goal','Enter goal']];
+  return `<section class="athlete-goals"><div class="section-head"><div><h2>Athlete goals</h2><p>Decide whether to build the floor or raise the ceiling.</p></div><button type="button" class="cursor-interaction" data-action="add-goal">+ Add goal</button></div><div class="table-wrap"><table class="athlete-goals-table" aria-label="Athlete goals"><colgroup><col class="goal-order-column"><col class="goal-exercise-column"><col><col><col><col class="goal-priority-column"><col class="goal-remove-column"></colgroup><thead><tr><th scope="col" class="goal-order-heading" aria-label="Goal order"></th><th scope="col">Exercise</th><th scope="col">Current ceiling</th><th scope="col">Current floor<br>if known</th><th scope="col">Goal</th><th scope="col">Build</th><th scope="col">Remove</th></tr></thead><tbody>${current.goals.map((g,i)=>`<tr data-goal-row="${g.id}"><td class="goal-drag-cell"><button type="button" draggable="false" class="goal-drag-handle" data-goal-handle="${g.id}" aria-label="Reorder ${esc(g.name||'Goal '+(i+1))}; drag or use arrow keys">${icon('grip-vertical')}</button></td>${fields.map(([key,label,placeholder])=>`<td class="goal-edit-cell"><span class="goal-field-label" aria-hidden="true">${label}</span>${goalEditor(g,i,key,label,placeholder)}</td>`).join('')}<td class="goal-edit-cell"><span class="goal-field-label" aria-hidden="true">Build</span><select data-goal="${i}" data-key="priority" aria-label="Build floor or ceiling">${options(['Choose','Floor','Ceiling'],g.priority)}</select></td><td class="goal-delete-cell"><button type="button" class="remove cursor-interaction" data-remove-goal="${i}" aria-label="Delete goal">Delete</button></td></tr>`).join('')}</tbody></table></div></section>`;
 }
 
 
-function board(){return `<div class="day-grid">${current.days.filter(workoutVisible).map(d=>`<article class="day" data-day-context="${contextState(comparisonPins.size,pinMatch(d)||d.exercises.some(e=>pinMatch(d,e)))}"><div class="day-title">${field(d.name,`data-day="${d.id}" data-key="name" aria-label="Workout Name" placeholder="Name this day"`)}</div><div class="day-tools"><select data-day="${d.id}" data-key="type" aria-label="Workout Type">${options(['Full body','Upper','Lower','Other'],d.type)}</select><button class="remove cursor-interaction" aria-label="Delete workout" title="Delete workout" data-remove-day="${d.id}">Delete Day</button></div><div class="day-body">${d.exercises.map(e=>exerciseEditor(d,e)).join('')}<button class="cursor-interaction" data-add-ex="${d.id}">+ Add Exercise</button></div></article>`).join('')}</div>${!current.days.length?'<p>No workouts yet. Add a day to begin.</p>':!comparisonPins.size&&selectedWorkouts?.size===0?'<p>Choose a workout above.</p>':''}`}
+function board(){return `<div class="day-grid">${current.days.filter(workoutVisible).map(d=>`<article class="day" data-day-context="${contextState(comparisonPins.size,pinMatch(d)||d.exercises.some(e=>pinMatch(d,e)))}"><div class="day-title">${field(d.name,`data-day="${d.id}" data-key="name" aria-label="Workout name" placeholder="Name this day"`)}</div><div class="day-tools"><select data-day="${d.id}" data-key="type" aria-label="Workout type">${options(['Full body','Upper','Lower','Other'],d.type)}</select><button class="remove cursor-interaction" aria-label="Delete workout" title="Delete workout" data-remove-day="${d.id}">Delete day</button></div><div class="day-body">${d.exercises.map(e=>exerciseEditor(d,e)).join('')}<button class="cursor-interaction" data-add-ex="${d.id}">+ Add exercise</button></div></article>`).join('')}</div>${!current.days.length?'<p>No workouts yet. Add a day to begin.</p>':!comparisonPins.size&&selectedWorkouts?.size===0?'<p>Choose a workout above.</p>':''}`}
 function workoutTypeControl(d){
  const types=['Upper','Lower','Full body'];
  const legacy=!types.includes(d.type);
@@ -2487,6 +2487,7 @@ function trainingSection(){
  return `<section class="athlete-training" data-program-layout="${layout}" data-program-section="${view}" data-day-count="${current.days.filter(workoutVisible).length}" data-pair="${pairType}"><div class="athlete-nav">${nav}${view!=='progression'&&!sheetTarget?'<span data-sheet-bin title="Drop an exercise here to delete" aria-label="Drop an exercise here to delete">'+icon('trash-2')+'</span>':''}<button type="button" data-action="add-day">+ Add day</button></div>${content}</section>`;
 }
 function rawRender(keepGoals){
+ indexSecondaryPriorities();
  pruneHighlightedExercises();
  if(goalFocus&&!goalEntries().some(({e})=>goalFocus==='all'||String(e.id)===goalFocus))goalFocus='';
  if(pairType&&!hasWorkoutPair(pairType))pairType='';
@@ -2506,7 +2507,7 @@ function rawRender(keepGoals){
      return;
    }
  }
- screen.innerHTML=`<main class="athlete-program"><header class="athlete-bar"><div class="athlete-identity"><span class="athlete-mark" aria-hidden="true">${icon('dumbbell')}</span><strong>${esc(current.name)}</strong><span>Training Program</span></div><button data-goals-toggle aria-expanded="${goalsOpen}" aria-controls="athlete-goal-panel">${icon('target')}Athlete Goals <b>${current.goals.length}</b><span aria-hidden="true">${goalsOpen?'▴':'▾'}</span></button><div class="athlete-whiteboard actions"></div></header><div id="athlete-goal-panel" ${goalsOpen?'':'hidden'}>${goalTable()}</div>${trainingSection()}</main>`;
+ screen.innerHTML=`<main class="athlete-program"><header class="athlete-bar"><div class="athlete-identity"><span class="athlete-mark" aria-hidden="true">${icon('dumbbell')}</span><strong>${esc(current.name)}</strong><span>Training program</span></div><button data-goals-toggle aria-expanded="${goalsOpen}" aria-controls="athlete-goal-panel">${icon('target')}Athlete goals <b>${current.goals.length}</b><span aria-hidden="true">${goalsOpen?'▴':'▾'}</span></button><div class="athlete-whiteboard actions"></div></header><div id="athlete-goal-panel" ${goalsOpen?'':'hidden'}>${goalTable()}</div>${trainingSection()}</main>`;
 }
 screen.addEventListener('click',event=>{
  if(event.target.closest('[data-default-sheet]')){
@@ -2573,7 +2574,7 @@ function render(keepGoals=false){normalize();rawRender(keepGoals===true);screen.
  if(sheet)sheet.mount(current,{
    schedule,bindExerciseName,automaticRoles(){automaticRoles();normalize();},openProgression,editRole,showRelated,get goalFocus(){return goalFocus;},isGoalExercise,applyWeekToSets,includesWorkout:workoutVisible,
    removeWorkout,removeExercise,roleBadge,workoutTypeControl,updateWorkoutType,notify:say,refreshSheet:render,
-   editSetTargets(e){sheetTarget=e.id;render();screen.querySelector('[data-close-set-editor]')?.focus();},
+   editExerciseSettings(e){sheetTarget=e.id;render();screen.querySelector('[data-close-set-editor]')?.focus();},
    updateDay(day,name,type){day.name=name;day.type=type;render();schedule();},
    pinExercise(key){setComparisonPin(key,true);},
    revealMovedExercise(day,id){
@@ -2620,7 +2621,7 @@ screen.addEventListener('click',event=>{
  event.stopImmediatePropagation();const prior=sheetTarget;sheetTarget=null;render();
  screen.querySelector('athlete-spreadsheet')?.shadowRoot?.querySelector(`[data-grip="e${prior}"]`)?.focus({preventScroll:true});
 },true);
-screen.addEventListener('submit',event=>{if(!event.target.matches('[data-profile]'))return;event.preventDefault();const data=new FormData(event.target);const name=data.get('name').trim();if(!name)return;current={id:uid(),name,goals:[{name:'',ceiling:'',floor:'',goal:'',priority:'Choose'}],days:Array.from({length:Number(data.get('workouts'))},(_,i)=>day('Day '+(i+1)))};athletes.push(current);resetComparison();render();say('Athlete profile created. Add Goals and exercises.')});
+screen.addEventListener('submit',event=>{if(!event.target.matches('[data-profile]'))return;event.preventDefault();const data=new FormData(event.target);const name=data.get('name').trim();if(!name)return;current={id:uid(),name,goals:[{name:'',ceiling:'',floor:'',goal:'',priority:'Choose'}],days:Array.from({length:Number(data.get('workouts'))},(_,i)=>day('Day '+(i+1)))};athletes.push(current);resetComparison();render();say('Athlete profile created. Add goals and exercises.')});
 screen.addEventListener('click',event=>{if(event.target.closest('[data-teaching-launch]'))return;if(learningClick(event))return;if(advancedClick(event))return;const b=event.target.closest('button');if(!b)return;const v=b.dataset;if(v.action==='roster'){preserveDraft();roster();return}if(v.action==='create'){clearUndo();profile();return}if(v.open){current=athletes.find(a=>a.id===Number(v.open));resetComparison();render();say('Athlete workspace opened. Changes save automatically.');return}if(!current)return;if(v.action==='add-day'){sheetTarget=null;current.days.push(day(unusedDayName()));selectedWorkouts=null;pairType='';view='workouts';say('Workout added.')}if(v.action==='add-goal')current.goals.push({name:'',ceiling:'',floor:'',goal:'',priority:'Choose'});if(v.addEx)current.days.find(d=>d.id===Number(v.addEx)).exercises.push(ex());if(v.removeDay){removeWorkout(current.days.find(d=>d.id===Number(v.removeDay)));return}if(v.removeEx){const d=current.days.find(d=>d.id===Number(v.day));removeExercise(d,d.exercises.find(e=>e.id===Number(v.removeEx)));return}if(v.removeGoal!==undefined){askDelete('Delete this goal?', 'Remove the selected goal from this athlete profile?',()=>{current.goals.splice(Number(v.removeGoal),1)});return}render()});
 function removeWorkout(d){
  askDelete('Delete '+(d.name||'this day')+'?', 'This removes the workout and its '+d.exercises.length+' exercise entries. Your goals stay unchanged.',()=>{current.days=current.days.filter(item=>item.id!==d.id)});
@@ -2711,21 +2712,22 @@ function rows(e){
 }
 function needsShared(e){const rs=(e.setRows||[]).slice(0,Number(e.sets));return e.mode!=='top'&&rs.length>1&&rs.some(r=>String(r.reps??'')!==String(rs[0].reps??'')||String(r.load??'')!==String(rs[0].load??'')||(e.mode==='range'&&String(r.high??e.high??'')!==String(rs[0].high??e.high??'')))}
 function reps(e){const rs=rows(e);return e.mode==='top'||needsShared(e)?rs.map((r,i)=>`Set ${i+1}, ${e.mode==='top'?r.kind+': ':''}${r.reps}${e.mode==='range'?' to '+r.high:''} reps at ${r.load||'load unset'}`).join('; '):summary(e)}
-function summary(e){rows(e);if(e.mode==='top'||needsShared(e))return `${e.sets} ${Number(e.sets)===1?'set':'sets'} · ${e.mode==='top'?'Top + Back Off':'Choose shared prescription'}`;const load=String(e.load||'').trim();return `${e.sets} × ${e.low||'Reps Not Set'}${e.mode==='range'?' to '+(e.high||'?'):''} · ${load?(/^[0-9]+(?:\.[0-9]+)?$/.test(load)?load+' kg':load):'Load Not Set'}`}
+function summary(e){rows(e);if(e.mode==='top'||needsShared(e))return `${e.sets} ${Number(e.sets)===1?'set':'sets'} · ${e.mode==='top'?'Top + back off':'Choose shared prescription'}`;const load=String(e.load||'').trim();return `${e.sets} × ${e.low||'Reps not set'}${e.mode==='range'?' to '+(e.high||'?'):''} · ${load?(/^[0-9]+(?:\.[0-9]+)?$/.test(load)?load+' kg':load):'Load not set'}`}
 function roleBadge(e){
  const role=Object.hasOwn(roleShapes,e.role)?e.role:'Choose';
  const links=activeLinks(e),focused=links.find(link=>String(link.goalId)===goalFocus),link=focused||links[0];
  const rank=role==='Secondary'&&link?.priority?' '+link.priority:'';
  const suffix=link?' · '+link.name+(!focused&&links.length>1?' +'+(links.length-1):''):'';
  const details=links.map(link=>role+(role==='Secondary'&&link.priority?' '+link.priority:'')+' · '+link.name).join(' / ');
+ const conflict=role==='Secondary'&&links.map(link=>secondaryConflict(e,link.goalId,link.priority,link.name)).find(Boolean);
  const label=goalFocus==='all'&&details?details:(role==='Choose'?'Unassigned':role)+rank+suffix;
- return `<span class="role-badge" title="${esc(details||label)}" data-badge="${role}" style="--badge-bg:var(--bg-${role});--badge-ink:var(--ink-${role})"><svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">${roleShapes[role]}</svg><span>${esc(label)}</span></span>`;
+ return `<span class="role-badge" title="${esc(conflict||details||label)}" data-badge="${role}" style="--badge-bg:var(--bg-${role});--badge-ink:var(--ink-${role})"><svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">${roleShapes[role]}</svg><span>${esc(label)}${conflict?' · Rank conflict':''}</span></span>`;
 }
 function prescriptionRows(e){
- const loadLabel=value=>{const text=String(value??'').trim();return text?(/^[0-9]+(?:\.[0-9]+)?$/.test(text)?text+' kg':text):'Load Not Set'};
- return `<div class="prescription-rows" role="table" aria-label="Set targets for ${esc(e.name||'exercise')}"><div class="prescription-row-head" role="row"><span role="columnheader">Set / Type</span><span role="columnheader">Reps</span><span role="columnheader">Load</span></div>${rows(e).map((r,i)=>`<div class="prescription-row" role="row"><span role="cell">${i+1}${e.mode==='top'?' · '+esc(r.kind):''}</span><span role="cell">${esc(r.reps||'Unset')}${e.mode==='range'?' to '+esc(r.high||'?'):''}</span><span role="cell">${esc(loadLabel(r.load))}</span></div>`).join('')}</div>`;
+ const loadLabel=value=>{const text=String(value??'').trim();return text?(/^[0-9]+(?:\.[0-9]+)?$/.test(text)?text+' kg':text):'Load not set'};
+ return `<div class="prescription-rows" role="table" aria-label="Set targets for ${esc(e.name||'exercise')}"><div class="prescription-row-head" role="row"><span role="columnheader">Set / type</span><span role="columnheader">Reps</span><span role="columnheader">Load</span></div>${rows(e).map((r,i)=>`<div class="prescription-row" role="row"><span role="cell">${i+1}${e.mode==='top'?' · '+esc(r.kind):''}</span><span role="cell">${esc(r.reps||'Unset')}${e.mode==='range'?' to '+esc(r.high||'?'):''}</span><span role="cell">${esc(loadLabel(r.load))}</span></div>`).join('')}</div>`;
 }
-function exerciseNumberLabel(e,day=null){const workout=day||allEntries().find(x=>x.e.id===e.id)?.d;const index=workout?.exercises.findIndex(x=>x.id===e.id)??-1;return index<0?'':`<small class="exercise-number">Exercise Number ${index+1}</small>`;}
+function exerciseNumberLabel(e,day=null){const workout=day||allEntries().find(x=>x.e.id===e.id)?.d;const index=workout?.exercises.findIndex(x=>x.id===e.id)??-1;return index<0?'':`<small class="exercise-number">Exercise number ${index+1}</small>`;}
 function firstWeekSummary(e){
  const first=e.progression&&LZProgression.forExercise(e).rows[0].planned.trim();
  return e.progression?'Week 1 · '+(first?first.split('\n').join(' · '):'Not entered'):'';
@@ -2745,7 +2747,7 @@ function comparisonGrid(e,heading=true,context=''){
      }).join('');
      return `<tr><th scope="row">W${index+1}</th>${cells}</tr>`;
    }).join('');
-   return `<tbody>${label}${rows||`<tr><td colspan="3">No Week ${comparisonWeek}</td></tr>`}</tbody>`;
+   return `<tbody>${label}${rows||`<tr><td colspan="3">No week ${comparisonWeek}</td></tr>`}</tbody>`;
  }).join('');
  return `<div class="comparison-sheet" data-context="${context}" data-sheet-exercise="${e.id}">${title}<table aria-label="${esc(name)} weekly progression"><colgroup><col class="grid-week"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned prescription</th><th scope="col">Actual results</th></tr></thead>${bodies}</table></div>`;
 }
@@ -2767,7 +2769,7 @@ function editComparisonCell(event){
  }
  schedule();
 }
-function advancedClick(event){const button=event.target.closest('button');if(!button||!current)return false;const v=button.dataset;const entry=allEntries().find(x=>x.e.id===Number(v.toggleEx||v.ex));if(v.convertShared!==undefined){convertPrescription(entry.e,entry.e.mode);return true}if(v.toggleEx){entry.e.collapsed=!entry.e.collapsed;render();return true}if(v.insertSet!==undefined){const e=entry.e;if(Number(e.sets)>=20)return true;const index=Number(v.insertSet);const active=rows(e);const next={...active[index],id:uid(),kind:e.mode==='top'?'Back off':active[index].kind};e.setRows=active;e.setRows.splice(index+1,0,next);e.sets=String(e.setRows.length);publishSetEdit(e);render();say('Set added. Set count updated.');return true}if(v.deleteSet!==undefined){const e=entry.e;const index=Number(v.deleteSet);if(Number(e.sets)===1){say('Keep at least one set. You can delete the exercise instead.');return true}askDelete('Delete Set '+(index+1)+'?', 'Remove this set target from '+(e.name||'this exercise')+'?',()=>{e.setRows=rows(e);e.setRows.splice(index,1);e.sets=String(e.setRows.length);publishSetEdit(e)});return true}return false}
+function advancedClick(event){const button=event.target.closest('button');if(!button||!current)return false;const v=button.dataset;const entry=allEntries().find(x=>x.e.id===Number(v.toggleEx||v.ex));if(v.convertShared!==undefined){convertPrescription(entry.e,entry.e.mode);return true}if(v.toggleEx){entry.e.collapsed=!entry.e.collapsed;render();return true}if(v.insertSet!==undefined){const e=entry.e;if(Number(e.sets)>=20)return true;const index=Number(v.insertSet);const active=rows(e);const next={...active[index],id:uid(),kind:e.mode==='top'?'Back off':active[index].kind};e.setRows=active;e.setRows.splice(index+1,0,next);e.sets=String(e.setRows.length);publishSetEdit(e);render();say('Set added. Set count updated.');return true}if(v.deleteSet!==undefined){const e=entry.e;const index=Number(v.deleteSet);if(Number(e.sets)===1){say('Keep at least one set. You can delete the exercise instead.');return true}askDelete('Delete set '+(index+1)+'?', 'Remove this set target from '+(e.name||'this exercise')+'?',()=>{e.setRows=rows(e);e.setRows.splice(index,1);e.sets=String(e.setRows.length);publishSetEdit(e)});return true}return false}
 function refreshFilter(attribute,value=''){
  const before=screen.querySelector('.mirror-filter-picker');
  const menuScroll=before?.querySelector('.workout-options')?.scrollTop||0;
@@ -2904,7 +2906,7 @@ function preserveDraft(){if(!member||!owner||!workspaceActive||serialized()===la
 function recoveryPanel(text=''){if(!workspaceActive){recoveryBar.innerHTML='';return}recoveryBar.innerHTML=text?`<div class="lz-recovery" role="status"><p>${esc(text)}</p><div class="actions">${conflict?'<button data-load-latest>Keep my draft and load latest saved</button>':''}${pendingRecovery?'<button data-restore-draft>Restore preserved draft</button><button data-dismiss-draft>Keep saved version</button>':''}<button data-export>Export current work</button>${member?.role==='teacher'?'<button data-teacher-home>Return to Students</button>':'<button data-signout>Sign Out and keep draft</button>'}</div></div>`:''}
 function setBusy(value){switching=value;screen.inert=value||!!pendingRecovery;screen.setAttribute('aria-busy',String(value))}
 async function leaveWorkspace(){await window.LZShell?.closeContent?.();if(!workspaceActive)return;if(typeof flushProgressionAutosave==='function')await flushProgressionAutosave();const kept=preserveDraft();try{await flush()}catch(e){if(!kept)throw e;say('Draft preserved. You can restore it when you reopen this workspace.')}clearTimeout(saveTimer);clearUndo()}
-function validationIssue(){for(const a of athletes){if(!a.name.trim())return {a,text:'Enter an athlete name.'};for(const d of a.days)for(const e of d.exercises){if(!Number.isInteger(Number(e.sets))||Number(e.sets)<1||Number(e.sets)>20)return {a,d,e,key:'sets',text:'Sets must be a whole number from 1 to 20.'};const rs=rows(e);for(let i=0;i<rs.length;i++){const r=rs[i];if(r.reps!==''&&(!Number.isInteger(Number(r.reps))||Number(r.reps)<1))return {a,d,e,index:i,key:e.mode==='top'||needsShared(e)?'reps':'low',text:'Reps must be positive whole numbers.'};if(e.mode==='range'&&r.high!==''&&(!Number.isInteger(Number(r.high))||Number(r.high)<1||(r.reps!==''&&Number(r.high)<Number(r.reps))))return {a,d,e,index:i,key:needsShared(e)?'high-set':'high',text:'Maximum Reps must be a whole number at least as large as minimum reps.'}}}}return null}
+function validationIssue(){for(const a of athletes){if(!a.name.trim())return {a,text:'Enter an athlete name.'};for(const d of a.days)for(const e of d.exercises){if(!Number.isInteger(Number(e.sets))||Number(e.sets)<1||Number(e.sets)>20)return {a,d,e,key:'sets',text:'Sets must be a whole number from 1 to 20.'};const rs=rows(e);for(let i=0;i<rs.length;i++){const r=rs[i];if(r.reps!==''&&(!Number.isInteger(Number(r.reps))||Number(r.reps)<1))return {a,d,e,index:i,key:e.mode==='top'||needsShared(e)?'reps':'low',text:'Reps must be positive whole numbers.'};if(e.mode==='range'&&r.high!==''&&(!Number.isInteger(Number(r.high))||Number(r.high)<1||(r.reps!==''&&Number(r.high)<Number(r.reps))))return {a,d,e,index:i,key:needsShared(e)?'high-set':'high',text:'Maximum reps must be a whole number at least as large as minimum reps.'}}}}return null}
 function showIssue(issue){if(!issue)return;const {a,d,e,index,key}=issue;say((a?.name||'Athlete')+(d?' / '+d.name:'')+(e?' / '+(e.name||'Exercise'):'')+': '+issue.text);if(current?.id===a.id&&e){e.collapsed=false;layout='sheet';view='workouts';selectedWorkouts=null;pairType='';sheetTarget=e.id;render();let selector=key==='role'?`[data-ex="${e.id}"][data-link-key="role"]`:key==='reps'||key==='high-set'?`[data-ex="${e.id}"][data-set="${index}"][data-set-key="${key==='high-set'?'high':key}"]`:`[data-ex="${e.id}"][data-key="${key}"]`;const input=screen.querySelector(selector);if(input){input.setAttribute('aria-invalid','true');input.focus()}}}
 function sanitize(payload){if(!payload||!Array.isArray(payload.athletes))throw Error('The saved workspace needs review.');const used=new Set();const safeId=v=>{let n=Number(v);if(!Number.isSafeInteger(n)||n<1||used.has(n))n=uid();used.add(n);serial=Math.max(serial,n);return n};return payload.athletes.map(a=>({id:safeId(a.id),name:String(a.name||''),archived:!!a.archived,goals:(Array.isArray(a.goals)?a.goals:[]).map(g=>({...g,id:safeId(g.id),name:String(g.name||''),ceiling:String(g.ceiling??''),floor:String(g.floor??''),goal:String(g.goal??''),priority:['Floor','Ceiling'].includes(g.priority)?g.priority:'Choose'})),days:(Array.isArray(a.days)?a.days:[]).map(d=>({id:safeId(d.id),name:String(d.name||''),type:['Full body','Upper','Lower','Other'].includes(d.type)?d.type:'Other',...(Array.isArray(d.sheetWidths)&&d.sheetWidths.length===3&&d.sheetWidths.every(n=>Number.isFinite(n)&&n>=65&&n<=1800)?{sheetWidths:d.sheetWidths.slice()}:{}),exercises:(Array.isArray(d.exercises)?d.exercises:[]).map(e=>({...e,id:safeId(e.id),name:String(e.name||''),role:['Goal','Primary','Secondary','Tertiary'].includes(e.role)?e.role:'Choose',mode:['fixed','range','top'].includes(e.mode)?e.mode:'fixed',sets:String(Math.max(1,Math.min(20,parseInt(e.sets)||1))),collapsed:true,setRows:(Array.isArray(e.setRows)?e.setRows:[]).slice(0,20).map(s=>({id:safeId(s.id),kind:s.kind==='Top'?'Top':'Back off',reps:String(s.reps??''),high:String(s.high??''),load:String(s.load??'')}))}))}))}))}
 async function loadOwner(id,name='',recover=false,fromExercise=false){
@@ -2941,7 +2943,7 @@ function renderStudentDashboard(){
  if(member?.role!=='teacher'||studentRosterActor!==member.id)return;
  const disabled=studentActionBusy?'disabled':'',labels={active:'Active',archived:'Archived',deleted:'Deleted'},visible=studentRoster.filter(s=>studentState(s)===studentTab);
  const action=(s,status,label,symbol)=>`<button type="button" class="${status==='deleted'?'student-delete':''}" data-student-status="${status}" data-student-id="${esc(s.id)}" ${disabled}>${icon(symbol)}<span>${label}</span></button>`;
- screen.innerHTML=`<main data-student-dashboard><div class="intro"><div><h1>Student Dashboard</h1><p>Open any student’s workspace to view or edit their practice athletes, goals and programs.</p></div><button class="primary" data-add-student ${disabled}>+ Add Student</button></div><div class="student-status-tabs" role="tablist" aria-label="Student status">${studentStates.map(status=>`<button type="button" role="tab" id="student-tab-${status}" data-student-tab="${status}" aria-selected="${studentTab===status}" aria-controls="student-roster-panel" ${disabled}>${labels[status]}<span class="student-count">(${studentRoster.filter(s=>studentState(s)===status).length})</span></button>`).join('')}</div><p class="student-lifecycle-note">${studentTab==='active'?'Active students can sign in and build their programs.':studentTab==='archived'?'Archived students cannot sign in. Their saved programs are kept, and you can restore access.':'Deleted students cannot sign in. Their saved programs and usernames are kept so you can restore them.'}</p><div id="student-roster-panel" role="tabpanel" aria-labelledby="student-tab-${studentTab}" class="roster">${visible.map(s=>{const state=studentState(s),name=s.username||s.email||'Student';return `<article class="athlete-card"><h2>${esc(name)}</h2><p>${state==='active'?'Access enabled':state==='archived'?'Archived · sign-in disabled':'Deleted · sign-in disabled'}</p>${state==='active'?`<button class="primary" data-open-student="${esc(s.id)}" data-student-name="${esc(name)}" ${disabled}>Open Workspace</button><button data-rename-student="${esc(s.id)}" data-student-name="${esc(name)}" ${disabled}>Edit Username</button><button data-change-password="${esc(s.id)}" ${disabled}>Change Password</button>`:''}<div class="student-card-actions">${state==='active'?action(s,'archived','Archive','archive')+action(s,'deleted','Delete','trash-2'):action(s,'active','Restore to Active','rotate-ccw')+(state==='archived'?action(s,'deleted','Delete','trash-2'):'')}</div></article>`;}).join('')||`<p>${studentTab==='active'?'No active students. Add a student to get started.':studentTab==='archived'?'No archived students.':'No deleted students.'}</p>`}</div></main>`;
+ screen.innerHTML=`<main data-student-dashboard><div class="intro"><div><h1>Student Dashboard</h1><p>Open any student’s workspace to view or edit their practice athletes, goals and programs.</p></div><button class="primary" data-add-student ${disabled}>+ Add Student</button></div><div class="student-status-tabs" role="tablist" aria-label="Student status">${studentStates.map(status=>`<button type="button" role="tab" id="student-tab-${status}" data-student-tab="${status}" aria-selected="${studentTab===status}" aria-controls="student-roster-panel" ${disabled}>${labels[status]}<span class="student-count">(${studentRoster.filter(s=>studentState(s)===status).length})</span></button>`).join('')}</div><p class="student-lifecycle-note">${studentTab==='active'?'Active students can sign in and build their programs.':studentTab==='archived'?'Archived students cannot sign in. Their saved programs are kept, and you can restore access.':'Deleted students cannot sign in. Their saved programs and usernames are kept so you can restore them.'}</p><div id="student-roster-panel" role="tabpanel" aria-labelledby="student-tab-${studentTab}" class="roster">${visible.map(s=>{const state=studentState(s),name=s.username||s.email||'Student';return `<article class="athlete-card"><h2>${esc(name)}</h2><p>${state==='active'?'Access enabled':state==='archived'?'Archived · sign-in disabled':'Deleted · sign-in disabled'}</p>${state==='active'?`<button class="primary" data-open-student="${esc(s.id)}" data-student-name="${esc(name)}" ${disabled}>Open workspace</button><button data-rename-student="${esc(s.id)}" data-student-name="${esc(name)}" ${disabled}>Edit Username</button><button data-change-password="${esc(s.id)}" ${disabled}>Change Password</button>`:''}<div class="student-card-actions">${state==='active'?action(s,'archived','Archive','archive')+action(s,'deleted','Delete','trash-2'):action(s,'active','Restore to Active','rotate-ccw')+(state==='archived'?action(s,'deleted','Delete','trash-2'):'')}</div></article>`;}).join('')||`<p>${studentTab==='active'?'No active students. Add a student to get started.':studentTab==='archived'?'No archived students.':'No deleted students.'}</p>`}</div></main>`;
  window.dispatchEvent(new Event('lz-dashboard-ready'));if(window.lucide)lucide.createIcons({attrs:{width:19,height:19}});
 }
 function confirmStudentChange(student,status){
@@ -2978,7 +2980,7 @@ root.addEventListener('click',async event=>{const b=event.target.closest('button
  else if(b.hasAttribute('data-dismiss-draft')){localStorage.removeItem(pendingRecovery?.key||draftKey());pendingRecovery=findRecovery();setBusy(false);account();recoveryPanel(pendingRecovery?'Another preserved draft is available. Restore it or keep the saved version.':'');say('Saved version kept.')}
  else if(b.dataset.changePassword){changeStudentPassword(b.dataset.changePassword);}
  else if(b.dataset.renameStudent){const id=b.dataset.renameStudent;editName('Edit student username',b.dataset.studentName,'Student username',async name=>{await api('rename-student',{student:id,username:name});await teacherHome();say('Username updated. The account and saved work are unchanged.')})}
- else if(b.dataset.renameAthlete){const a=athletes.find(a=>a.id===Number(b.dataset.renameAthlete));editName('Rename practice athlete',a.name,'Athlete Name',async name=>{a.name=name;roster();schedule()})}
+ else if(b.dataset.renameAthlete){const a=athletes.find(a=>a.id===Number(b.dataset.renameAthlete));editName('Rename practice athlete',a.name,'Athlete name',async name=>{a.name=name;roster();schedule()})}
  else if(b.dataset.archiveAthlete){const a=athletes.find(a=>a.id===Number(b.dataset.archiveAthlete));askDelete('Archive '+a.name+'?','The profile, goals and program will be kept in Archived athletes. You can restore them at any time.',()=>{a.archived=true;current=null;roster()},'Archive')}
  else if(b.dataset.restoreAthlete){athletes.find(a=>a.id===Number(b.dataset.restoreAthlete)).archived=false;roster();schedule()}
  else if(member&&!b.hasAttribute('data-cancel-delete'))schedule();
@@ -3003,6 +3005,26 @@ function activeLinks(e){
  if(!supportsRole(e.role)||!Array.isArray(e.goalLinks))return [];
  const goals=goalEntries(),byId=new Map(goals.map(({e})=>[e.id,e]));
  return e.goalLinks.filter(link=>link&&byId.has(link.goalId)).map(link=>({...link,name:byId.get(link.goalId).name||'Unnamed goal'}));
+}
+// A goal has four secondary slots shared by every workout in the athlete's program.
+let secondaryPriorities=new Map();
+function indexSecondaryPriorities(){
+ secondaryPriorities=new Map();
+ for(const {d,e} of allEntries()){
+   if(e.role!=='Secondary'||!Array.isArray(e.goalLinks))continue;
+   for(const link of e.goalLinks){
+     if(!link||![1,2,3,4].includes(Number(link.priority)))continue;
+     const key=link.goalId+':'+link.priority;
+     if(!secondaryPriorities.has(key))secondaryPriorities.set(key,[]);
+     secondaryPriorities.get(key).push({d,e});
+   }
+ }
+}
+function secondaryConflict(exercise,goalId,priority,goalName){
+ const owner=secondaryPriorities.get(goalId+':'+priority)?.find(({e})=>e.id!==exercise.id);
+ if(!owner)return '';
+ const day=owner.d.name||'Day '+(current.days.indexOf(owner.d)+1);
+ return 'Secondary '+priority+' for '+goalName+' is already assigned to '+(owner.e.name||'Unnamed exercise')+' on '+day+'. Choose another priority.';
 }
 function relatedToFocus(e){
  if(!goalFocus)return true;
@@ -3038,36 +3060,55 @@ function editRole(e,role,anchor){
  const athlete=current,choices=goalOptions(e),links=new Map(activeLinks(e).map(link=>[link.goalId,link.priority||'']));
  const dialog=document.createElement('dialog');
  dialog.className='goal-link-editor';dialog.setAttribute('aria-labelledby','goal-link-title');
- dialog.innerHTML=`<form><h3 id="goal-link-title">${esc(e.name||'Exercise')}</h3><label>Exercise role <select data-link-role>${['Choose','Goal','Primary','Secondary','Tertiary'].map(v=>`<option value="${v}" ${v===role?'selected':''}>${v==='Choose'?'Unassigned':v}</option>`).join('')}</select></label><fieldset><legend>Supports which goal?</legend>${choices.map(({id,label})=>`<div class="support-row"><label><input type="checkbox" data-support-goal="${id}" ${links.has(id)?'checked':''}>${esc(label)}</label><label data-rank-label>Priority <select required data-support-priority="${id}" aria-label="${esc('Priority for '+label)}"><option value="">Choose</option>${[1,2,3,4].map(n=>`<option value="${n}" ${links.get(id)===n?'selected':''}>${n}</option>`).join('')}</select></label></div>`).join('')||'<p>Assign the Goal role to an exercise first.</p>'}<small data-rank-hint>1 is the highest priority.</small></fieldset><footer><button type="button" data-dismiss>Cancel</button><button type="submit">Save</button></footer></form>`;
+ dialog.innerHTML=`<form><h3 id="goal-link-title">${esc(e.name||'Exercise')}</h3><label>Exercise role <select data-link-role>${['Choose','Goal','Primary','Secondary','Tertiary'].map(v=>`<option value="${v}" ${v===role?'selected':''}>${v==='Choose'?'Unassigned':v}</option>`).join('')}</select></label><fieldset><legend>Supports which goal?</legend>${choices.map(({id,label})=>`<div class="support-row"><label><input type="checkbox" data-support-goal="${id}" ${links.has(id)?'checked':''}>${esc(label)}</label><label data-rank-label>Priority <select required data-support-priority="${id}" aria-label="${esc('Priority for '+label)}" aria-describedby="rank-message-${id}"><option value="">Choose</option>${[1,2,3,4].map(n=>`<option value="${n}" ${links.get(id)===n?'selected':''}>${n}</option>`).join('')}</select></label><small class="rank-message" id="rank-message-${id}" role="status"></small></div>`).join('')||'<p>Assign the Goal role to an exercise first.</p>'}<small data-rank-hint>1 is the highest priority.</small></fieldset><footer><button type="button" data-dismiss>Cancel</button><button type="submit">Save</button></footer></form>`;
  document.body.append(dialog);
  const form=dialog.querySelector('form'),roleField=form.querySelector('[data-link-role]'),fields=form.querySelector('fieldset');
  function sync(){
    const support=supportsRole(roleField.value),ranked=roleField.value==='Secondary';
    fields.hidden=!support;form.querySelector('[data-rank-hint]').hidden=!ranked||!choices.length;
    const boxes=[...form.querySelectorAll('[data-support-goal]')];
+   let conflict=false;
    for(const box of boxes){
-     const rank=box.closest('.support-row').querySelector('[data-support-priority]');
+     const row=box.closest('.support-row'),rank=row.querySelector('[data-support-priority]');
      rank.disabled=!ranked||!box.checked;rank.parentElement.hidden=rank.disabled;
+     const goalId=Number(box.dataset.supportGoal),goalName=box.parentElement.textContent.trim();
+     for(const option of rank.options){
+       if(!option.value)continue;
+       const taken=secondaryConflict(e,goalId,option.value,goalName);
+       option.textContent=option.value+(taken?' (in use)':'');
+     }
+     const message=rank.disabled?'':secondaryConflict(e,goalId,rank.value,goalName);
+     rank.setCustomValidity(message);
+     rank.setAttribute('aria-invalid',String(Boolean(message)));
+     row.querySelector('.rank-message').textContent=message;
+     if(message)conflict=true;
    }
-   form.querySelector('[type=submit]').disabled=support&&!boxes.some(box=>box.checked);
+   form.querySelector('[type=submit]').disabled=conflict||(support&&!boxes.some(box=>box.checked));
+   return !conflict;
  }
  sync();form.onchange=sync;form.querySelector('[data-dismiss]').onclick=()=>dialog.close();
  form.onsubmit=event=>{
    event.preventDefault();const next=roleField.value;
+   if(current!==athlete||!allEntries().some(item=>item.e===e)){dialog.close();return;}
+   indexSecondaryPriorities();
+   if(!sync()||!form.reportValidity())return;
    const picks=[...form.querySelectorAll('[data-support-goal]:checked')].map(box=>{
      const goalId=Number(box.dataset.supportGoal);
      return next==='Secondary'?{goalId,priority:Number(form.querySelector('[data-support-priority="'+goalId+'"]').value)}:{goalId};
    });
-   if(current!==athlete||!allEntries().some(item=>item.e===e)){dialog.close();return;}
    if(supportsRole(next)&&(!picks.length||picks.some(link=>!goalEntries().some(({e})=>e.id===link.goalId)||next==='Secondary'&&![1,2,3,4].includes(link.priority))))return;
    assignRole(e,next,picks);dialog.close();
  };
- dialog.onclose=()=>{dialog.remove();restore();};
+ let observer;
+ dialog.onclose=()=>{observer?.disconnect();dialog.remove();restore();};
  const rect=anchor?.getBoundingClientRect();dialog.showModal();
  if(rect&&innerWidth>560){
-   const bounds=dialog.getBoundingClientRect();
-   dialog.style.margin='0';dialog.style.left=Math.max(8,Math.min(rect.left,innerWidth-bounds.width-8))+'px';
-   dialog.style.top=Math.max(8,Math.min(rect.bottom+4,innerHeight-bounds.height-8))+'px';
+   const position=()=>{
+     const bounds=dialog.getBoundingClientRect();
+     dialog.style.margin='0';dialog.style.left=Math.max(8,Math.min(rect.left,innerWidth-bounds.width-8))+'px';
+     dialog.style.top=Math.max(8,Math.min(rect.bottom+4,innerHeight-bounds.height-8))+'px';
+   };
+   position();observer=new ResizeObserver(position);observer.observe(dialog);
  }
 }
 function automaticRoles(){if(!current)return;for(const {e} of allEntries()){if(e.roleManual||isGoalExercise(e))continue;const matching=matchesAthleteGoal(e);e.role=matching?'Primary':StudentPatterns.classify(e).unilateral?'Tertiary':'Choose'}}
@@ -3130,8 +3171,8 @@ function exerciseEditor(d,e){
  const perSet=e.mode==='top'||needsShared(e);
  const planned=e.progression&&LZProgression.forExercise(e).rows[0].planned;
  const freeform=e.progression&&!fields&&planned!==planFromSets(e).rows[0].planned;
- const content=perSet?`<div class="set-editor set-grid">${needsShared(e)?`<p class="structural-warning">This saved entry has different targets. Choose a shared prescription to use ${e.mode==='range'?'Rep Range':'Fixed'}.</p><button ${attrs} data-convert-shared>Choose shared prescription</button>`:''}${e.mode==='top'&&!e.setRows.some(r=>r.kind==='Top')?'<p class="structural-warning" role="status">No Top set yet. Mark a set as Top when ready.</p>':''}${rows(e).map((r,i)=>`<div class="one-set"><div class="set-topline"><span>Set ${i+1} <span class="set-kind ${r.kind==='Top'?'top':'back-off'}">${e.mode==='top'?esc(r.kind):'Saved Target'}</span></span><div class="actions"><button ${attrs} data-insert-set="${i}" aria-label="Add Set after set ${i+1}" ${Number(e.sets)>=20?'disabled':''}>${icon('plus')}</button><button class="remove" ${attrs} data-delete-set="${i}" aria-label="Delete Set ${i+1}">${icon('trash-2')}</button></div></div><div class="set-values">${e.mode==='top'?`<label>Type<select ${attrs} data-set="${i}" data-set-key="kind">${options(['Top','Back off'],r.kind)}</select></label>`:''}<label>${e.mode==='range'?'Minimum Reps':'Reps'}${field(r.reps,`type="number" min="1" step="1" ${attrs} data-set="${i}" data-set-key="reps" aria-label="Set ${i+1} reps"`)}</label>${e.mode==='range'?`<label>Maximum Reps${field(r.high,`type="number" min="1" step="1" ${attrs} data-set="${i}" data-set-key="high" aria-label="Set ${i+1} maximum reps"`)}</label>`:''}<label>Load${field(r.load,`${attrs} data-set="${i}" data-set-key="load" aria-label="Set ${i+1} load" placeholder="kg / other"`)}</label></div></div>`).join('')}</div>`:`<div class="shared-targets"><label>${e.mode==='range'?'Minimum Reps':'Reps'}${field(e.low,`type="number" min="1" step="1" ${attrs} data-key="low" aria-label="${e.mode==='range'?'Minimum Reps':'Reps'}"`)}</label>${e.mode==='range'?`<label>Maximum Reps${field(e.high,`type="number" min="1" step="1" ${attrs} data-key="high" aria-label="Maximum Reps"`)}</label>`:''}<label>Load${field(e.load,`${attrs} data-key="load" aria-label="Load" placeholder="kg / other"`)}</label></div>`;
- return `<div class="exercise role-${e.role.toLowerCase()}" data-folded="${!!e.collapsed}" data-athlete-goal="${isGoalExercise(e)}"><div class="exercise-summary"><div>${exerciseNumberLabel(e,d)}<strong class="exercise-title-toggle" role="button" tabindex="0" data-header-toggle="${e.id}" aria-expanded="${!e.collapsed}">${esc(e.name||'New Exercise')}</strong> ${roleBadge(e)}<div class="summary-text prescription-summary"><strong class="scheme">${esc(week||summary(e))}</strong>${!week&&e.collapsed&&perSet&&[rows(e)[0].reps,rows(e)[0].load].some(Boolean)?' · '+esc([rows(e)[0].reps&&rows(e)[0].reps+' reps',rows(e)[0].load].filter(Boolean).join(' · ')):''}${!week&&e.rir?' · '+esc(e.rir)+' RIR':''}${e.progression?' · '+esc(e.progression.weeks)+(e.progression.weeks===1?' week':' weeks'):''}</div></div><button type="button" class="summary-toggle" data-toggle-ex="${e.id}" aria-expanded="${!e.collapsed}" aria-label="${e.collapsed?'Expand':'Minimize'} ${esc(e.name||'exercise')}">${icon(e.collapsed?'chevron-down':'chevron-up')}</button></div>${e.collapsed&&perSet&&!freeform?prescriptionRows(e):''}${e.collapsed?'':`<div class="exercise-expanded"><div class="exercise-head">${field(e.name,`${attrs} data-key="name" aria-label="Exercise Name" placeholder="Exercise Name"`)}<button class="remove" data-remove-ex="${e.id}" data-day="${d.id}" aria-label="Delete Exercise">${icon('trash-2')}</button></div><div class="role-fields"><label>Exercise Role<select ${attrs} data-link-key="role" aria-label="Exercise Role">${'<option value="Choose" '+(e.role==='Choose'?'selected':'')+'>Choose Role (Optional)</option>'+options(['Goal','Primary','Secondary','Tertiary'],e.role)}${supportsRole(e.role)?'<option value="links">Edit goal links…</option>':''}</select></label></div>${freeform?`<label>Week 1 planned prescription<textarea data-week-one="${e.id}" rows="2">${esc(planned)}</textarea></label><details><summary>Edit Week 1 using set fields</summary>`:''}<div class="prescription"><label>Sets${field(e.sets,`type="number" min="1" max="20" step="1" ${attrs} data-key="sets" aria-label="Number of Sets"`)}</label><label>Rep Format<select ${attrs} data-key="mode" aria-label="Rep Format"><option value="fixed" ${e.mode==='fixed'?'selected':''}>Fixed</option><option value="range" ${e.mode==='range'?'selected':''}>Rep Range</option><option value="top" ${e.mode==='top'?'selected':''}>Top + Back Off</option></select></label></div>${content}${freeform?'</details>':''}</div>`}</div>`
+ const content=perSet?`<div class="set-editor set-grid">${needsShared(e)?`<p class="structural-warning">This saved entry has different targets. Choose a shared prescription to use ${e.mode==='range'?'Rep range':'Fixed'}.</p><button ${attrs} data-convert-shared>Choose shared prescription</button>`:''}${e.mode==='top'&&!e.setRows.some(r=>r.kind==='Top')?'<p class="structural-warning" role="status">No top set yet. Mark a set as top when ready.</p>':''}${rows(e).map((r,i)=>`<div class="one-set"><div class="set-topline"><span>Set ${i+1} <span class="set-kind ${r.kind==='Top'?'top':'back-off'}">${e.mode==='top'?esc(r.kind):'Saved target'}</span></span><div class="actions"><button ${attrs} data-insert-set="${i}" aria-label="Add set after set ${i+1}" ${Number(e.sets)>=20?'disabled':''}>${icon('plus')}</button><button class="remove" ${attrs} data-delete-set="${i}" aria-label="Delete set ${i+1}">${icon('trash-2')}</button></div></div><div class="set-values">${e.mode==='top'?`<label>Type<select ${attrs} data-set="${i}" data-set-key="kind">${options(['Top','Back off'],r.kind)}</select></label>`:''}<label>${e.mode==='range'?'Minimum reps':'Reps'}${field(r.reps,`type="number" min="1" step="1" ${attrs} data-set="${i}" data-set-key="reps" aria-label="Set ${i+1} reps"`)}</label>${e.mode==='range'?`<label>Maximum reps${field(r.high,`type="number" min="1" step="1" ${attrs} data-set="${i}" data-set-key="high" aria-label="Set ${i+1} maximum reps"`)}</label>`:''}<label>Load${field(r.load,`${attrs} data-set="${i}" data-set-key="load" aria-label="Set ${i+1} load" placeholder="kg / other"`)}</label></div></div>`).join('')}</div>`:`<div class="shared-targets"><label>${e.mode==='range'?'Minimum reps':'Reps'}${field(e.low,`type="number" min="1" step="1" ${attrs} data-key="low" aria-label="${e.mode==='range'?'Minimum reps':'Reps'}"`)}</label>${e.mode==='range'?`<label>Maximum reps${field(e.high,`type="number" min="1" step="1" ${attrs} data-key="high" aria-label="Maximum reps"`)}</label>`:''}<label>Load${field(e.load,`${attrs} data-key="load" aria-label="Load" placeholder="kg / other"`)}</label></div>`;
+ return `<div class="exercise role-${e.role.toLowerCase()}" data-folded="${!!e.collapsed}" data-athlete-goal="${isGoalExercise(e)}"><div class="exercise-summary"><div>${exerciseNumberLabel(e,d)}<strong class="exercise-title-toggle" role="button" tabindex="0" data-header-toggle="${e.id}" aria-expanded="${!e.collapsed}">${esc(e.name||'New exercise')}</strong> ${roleBadge(e)}<div class="summary-text prescription-summary"><strong class="scheme">${esc(week||summary(e))}</strong>${!week&&e.collapsed&&perSet&&[rows(e)[0].reps,rows(e)[0].load].some(Boolean)?' · '+esc([rows(e)[0].reps&&rows(e)[0].reps+' reps',rows(e)[0].load].filter(Boolean).join(' · ')):''}${!week&&e.rir?' · '+esc(e.rir)+' RIR':''}${e.progression?' · '+esc(e.progression.weeks)+(e.progression.weeks===1?' week':' weeks'):''}</div></div><button type="button" class="summary-toggle" data-toggle-ex="${e.id}" aria-expanded="${!e.collapsed}" aria-label="${e.collapsed?'Expand':'Minimize'} ${esc(e.name||'exercise')}">${icon(e.collapsed?'chevron-down':'chevron-up')}</button></div>${e.collapsed&&perSet&&!freeform?prescriptionRows(e):''}${e.collapsed?'':`<div class="exercise-expanded"><div class="exercise-head">${field(e.name,`${attrs} data-key="name" aria-label="Exercise name" placeholder="Exercise name"`)}<button class="remove" data-remove-ex="${e.id}" data-day="${d.id}" aria-label="Delete exercise">${icon('trash-2')}</button></div><div class="role-fields"><label>Exercise role<select ${attrs} data-link-key="role" aria-label="Exercise role">${'<option value="Choose" '+(e.role==='Choose'?'selected':'')+'>Choose role (optional)</option>'+options(['Goal','Primary','Secondary','Tertiary'],e.role)}${supportsRole(e.role)?'<option value="links">Edit goal links…</option>':''}</select></label></div>${freeform?`<label>Week 1 planned prescription<textarea data-week-one="${e.id}" rows="2">${esc(planned)}</textarea></label><details><summary>Edit week 1 using set fields</summary>`:''}<div class="prescription"><label>Sets${field(e.sets,`type="number" min="1" max="20" step="1" ${attrs} data-key="sets" aria-label="Number of sets"`)}</label><label>Rep format<select ${attrs} data-key="mode" aria-label="Rep format"><option value="fixed" ${e.mode==='fixed'?'selected':''}>Fixed</option><option value="range" ${e.mode==='range'?'selected':''}>Rep range</option><option value="top" ${e.mode==='top'?'selected':''}>Top + back off</option></select></label></div>${content}${freeform?'</details>':''}</div>`}</div>`
 }
 function refreshEntry(e,targets=false){
  const card=screen.querySelector(`[data-drag-id="${e.id}"]`);if(!card)return;const scheme=card.querySelector('.prescription-summary .scheme');
@@ -3143,7 +3184,7 @@ function refreshEntry(e,targets=false){
 function convertPrescription(e,mode){
  const rs=rows(e);if(mode==='top'){e.mode='top';e.sharedPrescription=false;publishSetEdit(e);render();return}
  if(e.mode!=='top'&&!needsShared(e)){e.mode=mode;rows(e);publishSetEdit(e);render();return}
- askDelete('Choose shared prescription','Select the target to use for every set. This replaces the individual targets; no target is selected automatically.',()=>{const choice=root.querySelector('[data-shared-source]').value;if(choice==='')return;const r=rs[Number(choice)];e.mode=mode;e.low=r.reps;e.high=String(r.high??'');e.load=r.load;e.sharedPrescription=true;rows(e);publishSetEdit(e)},'Use shared prescription',`<label>Prescription to use<select data-shared-source><option value="">Choose a set target</option>${rs.map((r,i)=>`<option value="${i}">Set ${i+1}: ${esc(r.reps)}${mode==='range'?' to '+esc(r.high):''} · ${esc(r.load||'Load Not Set')}</option>`).join('')}</select></label>`);
+ askDelete('Choose shared prescription','Select the target to use for every set. This replaces the individual targets; no target is selected automatically.',()=>{const choice=root.querySelector('[data-shared-source]').value;if(choice==='')return;const r=rs[Number(choice)];e.mode=mode;e.low=r.reps;e.high=String(r.high??'');e.load=r.load;e.sharedPrescription=true;rows(e);publishSetEdit(e)},'Use shared prescription',`<label>Prescription to use<select data-shared-source><option value="">Choose a set target</option>${rs.map((r,i)=>`<option value="${i}">Set ${i+1}: ${esc(r.reps)}${mode==='range'?' to '+esc(r.high):''} · ${esc(r.load||'Load not set')}</option>`).join('')}</select></label>`);
  root.querySelector('[data-accept-delete]').disabled=true;
 }
 function refreshProgramNames(){
@@ -3161,7 +3202,7 @@ function refreshProgramNames(){
  if(summary)summary.textContent=workoutSelectionLabel();
  for(const card of screen.querySelectorAll('[data-drag-id]')){
    const e=exercises.get(Number(card.dataset.dragId));if(!e)continue;
-   const title=card.querySelector('[data-header-toggle],[data-sheet-title]');if(title)title.textContent=e.name||'New Exercise';
+   const title=card.querySelector('[data-header-toggle],[data-sheet-title]');if(title)title.textContent=e.name||'New exercise';
    card.querySelector('[data-toggle-ex]')?.setAttribute('aria-label',(e.collapsed?'Expand ':'Minimize ')+(e.name||'exercise'));
    if(!card.classList.contains('role-'+e.role.toLowerCase())){
      for(const c of [...card.classList])if(c.startsWith('role-'))card.classList.remove(c);
@@ -3179,7 +3220,7 @@ function refreshProgramNames(){
 function learningUpdate(event){const el=event.target,v=el.dataset;if(v.patternFilter!==undefined){if(event.type!=='change')return true;compareGoal=el.value;refreshFilter('data-pattern-filter');return true}if(v.linkKey==='role'){if(event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;const chosen=el.value;el.value=e.role;editRole(e,chosen==='links'?e.role:chosen,el)}return true}if(v.key==='name'&&v.ex&&event.type==='change'){const e=allEntries().find(x=>x.e.id===Number(v.ex)).e;bindExerciseName(e,el.value);el.value=e.name;automaticRoles();refreshProgramNames();return true}return false}
 function learningClick(event){const b=event.target.closest('button');if(!b)return false;if(b.dataset.addEx){const d=current.days.find(d=>d.id===Number(b.dataset.addEx));const e=ex('','','fixed','','','');e.sets='1';e.collapsed=false;d.exercises.push(e);render();return true}return false}
 function decorateLearning(){
-  screen.querySelectorAll('[data-remove-goal]').forEach(button=>{button.innerHTML=icon('trash-2');button.setAttribute('aria-label','Delete Goal');});
+  screen.querySelectorAll('[data-remove-goal]').forEach(button=>{button.innerHTML=icon('trash-2');button.setAttribute('aria-label','Delete goal');});
   screen.querySelectorAll('.day-grid .day').forEach(card=>{
     const dayId=Number(card.querySelector('[data-key="type"]').dataset.day);
     const day=current.days.find(item=>item.id===dayId);
@@ -3195,7 +3236,7 @@ function decorateLearning(){
         <summary>Move exercise</summary>
         <div class="exercise-move-controls">
           ${day.exercises.length>1?`<div class="exercise-reorder"><button type="button" data-move-up="${exercise.id}" ${index===0?'disabled':''}>${icon('arrow-up')}Up</button><button type="button" data-move-down="${exercise.id}" ${index===day.exercises.length-1?'disabled':''}>${icon('arrow-down')}Down</button></div>`:''}
-          ${destinations.length?`<label>Move to workout<select data-move-ex="${exercise.id}"><option value="">Choose workout</option>${destinations.map(item=>`<option value="${item.id}">${esc(item.name||'Untitled Workout')}</option>`).join('')}</select></label>`:''}
+          ${destinations.length?`<label>Move to workout<select data-move-ex="${exercise.id}"><option value="">Choose workout</option>${destinations.map(item=>`<option value="${item.id}">${esc(item.name||'Untitled workout')}</option>`).join('')}</select></label>`:''}
         </div>
       </details>`);
     });
@@ -3247,13 +3288,13 @@ function chooseExerciseTarget(){
    picker.showModal();
  });
 }
-function chooseWorkout(){return new Promise(resolve=>{const dialog=document.createElement('dialog');dialog.className='app-modal';dialog.innerHTML=`<form><h2>Choose a Workout</h2><label>Workout<select required>${current.days.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label><div class="actions" style="margin-top:20px"><button type="button">Cancel</button><button class="primary" type="submit">Add Exercise</button></div></form>`;document.body.append(dialog);dialog.querySelector('form').onsubmit=event=>{event.preventDefault();const id=Number(dialog.querySelector('select').value);dialog.close();dialog.remove();resolve(id);};const cancel=()=>{dialog.close();dialog.remove();resolve(null);};dialog.querySelector('[type=button]').onclick=cancel;dialog.oncancel=event=>{event.preventDefault();cancel();};dialog.showModal();});}
+function chooseWorkout(){return new Promise(resolve=>{const dialog=document.createElement('dialog');dialog.className='app-modal';dialog.innerHTML=`<form><h2>Choose a workout</h2><label>Workout<select required>${current.days.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label><div class="actions" style="margin-top:20px"><button type="button">Cancel</button><button class="primary" type="submit">Add exercise</button></div></form>`;document.body.append(dialog);dialog.querySelector('form').onsubmit=event=>{event.preventDefault();const id=Number(dialog.querySelector('select').value);dialog.close();dialog.remove();resolve(id);};const cancel=()=>{dialog.close();dialog.remove();resolve(null);};dialog.querySelector('[type=button]').onclick=cancel;dialog.oncancel=event=>{event.preventDefault();cancel();};dialog.showModal();});}
 function applyGoalRowColors(){screen.querySelectorAll('[data-key="priority"]').forEach(select=>{const tr=select.closest('tr');if(tr){tr.classList.toggle('goal-floor',select.value==='Floor');tr.classList.toggle('goal-ceiling',select.value==='Ceiling');}});}
 function progressionEntryActions(exercise, inlineEditor=false) {
-  const mainLabel = exercise.progression ? 'Edit Progression' : 'Create Progression';
+  const mainLabel = exercise.progression ? 'Edit progression' : 'Create progression';
   return `<div class="progression-entry-actions">
     ${inlineEditor?'':`<button type="button" class="primary" data-create-progression="${exercise.id}">${mainLabel}</button>`}
-    <button type="button" data-create-progression="${exercise.id}" data-new-alternative>${icon('plus')}<span>Add Alternative Progression</span></button>
+    <button type="button" data-create-progression="${exercise.id}" data-new-alternative>${icon('plus')}<span>Add alternative progression</span></button>
   </div>`;
 }
 function decorateProgressions() {
@@ -3305,13 +3346,13 @@ function progressionRows(track) {
   LZProgression.ensure(track);
   return track.rows.slice(0,track.weeks).map((week,index) => {
     const entered = !!week.actual.trim();
-    const plannedField = `<textarea class="progression-plan-textarea" data-pweek="${index}" data-pfield="planned" rows="1" aria-label="Week ${index+1} Planned Prescription" placeholder="Enter prescription">${esc(week.planned)}</textarea>`;
-    const actualField = `<textarea class="${entered?'progression-results-entered':''}" data-pweek="${index}" data-pfield="actual" rows="1" aria-label="Week ${index+1} Actual Results" placeholder="Enter results">${esc(week.actual)}</textarea>`;
-    return `<tr><th scope="row" class="progression-week">Week ${index+1}</th><td><span class="progression-field-label" aria-hidden="true">Planned Prescription</span>${plannedField}</td><td class="actual-results"><span class="progression-field-label" aria-hidden="true">Actual Results</span>${actualField}</td></tr>`;
+    const plannedField = `<textarea class="progression-plan-textarea" data-pweek="${index}" data-pfield="planned" rows="1" aria-label="Week ${index+1} Planned prescription" placeholder="Enter prescription">${esc(week.planned)}</textarea>`;
+    const actualField = `<textarea class="${entered?'progression-results-entered':''}" data-pweek="${index}" data-pfield="actual" rows="1" aria-label="Week ${index+1} Actual results" placeholder="Enter results">${esc(week.actual)}</textarea>`;
+    return `<tr><th scope="row" class="progression-week">Week ${index+1}</th><td><span class="progression-field-label" aria-hidden="true">Planned prescription</span>${plannedField}</td><td class="actual-results"><span class="progression-field-label" aria-hidden="true">Actual results</span>${actualField}</td></tr>`;
   }).join('');
 }
 function progressionTable() {
-  return `<table class="progression-table" aria-label="${esc(LZProgression.trackName(progressionDraft.alternatives,progressionTrackId))}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${progressionRows(activeProgression())}</tbody></table>`;
+  return `<table class="progression-table" aria-label="${esc(LZProgression.trackName(progressionDraft.alternatives,progressionTrackId))}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned prescription</th><th scope="col" class="actual-results">Actual results</th></tr></thead><tbody>${progressionRows(activeProgression())}</tbody></table>`;
 }
 function progressionComparison(p,weekFilter=0) {
   const tracks = [p, ...p.alternatives];
@@ -3319,14 +3360,14 @@ function progressionComparison(p,weekFilter=0) {
     LZProgression.ensure(track);
     const name = LZProgression.trackName(p.alternatives,track.id);
     const heading = tracks.length > 1 ? `<h4 data-track-tint="${index?1+(index-1)%4:0}">${esc(name)}</h4>` : '';
-    return `<div class="progression-comparison">${heading}<div class="table-wrap"><table class="progression-comparison-table" aria-label="${esc(name)}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned Prescription</th><th scope="col" class="actual-results">Actual Results</th></tr></thead><tbody>${track.rows.slice(0,track.weeks).map((week,index)=>weekFilter&&weekFilter!==index+1?'':`<tr><th scope="row">Week ${index+1}</th><td class="progression-plan-text">${esc(LZProgression.describe(track,index))}</td><td class="actual-results progression-plan-text ${week.actual.trim()?'progression-results-entered':''}">${esc(week.actual.trim()?week.actual:'Not entered')}</td></tr>`).join('')||(weekFilter?`<tr><td colspan="3">No Week ${weekFilter}</td></tr>`:'')}</tbody></table></div></div>`;
+    return `<div class="progression-comparison">${heading}<div class="table-wrap"><table class="progression-comparison-table" aria-label="${esc(name)}"><colgroup><col class="progression-week-column"><col><col></colgroup><thead><tr><th scope="col">Week</th><th scope="col">Planned prescription</th><th scope="col" class="actual-results">Actual results</th></tr></thead><tbody>${track.rows.slice(0,track.weeks).map((week,index)=>weekFilter&&weekFilter!==index+1?'':`<tr><th scope="row">Week ${index+1}</th><td class="progression-plan-text">${esc(LZProgression.describe(track,index))}</td><td class="actual-results progression-plan-text ${week.actual.trim()?'progression-results-entered':''}">${esc(week.actual.trim()?week.actual:'Not entered')}</td></tr>`).join('')||(weekFilter?`<tr><td colspan="3">No week ${weekFilter}</td></tr>`:'')}</tbody></table></div></div>`;
   }).join('')}</div>`;
 }
 function progressComparisonPanel() {
   const panel = progressionDialog.querySelector('[data-progression-comparison]');
   if (!panel) return;
   panel.hidden = !progressionDraft.alternatives.length;
-  panel.innerHTML = panel.hidden ? '' : `<h3>Compare Progressions</h3>${progressionComparison(progressionDraft)}`;
+  panel.innerHTML = panel.hidden ? '' : `<h3>Compare progressions</h3>${progressionComparison(progressionDraft)}`;
 }
 function updateProgressionTable() {
   progressionDialog.querySelector('[data-progress-table]').innerHTML = progressionTable();
@@ -3352,15 +3393,15 @@ function openProgression(id, newAlternative = false) {
   if(newAlternative)progressionTrackId=LZProgression.addAlternative(progressionDraft).id;
   progressionDialog.setAttribute('aria-labelledby','progression-title');
   progressionDialog.innerHTML=`<form><header>
-    <div class="progression-identity"><h2 id="progression-title">${esc(e.name||'Exercise')}</h2><p><span>Exercise Progression</span><span>${esc(current.name)}</span>${exerciseNumberLabel(e)}</p></div>
-    <div class="progression-header-actions"><button class="progression-alt-add" type="button" data-progression-add aria-label="Add Alternative Progression">${icon('plus')}<span>Add Alternative</span></button><button type="button" data-close-progression aria-label="Close Progression">${icon('x')}</button></div>
+    <div class="progression-identity"><h2 id="progression-title">${esc(e.name||'Exercise')}</h2><p><span>Exercise progression</span><span>${esc(current.name)}</span>${exerciseNumberLabel(e)}</p></div>
+    <div class="progression-header-actions"><button class="progression-alt-add" type="button" data-progression-add aria-label="Add alternative progression">${icon('plus')}<span>Add alternative</span></button><button type="button" data-close-progression aria-label="Close progression">${icon('x')}</button></div>
   </header>
   <div class="progression-content">
     ${progressionGoal(e,true)}
     <div class="progression-toolbar"><div class="progression-tabs" role="group" aria-label="Progression to edit" data-progression-tabs hidden></div>
     <div class="progression-config">
       <div class="progression-controls"><label class="weeks-label">Weeks <input type="text" inputmode="numeric" data-progression-weeks></label></div>
-      <div class="progression-actions"><span class="progression-autosave-status" data-progression-save-status role="status" aria-live="polite">Saving…</span><button type="button" data-progression-retry hidden>Retry Saving</button><button type="button" data-progression-keep-draft hidden>Keep Draft and Close</button><button class="progression-delete" type="button" data-progression-delete hidden>Delete Alternative</button></div>
+      <div class="progression-actions"><span class="progression-autosave-status" data-progression-save-status role="status" aria-live="polite">Saving…</span><button type="button" data-progression-retry hidden>Retry saving</button><button type="button" data-progression-keep-draft hidden>Keep draft and close</button><button class="progression-delete" type="button" data-progression-delete hidden>Delete alternative</button></div>
     </div></div>
     <div class="table-wrap" data-progress-table></div>
     <p data-progression-error role="alert"></p>
@@ -3482,7 +3523,7 @@ progressionDialog.addEventListener('click', async event=>{
   }else if(event.target.closest('[data-progression-delete]')){
     const token=progressionToken, track=activeProgression();
     if(!track?.id)return;
-    const choice=await askProgressionChoice('Delete '+LZProgression.trackName(progressionDraft.alternatives,track.id)+'?', 'This permanently deletes its planned prescriptions and actual results.', [['keep','Cancel'],['delete','Delete Alternative']]);
+    const choice=await askProgressionChoice('Delete '+LZProgression.trackName(progressionDraft.alternatives,track.id)+'?', 'This permanently deletes its planned prescriptions and actual results.', [['keep','Cancel'],['delete','Delete alternative']]);
     if(choice!=='delete'||token!==progressionToken||!progressionEntry())return;
     const alternatives=progressionDraft.alternatives;
     const index=alternatives.findIndex(item=>item.id===track.id);
@@ -3603,4 +3644,4 @@ window.addEventListener('lz-cloud-import-complete',async()=>{try{await closeCont
 window.LZShell={navigate,refreshAccount,showMessage,flushContent,closeContent};refreshAccount();if(LZStudent.context().admin&&!LZStudent.context().owner)dashboardChrome();iconify();
 })();
 </script><script src="appearance-settings.js?v=20261127-builder-fit2"></script>
-<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=workout-audit2"></script><link rel="stylesheet" href="athlete-program.css?v=goal-relations1"></body></html>
+<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=workout-audit2"></script><link rel="stylesheet" href="athlete-program.css?v=builder-polish1"></body></html>

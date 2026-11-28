@@ -371,3 +371,50 @@ html[data-lz-theme-ready] #student-learning-board .progression-dialog .progressi
  #student-learning-board .athlete-program .athlete-nav .workout-filter{position:static}
  #student-learning-board .athlete-program .athlete-nav .workout-options{left:0;right:auto;max-width:100%}
 }
+
+#student-learning-board .athlete-program :is(.program-view-options,.athlete-mirror-mode-tabs){display:inline-flex;align-items:center;gap:2px;max-width:100%}
+#student-learning-board .athlete-program .program-view-options button[aria-pressed=true]{background:var(--lz-soft);color:var(--lz-blue);border-color:var(--lz-blue)}
+#student-learning-board .athlete-program .athlete-mirror-mode-tabs{border:1px solid var(--card-border);background:var(--well);border-radius:7px;padding:1px}
+#student-learning-board .athlete-program .athlete-mirror-mode-tabs button{background:transparent;color:var(--lz-sub);border:0;border-radius:5px;padding:2px 7px;min-height:25px}
+#student-learning-board .athlete-program .athlete-mirror-mode-tabs button[aria-selected=true]{background:var(--lz-paper);color:var(--nav-ink);font-weight:650;box-shadow:0 1px 4px #152a461f}
+#student-learning-board .athlete-program .mirror-filters{padding:0;margin:0;background:transparent;border:0;min-width:0}
+#student-learning-board .athlete-program .mirror-filters>summary{cursor:pointer;color:var(--lz-blue);font-size:13px}
+#student-learning-board .athlete-program .day-filters{margin:2px 0}
+#student-learning-board .athlete-program .pattern-group{margin:3px 0;padding:0;border:1px solid var(--card-border);border-radius:7px;background:var(--lz-paper);min-width:0}
+#student-learning-board .athlete-program .pattern-group>summary{cursor:pointer;padding:4px 7px;font-size:14px;line-height:19px;border-radius:6px;color:var(--nav-ink);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;background:var(--card-top)}
+#student-learning-board .athlete-program .pattern-group>summary span{font-weight:400;font-size:12px;color:var(--lz-sub);margin-left:8px}
+#student-learning-board .athlete-program .pattern-group>summary[data-context=muted]{opacity:1;background:var(--well);color:var(--lz-sub)}
+#student-learning-board .athlete-program .pattern-group>summary[data-context=muted] span{opacity:.7}
+#student-learning-board .athlete-program .pattern-group>.table-wrap{max-width:100%;padding:0;overflow-x:auto}
+#student-learning-board .athlete-program table.mirror-matrix{width:100%;min-width:min(100%,420px);max-width:none;table-layout:fixed;border-collapse:collapse;margin:0}
+#student-learning-board .athlete-program .mirror-matrix :is(th,td){padding:3px 5px;background:var(--lz-paper);border:1px solid var(--card-border);font-size:13px;line-height:1.3;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+#student-learning-board .athlete-program .mirror-matrix>thead th{color:var(--lz-sub);background:var(--well);font-size:12px}
+#student-learning-board .athlete-program .mirror-matrix>thead th:first-child{width:clamp(90px,15%,175px)}
+#student-learning-board .athlete-program .mirror-matrix>tbody>tr>td{padding:0}
+#student-learning-board .athlete-program .mirror-cell{min-width:0;margin:0;padding:0;border:0;border-radius:0;background:var(--lz-paper)}
+#student-learning-board .athlete-program .mirror-cell>summary{cursor:pointer;padding:4px 7px;font-size:13px;color:var(--nav-ink);line-height:1.35;overflow-wrap:anywhere}
+#student-learning-board .athlete-program .mirror-cell>summary strong{margin-right:3px}
+#student-learning-board .athlete-program .mirror-cell[data-goal=true]>summary strong{color:var(--leaf)}
+#student-learning-board .athlete-program .mirror-cell[open]{padding-bottom:3px}
+#student-learning-board .athlete-program .mirror-detail>button{margin:2px 5px;min-height:26px;padding:2px 6px;font-size:12px}
+#student-learning-board .athlete-program .sheet-set-editor{max-width:60rem;margin:4px 0}
+#student-learning-board .athlete-program .sheet-set-editor>[data-close-set-editor]{margin-bottom:4px}
+#student-learning-board .athlete-program .goal-progression-card [data-track-tint="1"]{--track-band:light-dark(#efe7fa,#443452);--track-ink:light-dark(#58367d,#e8cffd)}
+#student-learning-board .athlete-program .goal-progression-card [data-track-tint="2"]{--track-band:light-dark(#dcebf9,#253f58);--track-ink:light-dark(#234f7e,#c3e0ff)}
+#student-learning-board .athlete-program .goal-progression-card [data-track-tint="3"]{--track-band:light-dark(#fae6ed,#533343);--track-ink:light-dark(#7f3858,#ffd1e2)}
+#student-learning-board .athlete-program .goal-progression-card [data-track-tint="4"]{--track-band:light-dark(#f6e8da,#4c392d);--track-ink:light-dark(#704527,#f6d9be)}
+#student-learning-board .athlete-program .goal-progression-card :is(h4[data-track-tint]:not([data-track-tint="0"]),tr[data-track-tint]:not([data-track-tint="0"])>th){background:var(--track-band);color:var(--track-ink)}
+#student-learning-board .athlete-program :is(.mirror-entry,.day-body>.exercise,.mirror-cell)[data-context=match]{box-shadow:inset 3px 0 var(--lz-blue)}
+#student-learning-board .athlete-program :is(.mirror-entry,.day-body>.exercise,.mirror-cell)[data-context=muted]:not(:focus-within){opacity:1;background:var(--well);box-shadow:none}
+#student-learning-board .athlete-program :is(.mirror-entry,.day-body>.exercise,.mirror-cell)[data-context=muted]:not(:focus-within)>*{opacity:.38}
+#student-learning-board .athlete-program [data-context=muted]:not(:focus-within)>:is(.mirror-entry-title,.exercise-summary,summary){opacity:.62}
+#student-learning-board .athlete-program .mirror-matrix th[data-context=muted]{opacity:.62}
+@container athlete (max-width:625px){
+ #student-learning-board .athlete-program table.mirror-matrix{min-width:calc(84px + var(--mirror-days)*110px)}
+ #student-learning-board .athlete-program .athlete-nav{flex-wrap:wrap}
+}
+#student-learning-board .athlete-program .mirror-filter-bar>label{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:13px}
+#student-learning-board .athlete-program .mirror-filter-bar>label select{width:auto;min-height:28px;padding:2px 6px;margin:0}
+#student-learning-board .athlete-program .mirror-cell>summary .role-badge{padding:1px 4px;vertical-align:middle;font-size:10px}
+#student-learning-board .athlete-program .mirror-cell[data-goal=true]>summary .role-badge{background:light-dark(#d8ecdf,#254a35);color:var(--leaf)}
+#student-learning-board .athlete-program .goal-progression-card .sheet-track-title[data-track-tint="0"] th{background:var(--well)}

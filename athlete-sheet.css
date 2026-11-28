@@ -112,9 +112,6 @@
 @container sheetday (max-width:325px){
  #workout-sheet .wp-wide-label{display:none}
  #workout-sheet .wp-small-label{display:inline}
- #workout-sheet col:first-child{width:28%!important}
- #workout-sheet col:nth-child(2){width:45%!important}
- #workout-sheet col:nth-child(3){width:27%!important}
  #workout-sheet .wp-grip{min-width:16px;padding-inline:1px}
 }
 #workout-sheet .wp-tools .wp-delete-day{display:inline-grid;place-items:center;flex:none;padding:3px;min-width:26px;min-height:26px;margin-left:auto;background:var(--paper);color:light-dark(#963f3b,#f2b7b0)}
@@ -126,3 +123,43 @@
 #workout-sheet tr[data-context=muted]:not(:focus-within) .wp-name>*{opacity:.64}
 #workout-sheet tr[data-context=muted][data-goal]:not(:focus-within) .wp-name{background:light-dark(#d6e6dc,#2d4438)}
 @media (pointer:coarse){#workout-sheet .wp-tools .wp-delete-day{min-width:34px;min-height:34px}}
+#workout-sheet [data-workouts]{display:flex;align-items:flex-start;gap:4px;max-width:100%;overflow:auto;padding-bottom:5px}
+#workout-sheet .wp-unit{flex:1 0 235px;min-width:0;border:1px solid var(--line);border-radius:7px}
+#workout-sheet .wp-tools,#workout-sheet th{position:relative;padding-right:10px}
+#workout-sheet .wp-tools{background:var(--band);border-radius:6px 6px 0 0}
+#workout-sheet .wp-name{background:var(--navy);color:#fff}
+#workout-sheet .wp-name .wp-role{display:block;font:500 11px/1.25 system-ui,sans-serif;field-sizing:content;width:auto;max-width:calc(100% - 6px);border:0;color:inherit;background:transparent;margin:0 0 2px 4px;padding:1px 0}
+#workout-sheet .wp-role option{background:var(--paper);color:var(--ink)}
+#workout-sheet .wp-week-line{display:flex;align-items:flex-start;gap:3px;padding:1px 2px;min-width:0}
+#workout-sheet .wp-week-chip{display:inline-flex;align-items:center;flex:none;background:var(--band);color:var(--muted);border-radius:4px}
+#workout-sheet .wp-week-word,#workout-sheet .wp-week-chip input{font:500 11px/1.5 system-ui,sans-serif;color:inherit;border:0;background:transparent;padding:0}
+#workout-sheet .wp-week-word{padding-left:3px;cursor:grab;touch-action:none;user-select:none}
+#workout-sheet .wp-week-chip input{width:2ch;text-align:center}
+#workout-sheet .wp-week-line .wp-box{flex:1;min-width:0}
+#workout-sheet .wp-week-line textarea,#workout-sheet .wp-week-line .wp-box::after{padding:0 1px;line-height:1.35}
+#workout-sheet .wp-track-toolbar{display:flex;align-items:center}
+#workout-sheet .wp-track-toolbar select{min-width:0;flex:1}
+#workout-sheet .wp-sets{padding:1px 4px;color:var(--muted);font-size:11px;background:transparent;border:0}
+#workout-sheet .wp-resize{position:absolute;right:0;inset-block:0;width:9px;min-width:0;min-height:0;cursor:col-resize;touch-action:none;background:transparent;border:0;padding:0}
+#workout-sheet .wp-resize::after{content:'';display:block;height:13px;width:2px;background:var(--line);margin:auto}
+#workout-sheet .wp-resize:focus-visible,#workout-sheet [data-track-drop]{outline:2px solid var(--focus);outline-offset:-2px}
+#workout-sheet .wp-name-picks{position:fixed;max-height:145px;overflow:auto;z-index:30;min-width:0}
+#workout-sheet .wp-name-picks button{white-space:normal;text-align:left;background:var(--paper);border:0}
+#workout-sheet .wp-name-picks [aria-selected=true]{background:var(--pick)}
+#workout-sheet .wp-target-rows,#workout-sheet .wp-current-plan{width:100%}
+#workout-sheet .wp-current-plan{font-size:12px;color:var(--muted);white-space:pre-line}
+#workout-sheet .wp-target-row{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:2px 0}
+#workout-sheet .wp-target-row input{width:7ch}
+#workout-sheet tbody td{vertical-align:top}
+#workout-sheet .wp-add-alt{font:600 11px/1.3 system-ui,sans-serif;color:var(--focus);background:transparent;border:0;text-align:left;padding:2px 4px}
+#workout-sheet .wp-alt-control{position:relative;container:alternative / inline-size;flex:1;min-width:0}
+#workout-sheet .wp-alt-control select{width:100%}
+#workout-sheet .wp-alt-label{display:none}
+@container alternative (max-width:102px){
+ #workout-sheet .wp-alt-select{color:transparent;padding:2px 0}
+ #workout-sheet .wp-alt-select option{color:var(--ink);background:var(--paper)}
+ #workout-sheet .wp-alt-label{position:absolute;display:block;top:50%;left:3px;right:2px;transform:translateY(-45%);font:600 11px/1.2 system-ui,sans-serif;color:var(--ink);pointer-events:none}
+ #workout-sheet .wp-alt-label::after{content:'▾';float:right}
+}
+#workout-sheet .wp-name textarea::placeholder{color:#dae4ef}
+@media(max-width:650px){#workout-sheet .wp-unit{flex-basis:min(86vw,370px)}}

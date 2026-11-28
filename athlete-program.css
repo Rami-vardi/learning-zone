@@ -443,3 +443,6 @@ html[data-lz-theme-ready] #student-learning-board .progression-dialog .progressi
 @container athlete (max-width:540px){
  #student-learning-board .athlete-program .program-view-options{display:contents}
 }
+#student-learning-board .athlete-program .athlete-layout-tabs [data-layout=sheet][aria-pressed=true]{background:var(--lz-blue);color:white;box-shadow:0 1px 3px #12274238}
+#student-learning-board [data-sheet-bin]{display:inline-grid;place-items:center;min-width:32px;height:30px;color:var(--lz-sub);border:1px dashed var(--card-border);border-radius:6px}
+#student-learning-board [data-sheet-bin][data-drop]{color:var(--lz-danger);border:2px solid currentColor;background:var(--well)}

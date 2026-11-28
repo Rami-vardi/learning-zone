@@ -2334,7 +2334,7 @@ function backup(before){
 function clearUndo(){undo=null;undoButton.hidden=true}
 function undoDeletion(){if(!undo||undo.owner!==owner||undo.id!==current?.id)return;const additions=new Map();for(const r of undo.removed.filter(r=>r.type==='set')){const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(e&&!e.setRows.some(x=>x.id===r.item.id))additions.set(e,(additions.get(e)||0)+1)}if([...additions].some(([e,n])=>e.setRows.length+n>20)){say('Undo would exceed 20 sets. Your current targets are unchanged; this deletion cannot be undone at the current set count.');return}for(const r of undo.removed){let list;if(r.type==='goal')list=current.goals;else if(r.type==='day')list=current.days;else if(r.type==='exercise')list=current.days.find(d=>d.id===r.parent)?.exercises;else{const e=allEntries().find(x=>x.e.id===r.parent)?.e;if(!e)continue;list=e.setRows;if(!list.some(x=>x.id===r.item.id)){list.splice(Math.min(r.index,list.length),0,r.item);e.sets=String(list.length);publishSetEdit(e)}continue}if(list&&!list.some(x=>x.id===r.item.id))list.splice(Math.min(r.index,list.length),0,r.item)}clearUndo();automaticRoles();render();schedule();say('Deletion undone. Subsequent edits were kept.')}
 const clone=value=>JSON.parse(JSON.stringify(value));
-function resetComparison(){sheetGrouped=false;sheetTarget=null;layout='sheet';view='workouts';comparisonWeek=0;pairType='';openMirrorWeeks.clear();comparisonPins.clear();goalsOpen=false;mirrorDayFilter=mirrorExerciseFilter='all';compareGoal='all';compareRoles=new Set(['Goal','Primary','Secondary','Tertiary','Choose']);selectedWorkouts=null;clearUndo()}
+function resetComparison(){sheetGrouped=false;sheetTarget=null;layout='sheet';view='workouts';comparisonWeek=0;pairType='';openMirrorWeeks.clear();collapsedGoalEntries.clear();comparisonPins.clear();goalsOpen=false;mirrorDayFilter=mirrorExerciseFilter='all';compareGoal='all';compareRoles=new Set(['Goal','Primary','Secondary','Tertiary','Choose']);selectedWorkouts=null;clearUndo()}
 /* Helpers run inside the existing student workspace closure. */
 let mirrorDayFilter='all',mirrorExerciseFilter='all',goalDragged=null;
 function bindExerciseName(target,value){
@@ -2398,7 +2398,7 @@ function mirror(){
  return `<div class="mirror-block"><div class="day-grid sheet-day-overview">${days.map(d=>`<article class="mirror-workout"><h3 class="label-icon" data-context="${highlightState(d)}">${icon('dumbbell')}${esc(d.name)} ${workoutTypeControl(d)}</h3>${d.exercises.map(e=>miniExercise(e,highlightState(d,e))).join('')||'<p>No exercises yet.</p>'}</article>`).join('')}</div></div>`;
 }
 let sheetGrouped=false,sheetTarget=null;
-const openMirrorWeeks=new Set(),comparisonPins=new Set();
+const openMirrorWeeks=new Set(),comparisonPins=new Set(),collapsedGoalEntries=new Set();
 let goalsOpen=false;
 function pinMatch(d,e){
  return !comparisonPins.size||comparisonPins.has('w'+d.id)||!!e&&comparisonPins.has('e'+e.id);
@@ -2495,6 +2495,16 @@ function rawRender(keepGoals){
  screen.innerHTML=`<main class="athlete-program"><header class="athlete-bar"><div class="athlete-identity"><span class="athlete-mark" aria-hidden="true">${icon('dumbbell')}</span><strong>${esc(current.name)}</strong><span>Training Program</span></div><button data-goals-toggle aria-expanded="${goalsOpen}" aria-controls="athlete-goal-panel">${icon('target')}Athlete Goals <b>${current.goals.length}</b><span aria-hidden="true">${goalsOpen?'▴':'▾'}</span></button><div class="athlete-whiteboard actions"></div></header><div id="athlete-goal-panel" ${goalsOpen?'':'hidden'}>${goalTable()}</div>${trainingSection()}</main>`;
 }
 screen.addEventListener('click',event=>{
+ const toggle=event.target.closest('[data-toggle-goal-entry]');
+ if(toggle){
+   event.stopImmediatePropagation();
+   const card=toggle.closest('[data-progression-entry]'),id=Number(card.dataset.progressionEntry);
+   const collapse=toggle.getAttribute('aria-expanded')==='true';
+   if(collapse)collapsedGoalEntries.add(id);else collapsedGoalEntries.delete(id);
+   toggle.setAttribute('aria-expanded',String(!collapse));
+   card.querySelector('.goal-entry-body').hidden=collapse;
+   return;
+ }
  const button=event.target.closest('[data-goals-toggle]');if(!button)return;
  event.stopImmediatePropagation();goalsOpen=!goalsOpen;button.setAttribute('aria-expanded',String(goalsOpen));button.lastElementChild.textContent=goalsOpen?'▴':'▾';screen.querySelector('#athlete-goal-panel').hidden=!goalsOpen;
 },true);
@@ -2632,7 +2642,7 @@ function update(event){
        const card=screen.querySelector(`[data-progression-entry="${e.id}"]`);if(!card)continue;
        const html=progressionGoal(e),old=card.querySelector('.progression-goal');
        if(old)old.outerHTML=html;
-       else if(html)card.querySelector('header').insertAdjacentHTML('afterend',html);
+       else if(html)card.querySelector('.goal-entry-body').insertAdjacentHTML('afterbegin',html);
      }
    }if(v.key==='priority')el.className=el.value==='Floor'?'priority-floor':el.value==='Ceiling'?'priority-ceiling':'';return}
  if(v.day){const d=current.days.find(d=>d.id===Number(v.day));if(!d)return;const target=v.ex?d.exercises.find(e=>e.id===Number(v.ex)):d;if(!target)return;
@@ -3183,10 +3193,10 @@ function chooseExerciseTarget(){
 }
 function chooseWorkout(){return new Promise(resolve=>{const dialog=document.createElement('dialog');dialog.className='app-modal';dialog.innerHTML=`<form><h2>Choose a Workout</h2><label>Workout<select required>${current.days.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label><div class="actions" style="margin-top:20px"><button type="button">Cancel</button><button class="primary" type="submit">Add Exercise</button></div></form>`;document.body.append(dialog);dialog.querySelector('form').onsubmit=event=>{event.preventDefault();const id=Number(dialog.querySelector('select').value);dialog.close();dialog.remove();resolve(id);};const cancel=()=>{dialog.close();dialog.remove();resolve(null);};dialog.querySelector('[type=button]').onclick=cancel;dialog.oncancel=event=>{event.preventDefault();cancel();};dialog.showModal();});}
 function applyGoalRowColors(){screen.querySelectorAll('[data-key="priority"]').forEach(select=>{const tr=select.closest('tr');if(tr){tr.classList.toggle('goal-floor',select.value==='Floor');tr.classList.toggle('goal-ceiling',select.value==='Ceiling');}});}
-function progressionEntryActions(exercise) {
+function progressionEntryActions(exercise, inlineEditor=false) {
   const mainLabel = exercise.progression ? 'Edit Progression' : 'Create Progression';
   return `<div class="progression-entry-actions">
-    <button type="button" class="primary" data-create-progression="${exercise.id}">${mainLabel}</button>
+    ${inlineEditor?'':`<button type="button" class="primary" data-create-progression="${exercise.id}">${mainLabel}</button>`}
     <button type="button" data-create-progression="${exercise.id}" data-new-alternative>${icon('plus')}<span>Add Alternative Progression</span></button>
   </div>`;
 }
@@ -3438,10 +3448,11 @@ function goalProgressionView() {
   if(!entries.length)return '<div class="goal-progression-empty"><h3>No goal exercises yet</h3><p>Choose the Goal role on an exercise to see its progressions here.</p></div>';
   return `<div class="goal-progressions">${entries.map(({d,e})=>{
     const p=e.progression?LZProgression.forExercise(e):null;
+    const expanded=!collapsedGoalEntries.has(e.id),bodyId='goal-entry-body-'+e.id;
     return `<article class="goal-progression-card" data-goal-role="${isGoalExercise(e)}" data-tracks="${1+(p?.alternatives.length||0)}" data-progression-entry="${e.id}" data-context="${highlightState(d,e)}"><header>
-      <div class="goal-progress-title"><h3 class="label-icon">${icon('target')}${esc(e.name||'Unnamed Exercise')}</h3><p>${esc(d.name)} · ${roleBadge(e)}</p></div>
-      ${progressionEntryActions(e)}
-    </header>${progressionGoal(e)}${layout==='sheet'?comparisonGrid(e,false):p?progressionComparison(p,comparisonWeek):'<p>No progression entered yet.</p>'}</article>`;
+      <div class="goal-progress-title"><h3><button type="button" data-toggle-goal-entry aria-expanded="${expanded}" aria-controls="${bodyId}" aria-label="${esc((e.name||'Unnamed exercise')+', '+d.name+' goal progression')}">${icon('chevron-down')}<span>${esc(e.name||'Unnamed exercise')}</span></button></h3><p>${esc(d.name)} · ${roleBadge(e)}</p></div>
+      ${progressionEntryActions(e,true)}
+    </header><div id="${bodyId}" class="goal-entry-body" ${expanded?'':'hidden'}>${progressionGoal(e)}${comparisonGrid(e,false)}</div></article>`;
   }).join('')}</div>`;
 }
 
@@ -3536,4 +3547,4 @@ window.addEventListener('lz-cloud-import-complete',async()=>{try{await closeCont
 window.LZShell={navigate,refreshAccount,showMessage,flushContent,closeContent};refreshAccount();if(LZStudent.context().admin&&!LZStudent.context().owner)dashboardChrome();iconify();
 })();
 </script><script src="appearance-settings.js?v=20261127-builder-fit2"></script>
-<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=workout-audit2"></script><link rel="stylesheet" href="athlete-program.css?v=sheet-views2"></body></html>
+<link rel="stylesheet" href="teaching-board.css?v=builder-only"><script src="teaching-board.js?v=workout-audit2"></script><link rel="stylesheet" href="athlete-program.css?v=goal-fold1"></body></html>
